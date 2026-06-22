@@ -63,7 +63,7 @@ export function CaptureCard() {
           });
           if (nres.ok) {
             const { data: ndata } = await nres.json();
-            notes = groundNotes(NotesTranslationSchema.parse(ndata));
+            notes = groundNotes(NotesTranslationSchema.parse(ndata), trimmed);
           }
         } catch {
           notes = undefined; // swallow: keep the report flow intact

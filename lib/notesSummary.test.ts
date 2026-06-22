@@ -62,6 +62,19 @@ describe('buildNotesView', () => {
     expect(viewZh.rows[0].flags[0].message).not.toBe(fEn[0].message);
   });
 
+  it('total-drop fallback: the verbatim original is shown as an abstained row (never empty)', () => {
+    const original = '医生说：未见占位，继续服用二甲双胍。';
+    const grounded = groundNotes({ segments: [] }, original);
+    const view = buildNotesView(grounded, 'en');
+    expect(view.rows).toHaveLength(1);
+    const r = view.rows[0];
+    expect(r.source).toBe(original); // original carried through verbatim
+    expect(r.translation).toBe(''); // never a silent simplified render
+    expect(r.abstained).toBe(true);
+    expect(r.abstainNote).not.toBe('');
+    expect(view.overallAction).toBe('abstain');
+  });
+
   it('carries the overall action through', () => {
     const grounded = groundNotes({
       segments: [
