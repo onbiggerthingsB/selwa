@@ -18,8 +18,8 @@ export function SaveVisitButton({ report, lang }: { report: GroundedReport; lang
   }
 
   return (
-    <button className="save" onClick={onSave} disabled={saved}>
-      {saved ? t('Saved', '已保存') : t('Save this report to my device', '保存到本机')}
+    <button className="btn btn-primary btn-block save" onClick={onSave} disabled={saved}>
+      {saved ? t('Saved', '已保存') : t('Keep this report on my device', '保存到本机')}
     </button>
   );
 }

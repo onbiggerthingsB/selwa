@@ -1,8 +1,8 @@
 export function DisclaimerBanner() {
   return (
     <div className="banner" role="note">
-      <strong>Not medical advice · 非医疗建议.</strong> This tool helps you understand a lab report and can misread
-      it. Always confirm with your clinician.
+      <strong>A reading aid, not medical advice.</strong> We can misread a photo — always confirm anything
+      important with your clinician.
     </div>
   );
 }

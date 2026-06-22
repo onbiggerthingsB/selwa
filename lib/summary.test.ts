@@ -13,33 +13,34 @@ const extraction: LabExtraction = {
 describe('buildSummary', () => {
   const report = groundExtraction(extraction, 'unknown');
 
-  it('always includes disclaimers', () => {
+  it('always includes disclaimers (EN and ZH)', () => {
     expect(buildSummary(report, 'en').disclaimers.length).toBeGreaterThan(0);
     expect(buildSummary(report, 'zh').disclaimers.length).toBeGreaterThan(0);
   });
 
-  it('renders a known analyte with name, value, classification label, and plain meaning', () => {
+  it('carries BOTH languages, the value, classification labels, plain meaning, and the reference range', () => {
     const { sections } = buildSummary(report, 'en');
     const glu = sections.find((s) => s.key === 'fasting_glucose')!;
-    expect(glu.title).toContain('Fasting plasma glucose');
+    expect(glu.nameEn).toContain('Fasting plasma glucose');
+    expect(glu.nameZh).toContain('空腹血糖');
     expect(glu.valueText).toBe('7.8 mmol/L');
-    expect(glu.statusLabel.toLowerCase()).toContain('high');
-    expect(glu.plain).toMatch(/blood sugar/i);
+    expect(glu.status).toBe('high');
+    expect(glu.statusLabelEn.toLowerCase()).toContain('high');
+    expect(glu.statusLabelZh).toBe('偏高');
+    expect(glu.plainEn).toMatch(/blood sugar/i);
+    expect(glu.plainZh).toMatch(/血糖/);
+    expect(glu.refRange).toMatch(/3\.9–6\.1 mmol\/L/);
     expect(glu.flags.length).toBeGreaterThan(0); // high-stakes
+    // flags carry both languages
+    expect(glu.flags.every((f) => f.messageEn.length > 0 && f.messageZh.length > 0)).toBe(true);
   });
 
-  it('renders Mandarin labels when lang=zh', () => {
-    const { sections } = buildSummary(report, 'zh');
-    const glu = sections.find((s) => s.key === 'fasting_glucose')!;
-    expect(glu.title).toContain('空腹血糖');
-    expect(glu.plain).toMatch(/血糖/);
-  });
-
-  it('presents an unclassified (unknown) analyte neutrally, with no status judgment', () => {
+  it('presents an unknown analyte neutrally — not assessed, no invented meaning, no range', () => {
     const { sections } = buildSummary(report, 'en');
-    const hcy = sections.find((s) => s.title.includes('homocysteine'))!;
+    const hcy = sections.find((s) => s.nameEn === 'homocysteine')!;
     expect(hcy.status).toBe('unclassified');
-    expect(hcy.statusLabel.toLowerCase()).toContain('not interpreted');
-    expect(hcy.plain).toBe(''); // no invented meaning
+    expect(hcy.statusLabelEn.toLowerCase()).toContain('not assessed');
+    expect(hcy.plainEn).toBe('');
+    expect(hcy.refRange).toBe('');
   });
 });

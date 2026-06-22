@@ -1,15 +1,16 @@
+// The first entry is the warm "lead" sentence; the rest are quieter supporting points.
 export const DISCLAIMERS_EN: string[] = [
-  'Not medical advice: this summary helps you understand your report in plain language. It is not a diagnosis or treatment recommendation. Always confirm with your clinician before making any health decision.',
-  'Not a medical device: this app is an educational comprehension aid, not a medical device, and has not been reviewed by any regulator. It can make mistakes, including misreading numbers.',
-  'We may misread your report: we use automatic photo reading (OCR), which can misread digits, decimal points, and units. Please check the values we show against your original report.',
-  'Confirm flagged items: items marked “confirm with your clinician” are high-stakes or uncertain. Verify exact values and meaning with your doctor, nurse, or pharmacist.',
+  'This app helps you understand your report in your own language. It is not medical advice and can’t replace your doctor — when something looks important, your clinician is the right person to ask.',
+  'We read your report with automatic photo recognition, which can misread a digit, a decimal point, or a unit. Please check the values against your original report.',
+  'Anything marked “confirm with your clinician” is high-stakes or uncertain. Verify the exact values and meaning with your doctor, nurse, or pharmacist.',
+  'This is an educational comprehension aid, not a medical device, and has not been reviewed by any regulator.',
 ];
 
 export const DISCLAIMERS_ZH: string[] = [
-  '本工具不提供医疗建议：本摘要旨在用通俗语言帮助您理解您的报告，并非诊断或治疗建议。在做出任何健康决定之前，请务必与您的医生确认。',
-  '本工具不是医疗器械：本应用是帮助理解的科普辅助工具，不是医疗器械，未经任何监管机构审核。它可能会出错，包括读错数字。',
-  '我们可能读错您的报告：本工具使用自动图像识别（OCR），可能读错数字、小数点和单位。请将我们显示的数值与您的原始报告核对。',
-  '请确认被标注的项目：标注“请与医生确认”的项目属于高风险或存在不确定性。请向您的医生、护士或药师核实具体数值与含义。',
+  '本应用帮助您用自己的语言理解化验单。它不是医疗建议，也不能替代您的医生——当某项结果看起来重要时，请向您的医生咨询。',
+  '我们使用自动图像识别读取您的报告，可能读错数字、小数点或单位。请将显示的数值与您的原始报告核对。',
+  '凡标注"请与医生确认"的项目，都属于高风险或存在不确定性。请向您的医生、护士或药师核实具体数值与含义。',
+  '本应用是帮助理解的科普工具，不是医疗器械，未经任何监管机构审核。',
 ];
 
 export function disclaimers(lang: 'en' | 'zh'): string[] {

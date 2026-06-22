@@ -18,7 +18,8 @@ export function InstallPrompt() {
   if (!show) return null;
   return (
     <p className="install-hint">
-      Add to Home Screen: tap the Share button, then “Add to Home Screen”.
+      Keep it one tap away: tap the Share button, then “Add to Home Screen”. ·
+      <span className="zh" lang="zh"> 添加到主屏幕：点按“分享”，再选“添加到主屏幕”。</span>
     </p>
   );
 }

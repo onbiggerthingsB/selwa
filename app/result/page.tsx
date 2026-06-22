@@ -25,15 +25,23 @@ export default function ResultPage() {
 
   if (!report) return null;
 
+  const t = (en: string, zh: string) => (lang === 'zh' ? zh : en);
+
   return (
     <main className="result">
-      <div className="lang-toggle">
-        <button aria-pressed={lang === 'en'} onClick={() => setLang('en')}>
-          EN
-        </button>
-        <button aria-pressed={lang === 'zh'} onClick={() => setLang('zh')}>
-          中文
-        </button>
+      <div className="result-head">
+        <div>
+          <p className="eyebrow">{t('Your results', '您的结果')}</p>
+          <h2>{t('Lab report', '化验单')}</h2>
+        </div>
+        <div className="lang-toggle" role="group" aria-label={t('Language', '语言')}>
+          <button aria-pressed={lang === 'en'} onClick={() => setLang('en')}>
+            EN
+          </button>
+          <button aria-pressed={lang === 'zh'} onClick={() => setLang('zh')}>
+            中文
+          </button>
+        </div>
       </div>
 
       {!confirmed ? (

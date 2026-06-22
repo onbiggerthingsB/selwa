@@ -16,22 +16,32 @@ export function SavedVisits({ lang }: { lang: 'en' | 'zh' }) {
 
   return (
     <section className="saved">
-      <h2>{t('Saved reports (on this device)', '已保存的报告（本机）')}</h2>
-      <ul>
+      <h2>{t('Saved reports', '已保存的报告')}</h2>
+      <ul className="saved-list">
         {visits.map((v) => (
-          <li key={v.id}>
-            <button onClick={() => setOpenId(openId === v.id ? null : v.id)}>
-              {new Date(v.createdAt).toLocaleString()} — {v.report.rows.length} {t('items', '项')}
-            </button>
-            <button
-              onClick={async () => {
-                await deleteVisit(v.id);
-                setVisits(await listVisits());
-              }}
-            >
-              {t('Delete', '删除')}
-            </button>
-            {openId === v.id && <SummaryView report={v.report} lang={lang} />}
+          <li key={v.id} className="saved-item">
+            <div className="saved-head">
+              <button className="saved-open" onClick={() => setOpenId(openId === v.id ? null : v.id)}>
+                {new Date(v.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                <span className="saved-meta">
+                  {v.report.rows.length} {t('values · on this device', '项 · 保存在本机')}
+                </span>
+              </button>
+              <button
+                className="saved-del"
+                onClick={async () => {
+                  await deleteVisit(v.id);
+                  setVisits(await listVisits());
+                }}
+              >
+                {t('Delete', '删除')}
+              </button>
+            </div>
+            {openId === v.id && (
+              <div className="saved-body">
+                <SummaryView report={v.report} lang={lang} />
+              </div>
+            )}
           </li>
         ))}
       </ul>
