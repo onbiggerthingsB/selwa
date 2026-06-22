@@ -87,6 +87,7 @@ const RAW_MARKERS_EN: RawMarker[] = [
   { marker: 'not', kind: 'negation', strength: 'definite-absent' },
   { marker: 'without', kind: 'negation', strength: 'definite-absent' },
   { marker: 'denies', kind: 'negation', strength: 'definite-absent' },
+  { marker: 'denied', kind: 'negation', strength: 'definite-absent' },
   { marker: 'negative for', kind: 'negation', strength: 'definite-absent' },
   { marker: 'absence of', kind: 'negation', strength: 'definite-absent' },
   { marker: 'free of', kind: 'negation', strength: 'definite-absent' },
@@ -192,6 +193,25 @@ const DOSE_UNIT_DIM: Record<string, string> = {
   滴: 'drop',
   喷: 'spray',
   贴: 'patch',
+  // English count units, sharing the SAME dim as their ZH counterparts so a
+  // faithful 1片→1 tablet translation extracts as the same dose dimension
+  // (ZH↔EN dose symmetry for the notes guard).
+  tablet: 'tablet',
+  tablets: 'tablet',
+  tab: 'tablet',
+  tabs: 'tablet',
+  capsule: 'capsule',
+  capsules: 'capsule',
+  cap: 'capsule',
+  caps: 'capsule',
+  pill: 'pill',
+  pills: 'pill',
+  drop: 'drop',
+  drops: 'drop',
+  spray: 'spray',
+  sprays: 'spray',
+  patch: 'patch',
+  patches: 'patch',
   // Compound tokens: dim = token itself.
   'mg/dL': 'mg/dL',
   'mmol/L': 'mmol/L',
@@ -204,6 +224,9 @@ const DOSE_UNIT_TOKENS: string[] = [
   'mg', '毫克', 'g', '克', 'mcg', 'ug', 'µg', '微克', 'mL', 'ml', '毫升', 'L',
   '升', 'IU', 'U', '国际单位', '单位', 'mmol', '毫摩尔', 'mg/dL', 'mmol/L', '片',
   '粒', '丸', '袋', '支', '瓶', '滴', '喷', '贴', 'ml/次', 'mg/kg', '毫克/公斤',
+  // EN count units (share dims with 片/粒/丸/滴/喷/贴 above).
+  'tablet', 'tablets', 'tab', 'tabs', 'capsule', 'capsules', 'cap', 'caps',
+  'pill', 'pills', 'drop', 'drops', 'spray', 'sprays', 'patch', 'patches',
 ];
 
 export const DOSE_UNITS: DoseUnit[] = DOSE_UNIT_TOKENS.map((token) => ({

@@ -15,6 +15,27 @@ describe('medical lexicon', () => {
     const haoke = DOSE_UNITS.find((u) => u.token === '毫克')!;
     expect(mg.dim).toBe(haoke.dim);
   });
+  it('shares the count-unit dim across ZH and EN tokens (片≡tablet, 粒≡capsule…)', () => {
+    const dimOf = (tok: string) => DOSE_UNITS.find((u) => u.token === tok)?.dim;
+    // EN count-unit tokens exist and share the ZH counterpart's dim.
+    expect(dimOf('tablet')).toBe('tablet');
+    expect(dimOf('tablets')).toBe('tablet');
+    expect(dimOf('tab')).toBe('tablet');
+    expect(dimOf('tabs')).toBe('tablet');
+    expect(dimOf('tablet')).toBe(dimOf('片'));
+    expect(dimOf('capsule')).toBe(dimOf('粒'));
+    expect(dimOf('capsules')).toBe('capsule');
+    expect(dimOf('cap')).toBe('capsule');
+    expect(dimOf('caps')).toBe('capsule');
+    expect(dimOf('pill')).toBe(dimOf('丸'));
+    expect(dimOf('pills')).toBe('pill');
+    expect(dimOf('drop')).toBe(dimOf('滴'));
+    expect(dimOf('drops')).toBe('drop');
+    expect(dimOf('spray')).toBe(dimOf('喷'));
+    expect(dimOf('sprays')).toBe('spray');
+    expect(dimOf('patch')).toBe(dimOf('贴'));
+    expect(dimOf('patches')).toBe('patch');
+  });
   it('maps known drugs by generic/zh/pinyin/brand to one canonical id', () => {
     const metf = KNOWN_DRUGS.find((d) => d.id === 'metformin')!;
     expect(metf.forms).toEqual(expect.arrayContaining(['metformin', '二甲双胍', 'glucophage', '格华止']));

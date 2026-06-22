@@ -60,6 +60,60 @@ describe('detectImmutables', () => {
     expect(neg).toBeTruthy();
     expect(neg!.polarity).toBe('absent');
   });
+
+  // --- Fix 1: EN count units → ZH↔EN dose symmetry --------------------------
+  it('extracts "1 tablet" (en) as a DOSAGE with unitDim tablet, not a bare number', () => {
+    const im = detectImmutables('1 tablet', 'en');
+    const dose = im.find((i) => i.type === 'dosage');
+    expect(dose).toBeTruthy();
+    expect(dose!.unitDim).toBe('tablet');
+    expect(dose!.amount).toBe('1');
+    expect(im.filter((i) => i.type === 'number')).toHaveLength(0);
+  });
+  it('matches EN/ZH count-unit dose dims: 2 tablets ≡ 2片 → tablet', () => {
+    const en = detectImmutables('2 tablets', 'en').find((i) => i.type === 'dosage')!;
+    const zh = detectImmutables('2片', 'zh').find((i) => i.type === 'dosage')!;
+    expect(en.unitDim).toBe('tablet');
+    expect(zh.unitDim).toBe('tablet');
+    expect(en.unitDim).toBe(zh.unitDim);
+  });
+  it('matches multi-letter EN count units longest-first ("tablets" beats "tab")', () => {
+    const dose = detectImmutables('3 tablets', 'en').find((i) => i.type === 'dosage')!;
+    expect(dose.amount).toBe('3');
+    expect(dose.unitDim).toBe('tablet');
+  });
+
+  // --- Fix 2: comma as thousands separator in dose amounts ------------------
+  it('parses a comma-grouped dose amount as one number (1,000 mg → 1000)', () => {
+    const im = detectImmutables('warfarin 1,000 mg daily', 'en');
+    const doses = im.filter((i) => i.type === 'dosage');
+    expect(doses).toHaveLength(1);
+    expect(doses[0].amount).toBe('1000');
+    expect(doses[0].unitDim).toBe('mg');
+    // No stray bare "1" left behind.
+    expect(im.filter((i) => i.type === 'number')).toHaveLength(0);
+  });
+  it('leaves a plain dose amount unchanged (5 mg → 5)', () => {
+    const dose = detectImmutables('5 mg', 'en').find((i) => i.type === 'dosage')!;
+    expect(dose.amount).toBe('5');
+  });
+  it('still parses a real decimal dose amount (0.5 mg → 0.5)', () => {
+    const dose = detectImmutables('0.5 mg', 'en').find((i) => i.type === 'dosage')!;
+    expect(dose.amount).toBe('0.5');
+  });
+
+  // --- Fix 3: past-tense EN negation "denied" ------------------------------
+  it('detects "denied" as a definite-absent EN negation', () => {
+    const im = detectImmutables('denied chest pain', 'en');
+    const neg = im.find((i) => i.type === 'negation');
+    expect(neg).toBeTruthy();
+    expect(neg!.polarity).toBe('absent');
+    expect(neg!.finding).toContain('chest pain');
+  });
+  it('does not fire "denied" inside another word', () => {
+    const im = detectImmutables('the deniedness score', 'en');
+    expect(im.filter((i) => i.type === 'negation')).toHaveLength(0);
+  });
 });
 
 describe('splitClauses', () => {

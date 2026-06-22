@@ -19,8 +19,11 @@ import {
 
 // --- Clause splitting -------------------------------------------------------
 // Split on sentence punctuation and the conjunctions that re-assert scope, so a
-// negation/hedge cannot leak across a clause boundary.
-const CLAUSE_SPLIT_RE = /[。.；;!?！？\n]|但是|但|而|及|和|，|,|\band\b|\bbut\b/giu;
+// negation/hedge cannot leak across a clause boundary. ASCII '.' and ',' are
+// guarded so they only split as punctuation, not inside a number — a decimal
+// point ('0.5 mg') or a thousands separator ('1,000 mg') must stay intact.
+const CLAUSE_SPLIT_RE =
+  /[。；;!?！？\n]|(?<!\d)[.,]|[.,](?!\d)|但是|但|而|及|和|，|\band\b|\bbut\b/giu;
 
 export function splitClauses(text: string): string[] {
   return text
@@ -149,7 +152,10 @@ const DOSE_UNIT_ALT = DOSE_UNITS.map((u) => u.token)
 
 // amount (+ optional range) + optional space + unit. Amount may be Arabic or a
 // ZH numeral cluster. Unicode-aware; allow zero or one space.
-const AMOUNT = '\\d+(?:[.,]\\d+)?|[零一二两三四五六七八九十]+|半';
+// Arabic form: comma-grouped thousands ('1,000', '12,500.5') OR a plain
+// integer/decimal ('5', '0.5'). The comma is a thousands separator, never a
+// decimal point — normalizeAmount strips it.
+const AMOUNT = '\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?|\\d+(?:\\.\\d+)?|[零一二两三四五六七八九十]+|半';
 const DOSE_RE = new RegExp(
   `(?<amount>${AMOUNT})(?:\\s*[-~–至]\\s*(?<amax>${AMOUNT}))?\\s*(?<unit>${DOSE_UNIT_ALT})`,
   'giu',
