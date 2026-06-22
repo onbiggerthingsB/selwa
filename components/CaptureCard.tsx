@@ -81,6 +81,24 @@ export function CaptureCard() {
             </span>
           </label>
 
+          <label className="field">
+            <span className="field-label">
+              Age <span className="zh" lang="zh">年龄</span>{' '}
+              <span style={{ opacity: 0.7 }}>(optional · 可选)</span>
+            </span>
+            <span className="select-wrap">
+              <select
+                value={age === undefined ? '' : String(age)}
+                onChange={(e) => setAge(e.target.value === '' ? undefined : Number(e.target.value))}
+              >
+                <option value="">Prefer not to say · 不便透露</option>
+                <option value="10">Under 18 · 18 岁以下</option>
+                <option value="40">18–64 · 18–64 岁</option>
+                <option value="70">65 and over · 65 岁及以上</option>
+              </select>
+            </span>
+          </label>
+
           <button type="button" className="capture-card" onClick={openPicker}>
             <CameraGlyph />
             <span className="cap-title">
