@@ -7,7 +7,7 @@ const extraction: LabExtraction = {
     { name: '空腹血糖', value: '7.8', unit: 'mmol/L', printedRange: '3.9-6.1', confidence: 'high' },
     { name: '钾', value: '6.9', unit: 'mmol/L', printedRange: '3.5-5.3', confidence: 'high' },
     { name: '总胆固醇', value: '4.5', unit: 'mmol/L', printedRange: '<5.2', confidence: 'high' },
-    { name: 'homocysteine', value: '15', unit: 'umol/L', printedRange: '5-15', confidence: 'medium' },
+    { name: 'ceruloplasmin', value: '15', unit: 'umol/L', printedRange: '5-15', confidence: 'medium' },
   ],
 };
 
@@ -35,7 +35,7 @@ describe('groundExtraction', () => {
 
   it('abstains (no classification) on an unknown analyte', () => {
     const { rows } = groundExtraction(extraction, 'unknown');
-    const hcy = rows.find((r) => r.extracted.name === 'homocysteine')!;
+    const hcy = rows.find((r) => r.extracted.name === 'ceruloplasmin')!;
     expect(hcy.entry).toBeNull();
     expect(hcy.action).toBe('abstain');
     expect(hcy.classification).toBe('unclassified');

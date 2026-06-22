@@ -16,7 +16,7 @@ describe('findEntry', () => {
     expect(findEntry('  K+ ')?.key).toBe('potassium');
   });
   it('returns null for an unknown analyte', () => {
-    expect(findEntry('homocysteine')).toBeNull();
+    expect(findEntry('ceruloplasmin')).toBeNull();
   });
 });
 

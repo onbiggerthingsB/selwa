@@ -13,7 +13,7 @@ function ids(flags: { id: string }[]) {
 
 describe('evaluateRow', () => {
   it('R1: unknown analyte → abstain, no classification', () => {
-    const ex = row({ name: 'homocysteine', value: '15', unit: 'umol/L' });
+    const ex = row({ name: 'ceruloplasmin', value: '15', unit: 'umol/L' });
     const out = evaluateRow(ex, null, null, 'unclassified', 'unknown');
     expect(out.action).toBe('abstain');
     expect(ids(out.flags)).toContain('R1-UNKNOWN-ANALYTE');

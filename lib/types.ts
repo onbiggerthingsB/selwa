@@ -61,8 +61,8 @@ export interface GroundedReport {
 export interface AgeBand {
   ageMin: number; // inclusive, years
   ageMax: number; // inclusive, years
-  refLow: Bound;
-  refHigh: Bound;
+  refLow: Bound | null; // null when the band has only an upper cutoff
+  refHigh: Bound | null; // null when the band has only a lower bound
 }
 
 // --- M3: doctor-notes immutables ---

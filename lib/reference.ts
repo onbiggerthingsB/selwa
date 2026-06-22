@@ -66,13 +66,16 @@ export function resolveBounds(entry: ReferenceEntry, sex: Sex, age?: number): Re
       }
     }
     // No age (or no matching band): widen across ALL bands and sexes, flag union.
-    const lows = bands.map((b) => scalarFromBound(b.refLow, 'low', 'female')).concat(
-      bands.map((b) => scalarFromBound(b.refLow, 'low', 'male')),
-    );
-    const highs = bands.map((b) => scalarFromBound(b.refHigh, 'high', 'female')).concat(
-      bands.map((b) => scalarFromBound(b.refHigh, 'high', 'male')),
-    );
-    return { low: Math.min(...lows), high: Math.max(...highs), usedUnion: true };
+    // refLow/refHigh may be null on one-sided bands; drop those before min/max.
+    const lows = bands
+      .flatMap((b) => (b.refLow === null ? [] : [scalarFromBound(b.refLow, 'low', 'female'), scalarFromBound(b.refLow, 'low', 'male')]));
+    const highs = bands
+      .flatMap((b) => (b.refHigh === null ? [] : [scalarFromBound(b.refHigh, 'high', 'female'), scalarFromBound(b.refHigh, 'high', 'male')]));
+    return {
+      low: lows.length ? Math.min(...lows) : null,
+      high: highs.length ? Math.max(...highs) : null,
+      usedUnion: true,
+    };
   }
 
   // No age bands: original v0 behaviour (sex split or scalar).

@@ -8,7 +8,7 @@ const report = (() => {
   const extraction: LabExtraction = {
     rows: [
       { name: '空腹血糖', value: '7.8', unit: 'mmol/L', printedRange: '3.9-6.1', confidence: 'high' },
-      { name: 'homocysteine', value: '15', unit: 'umol/L', printedRange: null, confidence: 'high' },
+      { name: 'ceruloplasmin', value: '15', unit: 'umol/L', printedRange: null, confidence: 'high' },
     ],
   };
   return { ...groundExtraction(extraction, 'unknown'), generatedAt: 0 };
@@ -31,7 +31,7 @@ describe('SummaryView', () => {
 
   it('presents an unknown analyte without a normal/abnormal judgment', () => {
     render(<SummaryView report={report} lang="en" />);
-    expect(screen.getByText('homocysteine')).toBeInTheDocument();
+    expect(screen.getByText('ceruloplasmin')).toBeInTheDocument();
     expect(screen.getAllByText(/not assessed/i).length).toBeGreaterThan(0);
   });
 

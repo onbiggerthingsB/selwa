@@ -6,7 +6,7 @@ import type { LabExtraction } from '@/lib/extractionSchema';
 const extraction: LabExtraction = {
   rows: [
     { name: '空腹血糖', value: '7.8', unit: 'mmol/L', printedRange: '3.9-6.1', confidence: 'high' },
-    { name: 'homocysteine', value: '15', unit: 'umol/L', printedRange: '5-15', confidence: 'high' },
+    { name: 'ceruloplasmin', value: '15', unit: 'umol/L', printedRange: '5-15', confidence: 'high' },
   ],
 };
 
@@ -37,7 +37,7 @@ describe('buildSummary', () => {
 
   it('presents an unknown analyte neutrally — not assessed, no invented meaning, no range', () => {
     const { sections } = buildSummary(report, 'en');
-    const hcy = sections.find((s) => s.nameEn === 'homocysteine')!;
+    const hcy = sections.find((s) => s.nameEn === 'ceruloplasmin')!;
     expect(hcy.status).toBe('unclassified');
     expect(hcy.statusLabelEn.toLowerCase()).toContain('not assessed');
     expect(hcy.plainEn).toBe('');
