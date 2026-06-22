@@ -16,5 +16,7 @@ export const UNIT_CONVERSIONS: UnitConversion[] = [
   { analyteKey: 'creatinine', conventionalUnit: 'mg/dL', siUnit: 'umol/L', factorConvToSI: 88.42, factorSIToConv: 0.01131, source: 'IFCC (creatinine MW 113.12); SI is µmol/L' },
   { analyteKey: 'total_bilirubin', conventionalUnit: 'mg/dL', siUnit: 'umol/L', factorConvToSI: 17.10, factorSIToConv: 0.05848, source: 'IFCC (bilirubin MW 584.66); SI is µmol/L' },
   { analyteKey: 'uric_acid', conventionalUnit: 'mg/dL', siUnit: 'umol/L', factorConvToSI: 59.48, factorSIToConv: 0.01681, source: 'IFCC (uric acid MW 168.11); SI is µmol/L' },
-  // NOTE: urea/BUN and calcium are DELIBERATELY EXCLUDED — see convert.ts ABSTAIN_TRAPS.
+  // NOTE: urea/BUN and calcium are DELIBERATELY EXCLUDED (abstain-traps: urea-vs-BUN ×2.14
+  // ambiguity, calcium mg/dL vs mEq/L). Absence from this list ⇒ convertValue() returns null
+  // ⇒ the caller abstains (R2-UNIT-MISMATCH) rather than risk a wrong conversion.
 ];
