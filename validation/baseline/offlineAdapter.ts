@@ -10,7 +10,6 @@ import { BASELINE_UNAVAILABLE, type Lang, type MtBaseline } from './MtBaseline';
 
 export const offlineAdapter: MtBaseline = {
   id: 'offline',
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async translate(_text: string, _from: Lang, _to: Lang): Promise<string> {
     return BASELINE_UNAVAILABLE;
   },

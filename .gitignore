@@ -38,6 +38,10 @@ yarn-error.log*
 /public/sw.js
 /public/swe-worker-*.js
 
+# generated validation reports (run via `npm run validate`)
+/validation/report.json
+/validation/report.md
+
 # claude code local settings (keep launch.json tracked)
 .claude/settings.local.json
 
