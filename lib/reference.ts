@@ -1,4 +1,4 @@
-import type { ReferenceEntry, Sex } from '@/lib/types';
+import type { Bound, ReferenceEntry, Sex } from '@/lib/types';
 import { REFERENCE_LABS } from '@/data/reference-labs';
 
 function normName(s: string): string {
@@ -44,22 +44,43 @@ export interface ResolvedBounds {
   usedUnion: boolean; // true when sex was unknown and a sex-specific band was widened
 }
 
-export function resolveBounds(entry: ReferenceEntry, sex: Sex): ResolvedBounds {
+function scalarFromBound(b: Bound, which: 'low' | 'high', sex: Sex): number {
+  if (typeof b === 'number') return b;
+  if (sex === 'male') return b.male;
+  if (sex === 'female') return b.female;
+  return which === 'low' ? Math.min(b.male, b.female) : Math.max(b.male, b.female);
+}
+
+export function resolveBounds(entry: ReferenceEntry, sex: Sex, age?: number): ResolvedBounds {
+  const bands = entry.ageBands;
+  if (bands && bands.length > 0) {
+    if (age !== undefined) {
+      const band = bands.find((b) => age >= b.ageMin && age <= b.ageMax);
+      if (band) {
+        const split = typeof band.refLow === 'object' || typeof band.refHigh === 'object';
+        return {
+          low: band.refLow === null ? null : scalarFromBound(band.refLow, 'low', sex),
+          high: band.refHigh === null ? null : scalarFromBound(band.refHigh, 'high', sex),
+          usedUnion: split && sex === 'unknown',
+        };
+      }
+    }
+    // No age (or no matching band): widen across ALL bands and sexes, flag union.
+    const lows = bands.map((b) => scalarFromBound(b.refLow, 'low', 'female')).concat(
+      bands.map((b) => scalarFromBound(b.refLow, 'low', 'male')),
+    );
+    const highs = bands.map((b) => scalarFromBound(b.refHigh, 'high', 'female')).concat(
+      bands.map((b) => scalarFromBound(b.refHigh, 'high', 'male')),
+    );
+    return { low: Math.min(...lows), high: Math.max(...highs), usedUnion: true };
+  }
+
+  // No age bands: original v0 behaviour (sex split or scalar).
   const isSplit = (b: ReferenceEntry['refLow']) => b !== null && typeof b === 'object';
   const split = isSplit(entry.refLow) || isSplit(entry.refHigh);
-
-  const pick = (b: ReferenceEntry['refLow'], which: 'lowUnion' | 'highUnion'): number | null => {
-    if (b === null) return null;
-    if (typeof b === 'number') return b;
-    if (sex === 'male') return b.male;
-    if (sex === 'female') return b.female;
-    // unknown → widen: lowest low, highest high
-    return which === 'lowUnion' ? Math.min(b.male, b.female) : Math.max(b.male, b.female);
-  };
-
   return {
-    low: pick(entry.refLow, 'lowUnion'),
-    high: pick(entry.refHigh, 'highUnion'),
+    low: entry.refLow === null ? null : scalarFromBound(entry.refLow, 'low', sex),
+    high: entry.refHigh === null ? null : scalarFromBound(entry.refHigh, 'high', sex),
     usedUnion: split && sex === 'unknown',
   };
 }

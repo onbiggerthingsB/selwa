@@ -55,3 +55,29 @@ describe('resolveBounds', () => {
     expect(resolveBounds(k, 'unknown')).toEqual({ low: 3.5, high: 5.3, usedUnion: false });
   });
 });
+
+describe('resolveBounds with age bands', () => {
+  // Synthetic entry with age bands for the test (independent of the data file).
+  const banded = {
+    ...findEntry('creatinine')!,
+    ageBands: [
+      { ageMin: 0, ageMax: 17, refLow: 20, refHigh: 60 },
+      { ageMin: 18, ageMax: 200, refLow: { male: 59, female: 45 }, refHigh: { male: 104, female: 84 } },
+    ],
+  };
+
+  it('picks the matching age band, then resolves sex within it', () => {
+    expect(resolveBounds(banded, 'male', 40)).toEqual({ low: 59, high: 104, usedUnion: false });
+    expect(resolveBounds(banded, 'female', 10)).toEqual({ low: 20, high: 60, usedUnion: false });
+  });
+  it('with age bands present but no age supplied, widens across bands AND sex, flags union', () => {
+    const r = resolveBounds(banded, 'unknown');
+    expect(r.usedUnion).toBe(true);
+    expect(r.low).toBe(20);   // min across all bands + sexes
+    expect(r.high).toBe(104); // max across all bands + sexes
+  });
+  it('entries without age bands behave exactly as before', () => {
+    const k = findEntry('potassium')!;
+    expect(resolveBounds(k, 'unknown')).toEqual({ low: 3.5, high: 5.3, usedUnion: false });
+  });
+});
