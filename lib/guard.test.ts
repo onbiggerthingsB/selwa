@@ -115,8 +115,9 @@ describe('evaluateRow', () => {
   });
 });
 
-describe('freeTextFlags (v0 no-op)', () => {
-  it('returns no flags in v0 (R7–R9 deferred)', () => {
-    expect(freeTextFlags('每日三次 metformin 0.5g 无异常')).toEqual([]);
+describe('freeTextFlags (R7–R9 live via notesGuard)', () => {
+  it('surfaces a fidelity flag for a dropped negation', () => {
+    const flags = freeTextFlags('未见占位', 'Mass present.');
+    expect(flags.map((f) => f.id)).toContain('R7-NEGATION-POLARITY-MISMATCH');
   });
 });

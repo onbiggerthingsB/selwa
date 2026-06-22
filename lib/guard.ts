@@ -7,6 +7,7 @@ import type {
   Sex,
 } from '@/lib/types';
 import { unitMatches, resolveBounds } from '@/lib/reference';
+import { evaluateSegment } from '@/lib/notesGuard';
 
 const CONFIRM_CLINICIAN_EN = 'Confirm this with your clinician.';
 const CONFIRM_CLINICIAN_ZH = '请与您的医生确认。';
@@ -161,8 +162,9 @@ function printedRangeDisagrees(printed: string, entry: ReferenceEntry, sex: Sex,
   return off(low, pLow) || off(high, pHigh);
 }
 
-// R7–R9 (negation / dosage / drug-name) operate on free text — out of scope for labs-only v0.
-// Kept as a tested no-op so the doctor-notes path in v0.1 slots in without reshaping the guard.
-export function freeTextFlags(_text: string): GuardFlag[] {
-  return [];
+// R7–R9 (negation / dosage / drug-name) translation-fidelity guard for free-text
+// doctor notes. Delegates to notesGuard.evaluateSegment, which recomputes the
+// note's immutables from the source and demands they survive in the output.
+export function freeTextFlags(source: string, translated: string): GuardFlag[] {
+  return evaluateSegment({ sourceText: source, translatedText: translated, kind: 'other' }).flags;
 }
