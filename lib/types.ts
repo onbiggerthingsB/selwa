@@ -15,6 +15,7 @@ export interface ReferenceEntry {
   criticalHigh: number | null; // SI
   highStakes: boolean; // any abnormal value always flagged for clinician
   populationSensitive: boolean; // range depends on sex/age/fasting/pregnancy
+  ageBands?: AgeBand[];
   plainEn: string;
   plainZh: string;
   source: string;
@@ -52,5 +53,48 @@ export interface GroundedRow {
 export interface GroundedReport {
   rows: GroundedRow[];
   sex: Sex;
+  age?: number;
   generatedAt: number;
+}
+
+// --- M1: age support (additive; existing entries omit ageBands) ---
+export interface AgeBand {
+  ageMin: number; // inclusive, years
+  ageMax: number; // inclusive, years
+  refLow: Bound;
+  refHigh: Bound;
+}
+
+// --- M3: doctor-notes immutables ---
+export type ImmutableType = 'negation' | 'dosage' | 'drug' | 'number';
+export type Polarity = 'present' | 'absent' | 'uncertain';
+
+export interface Immutable {
+  type: ImmutableType;
+  raw: string;                 // verbatim source span
+  finding?: string;            // negation: canonical finding key it scopes
+  polarity?: Polarity;         // negation
+  strength?: number;           // negation: hedge-ladder rank (higher = more certain)
+  amount?: string;             // dosage/number: verbatim normalized digits
+  unitDim?: string;            // dosage: normalized unit dimension key (mg, mL, mcg, IU, tablet…)
+  frequency?: string;          // dosage: canonical frequency
+  range?: { min: string; max: string }; // dosage range, e.g. 1–2 tablets
+  drugId?: string | null;      // drug: canonical known id, or null = unknown-med
+  numUnit?: string | null;     // number: trailing unit if any
+}
+
+export type SegmentKind = 'finding' | 'medication' | 'instruction' | 'followup' | 'other';
+export type SegmentAction = 'render' | 'flag' | 'abstain';
+
+export interface GroundedSegment {
+  source: string;
+  translated: string;          // '' when action === 'abstain'
+  kind: SegmentKind;
+  action: SegmentAction;
+  flags: GuardFlag[];
+  preserved: Immutable[];
+}
+export interface GroundedNotes {
+  segments: GroundedSegment[];
+  overallAction: SegmentAction; // max severity over segments (abstain > flag > render)
 }
