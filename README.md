@@ -10,19 +10,32 @@ It carries a limited-English-proficiency patient through a medical encounter end
 For translating *words*, you can — so that part is commodity. Generic translators fail in healthcare in four ways that **are** this product: (1) clinically significant errors with no uncertainty flag, (2) translation ≠ comprehension, (3) no kept record (patients forget 40–80% of a visit), (4) reports are images of jargon. The moat is **comprehension + safety**, never raw translation.
 
 ## Status
-Design approved (**Approach A** — hybrid, comprehension-first, one product / two modes). Build not started.
+**Approach A approved · Phase 1 / v0 built.** Mode 1 (after-visit comprehension), Mandarin ↔ English, web/PWA. Labs-only: photograph a lab report → OCR → ground each value vs reference ranges → plain-language translated summary with an abstention / "confirm with your clinician" guard on high-stakes and uncertain items. Plan: [`docs/superpowers/plans/2026-06-21-health-translator-v0.md`](docs/superpowers/plans/2026-06-21-health-translator-v0.md).
 
 ## Full design
 See [`docs/DESIGN.md`](docs/DESIGN.md) — architecture, the safety/abstention guard, MVP cut, validation plan, milestones, risks/ethics.
 
-## Phase 1 / v0 (start here)
-Mode 1 only · **Mandarin ↔ English** · web/PWA: photograph a lab report → OCR → ground each value vs reference ranges → plain-language translated summary with an abstention/"confirm with clinician" guard on high-stakes items.
+## How the safety model works (the moat)
+The LLM (Claude vision) does **OCR/extraction only** — it transcribes the printed analyte/value/unit/range rows and nothing else. Everything that assigns *meaning* is deterministic TypeScript grounded in a curated reference table ([`data/reference-labs.ts`](data/reference-labs.ts), ~28 analytes, SI units):
 
-## Open decisions (confirm at kickoff)
-1. Language pair (default Mandarin↔English)
-2. Platform: web/PWA vs React Native
-3. v0 grounding: cloud (recommended) vs on-device
-4. Which medical KB / reference-range source to ground against
+`extract (Claude) → reference lookup → unit check → numeric classification → safety guard (rules R1–R12) → templated bilingual summary`
 
-## Kickoff prompt (paste into a new Claude Code chat opened in this folder)
-> Read `docs/DESIGN.md`. We approved Approach A. Turn it into an implementation plan for **Phase 1 / v0**: Mode 1 (after-visit comprehension), Mandarin↔English, web/PWA — photograph a lab report → OCR → ground each value against reference ranges → plain-language translated summary with an abstention/"confirm with clinician" guard on high-stakes items. The moat is comprehension + safety, never raw translation. Then build it commit by commit.
+The model never supplies a reference range, never classifies a value, never diagnoses, never translates a clinical claim. The guard biases toward deferral: unknown analytes and unit mismatches **abstain** (shown verbatim, no judgment); high-stakes analytes (glucose, potassium, creatinine, LDL, hemoglobin) and critical values are **always re-confirmed** by the user before interpretation and flagged "confirm with your clinician." PHI stays on-device — the image transits the server only transiently to reach Claude and is never persisted; the kept record lives only in your browser's IndexedDB.
+
+## Running v0 locally
+Prerequisites: Node 20+.
+
+```bash
+npm install
+cp .env.local.example .env.local      # then set ANTHROPIC_API_KEY (server-only; never NEXT_PUBLIC_)
+npm test                              # unit + component tests (no API key needed)
+npm run dev                           # http://localhost:3000  (Turbopack)
+npm run dev:pwa                       # dev with the service worker (webpack — Serwist needs webpack)
+npm run build                         # production build; generates public/sw.js (webpack)
+```
+
+The home page and tests run without a key; **photographing a report** needs `ANTHROPIC_API_KEY` set in `.env.local` (the extract route calls Claude server-side). See [`docs/RUNNING.md`](docs/RUNNING.md) for constraints and gotchas.
+
+## v0 scope and what's deferred
+- **In v0:** labs-only, Mandarin ↔ English, the deterministic safety core, the confirm-the-values gate, the kept on-device record, PWA/offline shell.
+- **Deferred:** free-text doctor-notes translation and the negation/dosage/drug-name fidelity rules (R7–R9, present as tested no-ops); unit auto-conversion (v0 abstains on unit mismatch); Mode 2 (live interpreter). The validation number (medical-term fidelity + abstention precision vs raw Google Translate) is v1.

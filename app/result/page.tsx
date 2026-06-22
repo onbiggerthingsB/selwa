@@ -14,8 +14,12 @@ export default function ResultPage() {
   const [lang, setLang] = useState<'en' | 'zh'>('en');
 
   useEffect(() => {
+    // Mount-time load of the in-progress report from sessionStorage (browser-only).
+    // The default null render is what the server produced, so we update after mount
+    // to stay hydration-safe; this is the intended use of an effect, not a render cascade.
     const r = getPendingReport();
     if (!r) router.replace('/');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     else setReport(r);
   }, [router]);
 
