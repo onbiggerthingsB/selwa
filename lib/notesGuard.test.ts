@@ -145,3 +145,73 @@ describe('notesGuard — invariants', () => {
     expect(o.flags).toHaveLength(0);
   });
 });
+
+// GAP 1 — unmapped-finding negations must fail SAFE. The detector emits a
+// correct negation immutable for these findings, but they sit outside
+// FINDING_SYNONYMS, so the per-finding logic alone discarded them. The
+// polarity-bucket-count balance must now catch dropped/added negations.
+describe('notesGuard — GAP 1: unmapped-finding negations fail safe', () => {
+  it('UNSAFE dropped negation (未见积液 → Effusion present) → flag', () => {
+    // src: 1 absent negation; out: 0 negations → output dropped a negation
+    // (false-alarm direction) → flag, not render.
+    const o = seg('未见积液', 'Effusion present.');
+    expect(o.action).not.toBe('render');
+    expect(ids(o)).toContain('R7-NEGATION-POLARITY-MISMATCH');
+  });
+
+  it('UNSAFE added negation (可见气胸 → No pneumothorax) → abstain', () => {
+    // src: 0 negations; out: 1 absent negation → output ADDED a negation
+    // (false reassurance — the dangerous direction) → abstain.
+    const o = seg('可见气胸', 'No pneumothorax.');
+    expect(o.action).toBe('abstain');
+    expect(ids(o)).toContain('R7-NEGATION-POLARITY-MISMATCH');
+  });
+
+  it('UNSAFE dropped negation (未见出血 → Hemorrhage present) → flag', () => {
+    const o = seg('未见出血', 'Hemorrhage present.');
+    expect(o.action).not.toBe('render');
+    expect(ids(o)).toContain('R7-NEGATION-POLARITY-MISMATCH');
+  });
+
+  it('FAITHFUL preserved negation (未见积液 → No effusion) → render', () => {
+    // src: 1 absent; out: 1 absent → equal buckets → preserved → render.
+    const o = seg('未见积液', 'No effusion.');
+    expect(o.action).toBe('render');
+    expect(o.flags).toHaveLength(0);
+  });
+});
+
+// GAP 2 — a known source drug that vanishes or is replaced by an unrecognized
+// token must fail SAFE. The old rule only fired when the OUTPUT named another
+// recognized drug, silently rendering the cases below.
+describe('notesGuard — GAP 2: vanished/replaced known drug fails safe', () => {
+  it('UNSAFE drug swap to unseeded drug (warfarin → heparin) → abstain', () => {
+    const o = seg('Continue warfarin.', 'Continue heparin.', 'medication');
+    expect(o.action).toBe('abstain');
+    expect(ids(o)).toContain('R9-DRUG-SUBSTITUTED');
+  });
+
+  it('UNSAFE drug dropped (继续服用二甲双胍 → Continue your medication) → abstain', () => {
+    const o = seg('继续服用二甲双胍。', 'Continue your medication.', 'medication');
+    expect(o.action).toBe('abstain');
+    expect(ids(o)).toContain('R9-DRUG-SUBSTITUTED');
+  });
+
+  it('UNSAFE drug swap to unseeded drug (atorvastatin → simvastatin) → abstain', () => {
+    const o = seg('Continue atorvastatin.', 'Continue simvastatin.', 'medication');
+    expect(o.action).toBe('abstain');
+    expect(ids(o)).toContain('R9-DRUG-SUBSTITUTED');
+  });
+
+  it('FAITHFUL drug preserved (继续服用二甲双胍 → Continue metformin) → render', () => {
+    const o = seg('继续服用二甲双胍。', 'Continue metformin.', 'medication');
+    expect(o.action).toBe('render');
+    expect(o.flags).toHaveLength(0);
+  });
+
+  it('FAITHFUL transliteration still renders (FM-17 stays green)', () => {
+    const o = seg('阿莫西林 500 毫克 每日三次。', 'Amoxicillin 500 mg three times daily.', 'medication');
+    expect(o.action).toBe('render');
+    expect(o.flags).toHaveLength(0);
+  });
+});

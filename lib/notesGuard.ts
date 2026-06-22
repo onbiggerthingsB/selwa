@@ -504,6 +504,67 @@ function evaluateNegations(
       );
     }
   }
+
+  // --- Unmapped-finding negation balance (GAP 1 fail-safe) -------------------
+  // The precise per-finding logic above only protects findings in
+  // FINDING_SYNONYMS. Any negation on an UNMAPPED finding (积液 effusion, 出血
+  // hemorrhage, 气胸 pneumothorax, …) would otherwise be silently discarded —
+  // so a dropped or added negation on such a finding would RENDER unchecked.
+  //
+  // Without a complete cross-lingual finding map we can't match unmapped
+  // findings by identity across languages, so we compare CONSERVATIVELY by
+  // POLARITY-BUCKET COUNT. Mapped findings are fully owned by the per-finding
+  // logic above, so we exclude them here (no double-handling of 占位 etc.). The
+  // cannot-exclude hedge is likewise owned by the hedge-collapse path above.
+  const srcHasHedge = mentionsCannotExclude(sourceText, srcLang);
+  const outHasHedge = mentionsCannotExclude(translatedText, outLang);
+  if (!srcHasHedge && !outHasHedge) {
+    const unmapped = (negs: Immutable[], lang: 'en' | 'zh') =>
+      negs.filter((n) => canonicalFinding(n.finding ?? '', lang) === null);
+    const bucketCounts = (negs: Immutable[]) => {
+      const c = { absent: 0, uncertain: 0 };
+      for (const n of negs) {
+        if (n.polarity === 'absent') c.absent += 1;
+        else c.uncertain += 1; // 'uncertain' (hedge) — anything not definite-absent
+      }
+      return c;
+    };
+    const srcCounts = bucketCounts(unmapped(srcNegs, srcLang));
+    const outCounts = bucketCounts(unmapped(outNegs, outLang));
+
+    for (const bucket of ['absent', 'uncertain'] as const) {
+      const srcN = srcCounts[bucket];
+      const outN = outCounts[bucket];
+      if (outN > srcN) {
+        // Output ADDED a negation the source lacked: a finding the source left
+        // open/asserted is denied in the output (false reassurance — the
+        // dangerous direction) → abstain.
+        add(
+          flag(
+            'R7-NEGATION-POLARITY-MISMATCH',
+            'urgent',
+            'The translation states a finding is absent that the original does not. ' + SHOWN_AS_WRITTEN_EN,
+            '译文称某一发现不存在，而原文并未如此表述。' + SHOWN_AS_WRITTEN_ZH,
+          ),
+          'abstain',
+        );
+      } else if (outN < srcN) {
+        // Output DROPPED a source negation: a "not seen" finding becomes
+        // asserted in the output (false alarm direction) → flag.
+        add(
+          flag(
+            'R7-NEGATION-POLARITY-MISMATCH',
+            'caution',
+            'A negation from the original is missing in the translation. ' + CONFIRM_EN,
+            '译文中遗漏了原文中的否定表述。' + CONFIRM_ZH,
+          ),
+          'flag',
+        );
+      }
+      // Equal counts per bucket → assume preserved (no flag); keeps faithful
+      // translations rendering.
+    }
+  }
 }
 
 // ============================================================================
@@ -704,24 +765,27 @@ function evaluateDrugs(
     .filter((i) => i.type === 'drug' && i.drugId === null)
     .map((i) => i.raw);
 
-  // --- Drug substitution (FM-11): a source known drug resolves to a DIFFERENT
-  // known drug in the output (and is itself absent from the output) → abstain.
+  // --- Drug not preserved (FM-11 + GAP 2 fail-safe): for every SOURCE known
+  // drug, its canonical id MUST appear in the output's recognized known-drug
+  // set. If it does not, the drug was dropped or replaced by a token we don't
+  // recognize — either way the drug was NOT preserved and we cannot verify it →
+  // abstain. (A faithful translation preserves the drug: seed drugs carry EN+ZH
+  // forms, so the output's id matches and we render.)
+  //
+  // The previous `outKnown.size > 0` guard only caught substitution by ANOTHER
+  // recognized drug, silently RENDERING warfarin→heparin (heparin unseeded),
+  // metformin→"your medication" (dropped), atorvastatin→simvastatin (unseeded).
   for (const id of srcKnown) {
     if (outKnown.has(id)) continue; // preserved
-    // The source drug is gone. If the output names a different known drug,
-    // it's a substitution. (Bare base-name like metoprolol staying is handled by
-    // the outKnown.has check above.)
-    if (outKnown.size > 0) {
-      add(
-        flag(
-          'R9-DRUG-SUBSTITUTED',
-          'urgent',
-          'The medication name in the translation differs from the original. ' + SHOWN_AS_WRITTEN_EN,
-          '译文中的药品名称与原文不同。' + SHOWN_AS_WRITTEN_ZH,
-        ),
-        'abstain',
-      );
-    }
+    add(
+      flag(
+        'R9-DRUG-SUBSTITUTED',
+        'urgent',
+        'The medication named in the original was not preserved in the translation. ' + SHOWN_AS_WRITTEN_EN,
+        '译文未能保留原文中的药品名称。' + SHOWN_AS_WRITTEN_ZH,
+      ),
+      'abstain',
+    );
   }
 
   // --- Unknown drug altered (FM-13): a source unknown med-context token must
