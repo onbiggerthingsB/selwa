@@ -67,6 +67,24 @@ function detectNegations(clause: string, lang: 'en' | 'zh'): Immutable[] {
       const end = idx + needle.length;
       from = end;
       if (overlaps(idx, end)) continue;
+      if (lang === 'en') {
+        // Require word boundaries on the alphanumeric EDGES of the marker so
+        // 'no' does not fire inside "normal"/"diagnosis"/"lisinopril", while
+        // punctuated markers ('non-', 'r/o') and multi-word markers still match.
+        // Find the first/last alnum char of the needle and check the chars just
+        // outside those positions are non-[A-Za-z0-9] boundaries.
+        let firstAlnum = 0;
+        while (firstAlnum < needle.length && !/[a-z0-9]/i.test(needle[firstAlnum])) firstAlnum++;
+        let lastAlnum = needle.length - 1;
+        while (lastAlnum >= 0 && !/[a-z0-9]/i.test(needle[lastAlnum])) lastAlnum--;
+        if (firstAlnum <= lastAlnum) {
+          const beforeIdx = idx + firstAlnum - 1;
+          const afterIdx = idx + lastAlnum + 1;
+          const before = beforeIdx < 0 ? '' : hay[beforeIdx];
+          const after = afterIdx >= hay.length ? '' : hay[afterIdx];
+          if (/[a-z0-9]/i.test(before) || /[a-z0-9]/i.test(after)) continue;
+        }
+      }
       consumed.push([idx, end]);
 
       const isSuffix = lang === 'zh' && ZH_SUFFIX_HEDGES.has(m.marker);
@@ -233,12 +251,24 @@ function detectDrugs(
 
   // Pass 2: unknown med-context tokens (look like a drug but not in the seed).
   if (lang === 'en') {
+    // Mirror the ZH path: a suffix-matched token only counts as a drug when it
+    // sits in a medication context within the same clause — a dose token, a
+    // FREQUENCY_TOKENS match, or an English med-verb. This stops the suffix
+    // list (e.g. 'pine') from flagging ordinary words like "spine".
+    const freq = findFrequency(clause, lang);
+    const hasMedContext =
+      doseSpans.length > 0 ||
+      !!freq ||
+      /\b(?:take|takes|taking|continue|continues|start|started|stop|stopped|prescribe|prescribed|give|given)\b/i.test(
+        clause,
+      );
     const tokenRe = /[A-Za-z][A-Za-z-]*[A-Za-z]/g;
     for (const m of clause.matchAll(tokenRe)) {
       const start = m.index ?? 0;
       const end = start + m[0].length;
       if (overlaps(start, end)) continue;
       if (!EN_DRUG_SUFFIX.test(m[0])) continue;
+      if (!hasMedContext) continue;
       consumed.push([start, end]);
       out.push({ type: 'drug', raw: m[0], drugId: null });
     }

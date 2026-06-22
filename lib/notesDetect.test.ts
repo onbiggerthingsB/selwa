@@ -36,6 +36,30 @@ describe('detectImmutables', () => {
     const unknown = detectImmutables('服用恩美曲妥珠单抗', 'zh').find((i) => i.type === 'drug')!;
     expect(unknown.drugId).toBeNull();
   });
+
+  // --- EN false-positive regressions (v1 fix) -------------------------------
+  it('does not fire a phantom EN negation inside ordinary words (normal/notes)', () => {
+    const im = detectImmutables('normal sinus rhythm', 'en');
+    expect(im.filter((i) => i.type === 'negation')).toHaveLength(0);
+  });
+  it('does not fire a phantom EN negation inside "lisinopril" (no inside the word)', () => {
+    const im = detectImmutables('continue lisinopril', 'en');
+    expect(im.filter((i) => i.type === 'negation')).toHaveLength(0);
+    // med-context ("continue") + 'pril' suffix → lisinopril detected as unknown drug.
+    const drug = im.find((i) => i.type === 'drug');
+    expect(drug).toBeTruthy();
+    expect(drug!.drugId).toBeNull();
+  });
+  it('does not flag "spine" as a drug without medication context', () => {
+    const im = detectImmutables('cervical spine MRI', 'en');
+    expect(im.filter((i) => i.type === 'drug')).toHaveLength(0);
+  });
+  it('still detects a genuine EN negation ("no evidence of")', () => {
+    const im = detectImmutables('no evidence of malignancy', 'en');
+    const neg = im.find((i) => i.type === 'negation');
+    expect(neg).toBeTruthy();
+    expect(neg!.polarity).toBe('absent');
+  });
 });
 
 describe('splitClauses', () => {
