@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateRow, freeTextFlags } from './guard';
+import { evaluateRow } from './guard';
 import { findEntry } from './reference';
 import { parseValue, classify } from './classify';
 import type { ExtractedRow } from '@/lib/types';
@@ -112,19 +112,5 @@ describe('evaluateRow', () => {
     expect(out.action).toBe('classify');
     expect(out.needsConfirm).toBe(false);
     expect(out.flags).toHaveLength(0);
-  });
-});
-
-describe('freeTextFlags (R7–R9 live via notesGuard)', () => {
-  it('surfaces a fidelity flag for a dropped negation', () => {
-    const flags = freeTextFlags('未见占位', 'Mass present.');
-    expect(flags.map((f) => f.id)).toContain('R7-NEGATION-POLARITY-MISMATCH');
-  });
-
-  it('malformed single-arg call fails safe (no throw, empty flags)', () => {
-    // The v0 signature was single-arg; a stale caller passing one arg must not
-    // throw — it must fail safe to an empty flag list.
-    // @ts-expect-error intentionally calling with a missing argument
-    expect(freeTextFlags('x')).toEqual([]);
   });
 });

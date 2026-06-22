@@ -7,7 +7,6 @@ import type {
   Sex,
 } from '@/lib/types';
 import { unitMatches, resolveBounds } from '@/lib/reference';
-import { evaluateSegment } from '@/lib/notesGuard';
 
 const CONFIRM_CLINICIAN_EN = 'Confirm this with your clinician.';
 const CONFIRM_CLINICIAN_ZH = '请与您的医生确认。';
@@ -160,14 +159,4 @@ function printedRangeDisagrees(printed: string, entry: ReferenceEntry, sex: Sex,
   const off = (ours: number | null, theirs: number) =>
     ours !== null && Math.abs(ours - theirs) > Math.abs(ours) * tol;
   return off(low, pLow) || off(high, pHigh);
-}
-
-// R7–R9 (negation / dosage / drug-name) translation-fidelity guard for free-text
-// doctor notes. Delegates to notesGuard.evaluateSegment, which recomputes the
-// note's immutables from the source and demands they survive in the output.
-export function freeTextFlags(source: string, translated: string): GuardFlag[] {
-  // Defensive: the v0 signature was single-arg. A stale/malformed caller passing
-  // a missing arg must fail SAFE (empty flags) rather than throw downstream.
-  if (typeof source !== 'string' || typeof translated !== 'string') return [];
-  return evaluateSegment({ sourceText: source, translatedText: translated, kind: 'other' }).flags;
 }
