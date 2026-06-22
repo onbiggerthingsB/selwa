@@ -125,6 +125,29 @@ describe('notesGuard — R7/R8/R9 (18 red-team failure modes)', () => {
   });
 });
 
+// Bug fix — bare 排除 must not false-positive the hedge-collapse abstain.
+// `不能排除` / `不排除` / etc. contain the substring 排除; a FAITHFUL ZH→ZH
+// hedge ("cannot exclude X" → "cannot exclude X") must RENDER, not abstain.
+describe('notesGuard — bare 排除 does not false-abstain a faithful cannot-exclude hedge', () => {
+  it('FAITHFUL ZH hedge preserved (不能排除 → 不能排除) → render, NO hedge-weakened', () => {
+    const o = seg('不能排除转移可能。', '不能排除转移的可能性。');
+    expect(o.action).toBe('render');
+    expect(ids(o)).not.toContain('R7-HEDGE-STRENGTH-WEAKENED');
+  });
+
+  it('REGRESSION GUARD FM-03 still abstains (不能排除 → Metastasis is excluded.) → abstain', () => {
+    const o = seg('不能排除转移可能。', 'Metastasis is excluded.');
+    expect(o.action).toBe('abstain');
+    expect(ids(o)).toContain('R7-HEDGE-STRENGTH-WEAKENED');
+  });
+
+  it('true definite-exclusion faithfully preserved (已排除转移 → ruled out) → render', () => {
+    const o = seg('已排除转移。', 'Metastasis has been ruled out.');
+    expect(o.action).toBe('render');
+    expect(ids(o)).not.toContain('R7-HEDGE-STRENGTH-WEAKENED');
+  });
+});
+
 describe('notesGuard — invariants', () => {
   it('abstain blanks the translation (caller shows source verbatim)', () => {
     const o = seg('乙肝表面抗原 阳性。', 'Hepatitis B surface antigen negative.');

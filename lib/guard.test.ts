@@ -120,4 +120,11 @@ describe('freeTextFlags (R7–R9 live via notesGuard)', () => {
     const flags = freeTextFlags('未见占位', 'Mass present.');
     expect(flags.map((f) => f.id)).toContain('R7-NEGATION-POLARITY-MISMATCH');
   });
+
+  it('malformed single-arg call fails safe (no throw, empty flags)', () => {
+    // The v0 signature was single-arg; a stale caller passing one arg must not
+    // throw — it must fail safe to an empty flag list.
+    // @ts-expect-error intentionally calling with a missing argument
+    expect(freeTextFlags('x')).toEqual([]);
+  });
 });

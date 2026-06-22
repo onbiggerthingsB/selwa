@@ -101,8 +101,16 @@ type PolarityClass = 'absent' | 'present' | 'uncertain';
 const CANNOT_EXCLUDE_ZH = ['不能排除', '不能除外', '不除外', '未能排除', '不排除'];
 const CANNOT_EXCLUDE_EN = ['cannot exclude', 'cannot rule out', "can't exclude", "can't rule out"];
 // Definite-absent exclusion verbs (the dangerous OUTPUT side of a hedge collapse).
-const EXCLUDED_ZH = ['已排除', '排除', '可排除'];
+// NOTE: bare 排除 ("exclude") is a SUBSTRING of the cannot-exclude hedges
+// (不能排除 / 不排除 / 未能排除 / 未排除 / 难以排除). Counting it directly would make
+// mentionsExcluded() fire on a FAITHFUL "cannot exclude" hedge in the output,
+// false-abstaining a correct hedge-preserving translation. We therefore strip
+// the cannot-exclude spans before testing bare 排除 (see mentionsExcluded).
+const EXCLUDED_ZH = ['已排除', '排除了', '可排除', '予以排除', '排除'];
 const EXCLUDED_EN = ['excluded', 'ruled out', 'no evidence of', 'no evidence', 'negative for', '无证据'];
+// ZH cannot-exclude negators that, when they immediately precede 排除, turn it
+// into a HEDGE rather than a definite exclusion. Stripped before bare-排除 test.
+const ZH_CANNOT_EXCLUDE_SPANS = ['不能排除', '不排除', '未能排除', '未排除', '难以排除'];
 
 function mentionsCannotExclude(text: string, lang: 'en' | 'zh'): boolean {
   const hay = lang === 'en' ? text.toLowerCase() : text;
@@ -110,9 +118,17 @@ function mentionsCannotExclude(text: string, lang: 'en' | 'zh'): boolean {
   return list.some((p) => hay.includes(p));
 }
 function mentionsExcluded(text: string, lang: 'en' | 'zh'): boolean {
-  const hay = lang === 'en' ? text.toLowerCase() : text;
+  if (lang === 'en') {
+    const hay = text.toLowerCase();
+    return EXCLUDED_EN.some((p) => hay.includes(p));
+  }
+  // ZH: a bare 排除 only counts as a DEFINITE exclusion when it is NOT part of a
+  // cannot-exclude construction. Remove the hedge spans first so 不能排除 / 不排除 /
+  // etc. don't leak their trailing 排除 into the bare-排除 test below.
+  let hay = text;
+  for (const span of ZH_CANNOT_EXCLUDE_SPANS) hay = hay.split(span).join('');
   // ZH 无 (definite-absent) also reads as "no evidence".
-  const list = lang === 'en' ? EXCLUDED_EN : [...EXCLUDED_ZH, '无'];
+  const list = [...EXCLUDED_ZH, '无'];
   return list.some((p) => hay.includes(p));
 }
 
@@ -327,6 +343,12 @@ function evaluateNegations(
   const srcNegs = srcIm.filter((i) => i.type === 'negation');
   const outNegs = outIm.filter((i) => i.type === 'negation');
 
+  // Output negations the per-finding loop attributes to a mapped source finding.
+  // These are excluded from the unmapped-balance count below so a faithful
+  // definite exclusion (e.g. EN "ruled out", emitted without a finding) isn't
+  // double-counted as an added unmapped negation.
+  const consumedOut = new Set<Immutable>();
+
   // --- Hedge collapse: source "cannot exclude X" → output "excluded / no
   // evidence" is a positive→negative boundary cross of a hedge (FM-03, FM-04).
   if (mentionsCannotExclude(sourceText, srcLang) && mentionsExcluded(translatedText, outLang)) {
@@ -363,16 +385,26 @@ function evaluateNegations(
 
     const srcPol: PolarityClass = sn.polarity === 'absent' ? 'absent' : 'uncertain';
 
-    // Find an output negation scoping the SAME canonical finding.
-    const matchedOut = outNegs.find((on) => {
-      const onSyn = canonicalFinding(on.finding ?? '', outLang);
-      return onSyn?.canonical === syn.canonical;
-    });
-
     // Does the output ASSERT (mention without negation) this finding?
     const outMentions = textMentionsFinding(translatedText, syn, outLang);
 
+    // Find an output negation scoping the SAME canonical finding. Some negation
+    // verbs (e.g. EN "ruled out") are emitted by the detector WITHOUT a finding
+    // attribution, so a faithful definite-exclusion translation (已排除转移 →
+    // "metastasis ruled out") would otherwise look like a retargeted/added
+    // negation. Fall back to attributing such an unfinding'd output negation to
+    // the source's canonical finding when the output text actually mentions it.
+    const matchedOut =
+      outNegs.find((on) => {
+        const onSyn = canonicalFinding(on.finding ?? '', outLang);
+        return onSyn?.canonical === syn.canonical;
+      }) ??
+      (outMentions
+        ? outNegs.find((on) => canonicalFinding(on.finding ?? '', outLang) === null)
+        : undefined);
+
     if (matchedOut) {
+      consumedOut.add(matchedOut);
       const outPol: PolarityClass = matchedOut.polarity === 'absent' ? 'absent' : 'uncertain';
       // Same negation polarity on both sides → preserved (no flag).
       if (outPol === srcPol) continue;
@@ -520,7 +552,9 @@ function evaluateNegations(
   const outHasHedge = mentionsCannotExclude(translatedText, outLang);
   if (!srcHasHedge && !outHasHedge) {
     const unmapped = (negs: Immutable[], lang: 'en' | 'zh') =>
-      negs.filter((n) => canonicalFinding(n.finding ?? '', lang) === null);
+      negs.filter(
+        (n) => canonicalFinding(n.finding ?? '', lang) === null && !consumedOut.has(n),
+      );
     const bucketCounts = (negs: Immutable[]) => {
       const c = { absent: 0, uncertain: 0 };
       for (const n of negs) {

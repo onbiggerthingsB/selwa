@@ -166,5 +166,8 @@ function printedRangeDisagrees(printed: string, entry: ReferenceEntry, sex: Sex,
 // doctor notes. Delegates to notesGuard.evaluateSegment, which recomputes the
 // note's immutables from the source and demands they survive in the output.
 export function freeTextFlags(source: string, translated: string): GuardFlag[] {
+  // Defensive: the v0 signature was single-arg. A stale/malformed caller passing
+  // a missing arg must fail SAFE (empty flags) rather than throw downstream.
+  if (typeof source !== 'string' || typeof translated !== 'string') return [];
   return evaluateSegment({ sourceText: source, translatedText: translated, kind: 'other' }).flags;
 }
