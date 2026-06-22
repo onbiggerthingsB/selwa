@@ -38,6 +38,9 @@ yarn-error.log*
 /public/sw.js
 /public/swe-worker-*.js
 
+# claude code local settings (keep launch.json tracked)
+.claude/settings.local.json
+
 # vercel
 .vercel
 
