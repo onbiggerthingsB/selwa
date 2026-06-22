@@ -1,11 +1,12 @@
 'use client';
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import type { GroundedReport } from '@/lib/types';
+import type { GroundedReport, GroundedNotes } from '@/lib/types';
 
 export interface VisitRecord {
   id: string;
   createdAt: number;
   report: GroundedReport;
+  notes?: GroundedNotes; // optional doctor-notes translation, kept on-device alongside the report
 }
 
 interface VisitDB extends DBSchema {
@@ -25,8 +26,8 @@ function db() {
   return dbp;
 }
 
-export async function saveVisit(report: GroundedReport): Promise<VisitRecord> {
-  const rec: VisitRecord = { id: crypto.randomUUID(), createdAt: Date.now(), report };
+export async function saveVisit(report: GroundedReport, notes?: GroundedNotes): Promise<VisitRecord> {
+  const rec: VisitRecord = { id: crypto.randomUUID(), createdAt: Date.now(), report, ...(notes ? { notes } : {}) };
   await (await db()).put('visits', rec);
   return rec;
 }

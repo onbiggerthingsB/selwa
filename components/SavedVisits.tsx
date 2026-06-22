@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { listVisits, deleteVisit, type VisitRecord } from '@/lib/db';
 import { SummaryView } from '@/components/SummaryView';
+import { NotesSection } from '@/components/NotesSection';
 
 export function SavedVisits({ lang }: { lang: 'en' | 'zh' }) {
   const [visits, setVisits] = useState<VisitRecord[]>([]);
@@ -40,6 +41,7 @@ export function SavedVisits({ lang }: { lang: 'en' | 'zh' }) {
             {openId === v.id && (
               <div className="saved-body">
                 <SummaryView report={v.report} lang={lang} />
+                {v.notes && v.notes.segments.length > 0 && <NotesSection notes={v.notes} lang={lang} />}
               </div>
             )}
           </li>

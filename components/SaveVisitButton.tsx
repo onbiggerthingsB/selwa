@@ -3,15 +3,23 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { saveVisit } from '@/lib/db';
 import { clearPendingReport } from '@/lib/session';
-import type { GroundedReport } from '@/lib/types';
+import type { GroundedReport, GroundedNotes } from '@/lib/types';
 
-export function SaveVisitButton({ report, lang }: { report: GroundedReport; lang: 'en' | 'zh' }) {
+export function SaveVisitButton({
+  report,
+  notes,
+  lang,
+}: {
+  report: GroundedReport;
+  notes?: GroundedNotes;
+  lang: 'en' | 'zh';
+}) {
   const router = useRouter();
   const [saved, setSaved] = useState(false);
   const t = (en: string, zh: string) => (lang === 'zh' ? zh : en);
 
   async function onSave() {
-    await saveVisit(report);
+    await saveVisit(report, notes);
     clearPendingReport();
     setSaved(true);
     router.push('/');

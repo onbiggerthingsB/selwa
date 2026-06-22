@@ -194,6 +194,27 @@ a {
   border-color: var(--accent);
   box-shadow: var(--shadow-focus);
 }
+.notes-textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  padding: 12px 14px;
+  resize: vertical;
+}
+.notes-textarea::placeholder {
+  color: var(--ink-muted);
+  opacity: 0.7;
+}
+.notes-textarea:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
+}
 
 /* ----- Capture card --------------------------------------------------------- */
 .capture {
@@ -630,6 +651,106 @@ a {
   left: 6px;
   color: var(--accent);
   font-weight: 700;
+}
+
+/* ----- Doctor-notes section ------------------------------------------------- */
+.notes-section {
+  margin-top: var(--s8);
+}
+.notes-head {
+  margin-bottom: var(--s4);
+}
+.notes-head .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.notes-sub {
+  margin-top: var(--s1);
+  font-size: 14px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+.note-row {
+  --sev: var(--sev-unclassified);
+  --sev-tint: var(--sev-unclassified-tint);
+}
+/* a held-back (abstained) note gets the same protective tint as a critical lab */
+.note-row.note-held {
+  --sev: var(--sev-critical);
+  --sev-tint: var(--sev-critical-tint);
+  background: color-mix(in srgb, var(--sev-critical-tint) 45%, var(--surface));
+}
+.note-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--s2);
+}
+.note-kind {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--sev);
+  background: var(--sev-tint);
+  border-radius: var(--r-chip);
+  padding: 3px 10px;
+}
+.note-source {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink);
+}
+.note-translation {
+  margin: var(--s3) 0 0;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-muted);
+  padding-left: var(--s3);
+  border-left: 2px solid var(--line);
+}
+.note-held-note {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin: var(--s3) 0 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: #8a3a2a;
+}
+.note-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s3);
+}
+.note-chip {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--r-chip);
+  padding: 3px 10px;
+  background: var(--surface-alt);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.note-chip-dosage,
+.note-chip-number {
+  background: var(--sev-low-tint);
+  color: var(--sev-low);
+  border-color: color-mix(in srgb, var(--sev-low) 20%, transparent);
+}
+.note-chip-drug {
+  background: var(--sev-normal-tint);
+  color: var(--sev-normal);
+  border-color: color-mix(in srgb, var(--sev-normal) 20%, transparent);
+}
+.note-chip-negation {
+  background: var(--sev-high-tint);
+  color: #7c531c;
+  border-color: color-mix(in srgb, var(--sev-high) 20%, transparent);
 }
 
 /* ----- Confirm-the-values step ---------------------------------------------- */

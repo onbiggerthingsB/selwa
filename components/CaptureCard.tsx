@@ -4,8 +4,10 @@ import { useRouter } from 'next/navigation';
 import { downscaleToJpeg } from '@/lib/downscaleImage';
 import { groundExtraction } from '@/lib/grounding';
 import { LabExtractionSchema } from '@/lib/extractionSchema';
+import { NotesTranslationSchema } from '@/lib/notesSchema';
+import { groundNotes } from '@/lib/notesGrounding';
 import { setPendingReport } from '@/lib/session';
-import type { Sex } from '@/lib/types';
+import type { GroundedNotes, Sex } from '@/lib/types';
 
 type Phase = 'idle' | 'preview' | 'extracting' | 'error';
 
@@ -17,6 +19,7 @@ export function CaptureCard() {
   const [phase, setPhase] = useState<Phase>('idle');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [notesText, setNotesText] = useState('');
 
   function openPicker() {
     inputRef.current?.click();
@@ -46,7 +49,28 @@ export function CaptureCard() {
       const { data } = await res.json();
       const extraction = LabExtractionSchema.parse(data);
       const report = { ...groundExtraction(extraction, sex, age), generatedAt: Date.now() };
-      setPendingReport(report);
+
+      // Doctor notes are optional and best-effort: a translation failure must never
+      // block the lab report. The notes text transits the server transiently only.
+      let notes: GroundedNotes | undefined;
+      const trimmed = notesText.trim();
+      if (trimmed) {
+        try {
+          const nres = await fetch('/api/translate-notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: trimmed }),
+          });
+          if (nres.ok) {
+            const { data: ndata } = await nres.json();
+            notes = groundNotes(NotesTranslationSchema.parse(ndata));
+          }
+        } catch {
+          notes = undefined; // swallow: keep the report flow intact
+        }
+      }
+
+      setPendingReport({ report, ...(notes ? { notes } : {}) });
       router.push('/result');
     } catch {
       setPhase('error');
@@ -97,6 +121,20 @@ export function CaptureCard() {
                 <option value="70">65 and over · 65 岁及以上</option>
               </select>
             </span>
+          </label>
+
+          <label className="field">
+            <span className="field-label">
+              What the doctor told you <span className="zh" lang="zh">医生说了什么</span>{' '}
+              <span style={{ opacity: 0.7 }}>(optional · 可选)</span>
+            </span>
+            <textarea
+              className="notes-textarea"
+              rows={3}
+              placeholder="Paste or type the doctor’s notes… · 粘贴或输入医生的说明…"
+              value={notesText}
+              onChange={(e) => setNotesText(e.target.value)}
+            />
           </label>
 
           <button type="button" className="capture-card" onClick={openPicker}>
