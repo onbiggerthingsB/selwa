@@ -47,4 +47,22 @@ describe('groundExtraction', () => {
     expect(tc.classification).toBe('normal');
     expect(tc.action).toBe('classify');
   });
+
+  it('auto-converts a convertible unit mismatch and flags the conversion (R2b)', () => {
+    const ex = { rows: [{ name: 'GLU', value: '99', unit: 'mg/dL', printedRange: null, confidence: 'high' as const }] };
+    const { rows } = groundExtraction(ex, 'unknown');
+    const glu = rows.find((r) => r.entry?.key === 'fasting_glucose')!;
+    expect(glu.classification).toBe('normal');          // 99 mg/dL = 5.49 mmol/L
+    expect(glu.valueNum).toBeCloseTo(5.49, 1);
+    expect(glu.flags.map((f) => f.id)).toContain('R2b-UNIT-CONVERTED');
+    expect(glu.action).toBe('classify');
+  });
+
+  it('still abstains when no safe conversion exists (urea mg/dL)', () => {
+    const ex = { rows: [{ name: '尿素', value: '14', unit: 'mg/dL', printedRange: null, confidence: 'high' as const }] };
+    const { rows } = groundExtraction(ex, 'unknown');
+    const urea = rows.find((r) => r.entry?.key === 'urea')!;
+    expect(urea.action).toBe('abstain');
+    expect(urea.flags.map((f) => f.id)).toContain('R2-UNIT-MISMATCH');
+  });
 });

@@ -1,16 +1,43 @@
 import type { GroundedReport, GroundedRow, Sex } from '@/lib/types';
 import type { LabExtraction } from '@/lib/extractionSchema';
-import { findEntry } from '@/lib/reference';
+import { findEntry, unitMatches } from '@/lib/reference';
 import { parseValue, classify } from '@/lib/classify';
 import { evaluateRow } from '@/lib/guard';
+import { convertValue } from '@/lib/convert';
 
 export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: number): GroundedReport {
   const rows: GroundedRow[] = extraction.rows.map((extracted) => {
     const entry = findEntry(extracted.name);
-    const valueNum = parseValue(extracted.value);
+    let valueNum = parseValue(extracted.value);
+
+    // R2b — safe unit auto-conversion. When the reported unit doesn't match our
+    // reference unit but a curated, unambiguous conversion exists, convert to the
+    // canonical SI value and record an info flag. Unconvertible mismatches fall
+    // through unchanged so the guard's R2 abstain still fires.
+    let converted: { from: string; to: string } | null = null;
+    if (entry && valueNum !== null && extracted.unit && !unitMatches(extracted.unit, entry)) {
+      const c = convertValue(valueNum, extracted.unit, entry);
+      if (c) {
+        converted = { from: `${extracted.value} ${extracted.unit}`, to: `${c.value.toFixed(2)} ${c.unit}` };
+        valueNum = c.value;
+      }
+    }
+    const effectiveUnit = converted ? entry!.unit : extracted.unit;
+
     // classify only when grounded against a matched entry; the guard owns abstention.
     const classification = entry ? classify(valueNum, entry, sex, age) : 'unclassified';
-    const outcome = evaluateRow(extracted, entry, valueNum, classification, sex, age);
+    const outcome = evaluateRow({ ...extracted, unit: effectiveUnit }, entry, valueNum, classification, sex, age);
+
+    // Surface the conversion as a non-blocking info flag (EN + ZH).
+    if (converted) {
+      outcome.flags.unshift({
+        id: 'R2b-UNIT-CONVERTED',
+        severity: 'info',
+        messageEn: `We converted ${converted.from} to ${converted.to} to compare with our reference range.`,
+        messageZh: `我们已将 ${converted.from} 换算为 ${converted.to} 以便与参考范围比较。`,
+      });
+    }
+
     return {
       extracted,
       entry,
