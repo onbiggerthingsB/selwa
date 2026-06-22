@@ -39,8 +39,8 @@ function valueText(row: GroundedRow): string {
   return `${v}${u}`;
 }
 
-function formatRefRange(entry: ReferenceEntry, sex: Sex): string {
-  const { low, high } = resolveBounds(entry, sex);
+function formatRefRange(entry: ReferenceEntry, sex: Sex, age?: number): string {
+  const { low, high } = resolveBounds(entry, sex, age);
   const u = entry.unit;
   if (low !== null && high !== null) return `${low}–${high} ${u}`;
   if (high !== null) return `< ${high} ${u}`;
@@ -70,7 +70,7 @@ export function buildSummary(
         messageEn: f.messageEn,
         messageZh: f.messageZh,
       })),
-      refRange: entry ? formatRefRange(entry, report.sex) : '',
+      refRange: entry ? formatRefRange(entry, report.sex, report.age) : '',
       source: entry?.source ?? '',
     };
   });

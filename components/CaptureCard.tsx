@@ -13,6 +13,7 @@ export function CaptureCard() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [sex, setSex] = useState<Sex>('unknown');
+  const [age, setAge] = useState<number | undefined>(undefined);
   const [phase, setPhase] = useState<Phase>('idle');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -44,7 +45,7 @@ export function CaptureCard() {
       }
       const { data } = await res.json();
       const extraction = LabExtractionSchema.parse(data);
-      const report = { ...groundExtraction(extraction, sex), generatedAt: Date.now() };
+      const report = { ...groundExtraction(extraction, sex, age), generatedAt: Date.now() };
       setPendingReport(report);
       router.push('/result');
     } catch {

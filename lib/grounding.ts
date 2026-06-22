@@ -4,13 +4,13 @@ import { findEntry } from '@/lib/reference';
 import { parseValue, classify } from '@/lib/classify';
 import { evaluateRow } from '@/lib/guard';
 
-export function groundExtraction(extraction: LabExtraction, sex: Sex): GroundedReport {
+export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: number): GroundedReport {
   const rows: GroundedRow[] = extraction.rows.map((extracted) => {
     const entry = findEntry(extracted.name);
     const valueNum = parseValue(extracted.value);
     // classify only when grounded against a matched entry; the guard owns abstention.
-    const classification = entry ? classify(valueNum, entry, sex) : 'unclassified';
-    const outcome = evaluateRow(extracted, entry, valueNum, classification, sex);
+    const classification = entry ? classify(valueNum, entry, sex, age) : 'unclassified';
+    const outcome = evaluateRow(extracted, entry, valueNum, classification, sex, age);
     return {
       extracted,
       entry,
@@ -23,5 +23,5 @@ export function groundExtraction(extraction: LabExtraction, sex: Sex): GroundedR
   });
 
   // generatedAt stamped by the caller (Date is non-deterministic in tests).
-  return { rows, sex, generatedAt: 0 };
+  return { rows, sex, age, generatedAt: 0 };
 }

@@ -11,13 +11,13 @@ export function parseValue(raw: string | null): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function classify(valueNum: number | null, entry: ReferenceEntry, sex: Sex): Classification {
+export function classify(valueNum: number | null, entry: ReferenceEntry, sex: Sex, age?: number): Classification {
   if (valueNum === null) return 'unclassified';
 
   if (entry.criticalLow !== null && valueNum < entry.criticalLow) return 'critical';
   if (entry.criticalHigh !== null && valueNum > entry.criticalHigh) return 'critical';
 
-  const { low, high } = resolveBounds(entry, sex);
+  const { low, high } = resolveBounds(entry, sex, age);
   if (low !== null && valueNum < low) return 'low';
   if (high !== null && valueNum > high) return 'high';
   return 'normal';

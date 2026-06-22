@@ -39,6 +39,7 @@ export function evaluateRow(
   valueNum: number | null,
   classification: Classification,
   sex: Sex,
+  age?: number,
 ): GuardOutcome {
   const flags: GuardFlag[] = [];
 
@@ -122,7 +123,7 @@ export function evaluateRow(
   }
 
   // R11 — report-printed range materially disagrees with ours.
-  if (extracted.printedRange && printedRangeDisagrees(extracted.printedRange, entry, sex)) {
+  if (extracted.printedRange && printedRangeDisagrees(extracted.printedRange, entry, sex, age)) {
     flags.push(
       flag(
         'R11-RANGE-DISAGREEMENT',
@@ -133,8 +134,8 @@ export function evaluateRow(
     );
   }
 
-  // R12 — population-sensitive analyte with unknown sex (we widened the band).
-  if (entry.populationSensitive && sex === 'unknown') {
+  // R12 — population-sensitive analyte with unknown sex or missing age (we widened the band).
+  if (entry.populationSensitive && (sex === 'unknown' || (entry.ageBands && age === undefined))) {
     flags.push(
       flag(
         'R12-POPULATION-SENSITIVE',
@@ -148,12 +149,12 @@ export function evaluateRow(
   return { action: 'classify', needsConfirm, flags };
 }
 
-function printedRangeDisagrees(printed: string, entry: ReferenceEntry, sex: Sex): boolean {
+function printedRangeDisagrees(printed: string, entry: ReferenceEntry, sex: Sex, age?: number): boolean {
   const m = printed.match(/(-?\d+(?:\.\d+)?)\s*[-~–]\s*(-?\d+(?:\.\d+)?)/);
   if (!m) return false;
   const pLow = Number(m[1]);
   const pHigh = Number(m[2]);
-  const { low, high } = resolveBounds(entry, sex);
+  const { low, high } = resolveBounds(entry, sex, age);
   const tol = 0.15; // 15% materiality threshold
   const off = (ours: number | null, theirs: number) =>
     ours !== null && Math.abs(ours - theirs) > Math.abs(ours) * tol;

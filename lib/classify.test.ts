@@ -48,4 +48,15 @@ describe('classify', () => {
   it('returns unclassified when value is null', () => {
     expect(classify(null, glu, 'unknown')).toBe('unclassified');
   });
+  it('uses an age band when age is provided', () => {
+    const banded = {
+      ...findEntry('creatinine')!,
+      ageBands: [
+        { ageMin: 0, ageMax: 17, refLow: 20, refHigh: 60 },
+        { ageMin: 18, ageMax: 200, refLow: { male: 59, female: 45 }, refHigh: { male: 104, female: 84 } },
+      ],
+    };
+    expect(classify(70, banded, 'female', 10)).toBe('high');   // child band 20–60
+    expect(classify(70, banded, 'female', 40)).toBe('normal'); // adult female 45–84
+  });
 });

@@ -37,7 +37,7 @@ export function ConfirmValues({
     );
     const extraction: LabExtraction = { rows };
     const regrounded: GroundedReport = {
-      ...groundExtraction(extraction, report.sex as Sex),
+      ...groundExtraction(extraction, report.sex as Sex, report.age),
       generatedAt: report.generatedAt,
     };
     onConfirmed(regrounded);
