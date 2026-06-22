@@ -1,0 +1,56 @@
+export type Sex = 'male' | 'female' | 'unknown';
+
+export type Bound = number | { male: number; female: number };
+
+export interface ReferenceEntry {
+  key: string; // stable id, e.g. 'fasting_glucose'
+  nameEn: string;
+  nameZh: string;
+  aliases: string[]; // EN abbreviations + ZH names/synonyms, matched case-insensitively
+  unit: string; // canonical SI unit, e.g. 'mmol/L'
+  allowedUnits: string[]; // exact equivalents accepted without conversion
+  refLow: Bound | null; // null when the analyte has only an upper decision cutoff
+  refHigh: Bound | null; // null when only a lower bound is meaningful (e.g. eGFR, HDL)
+  criticalLow: number | null; // SI; null when no panic band defined
+  criticalHigh: number | null; // SI
+  highStakes: boolean; // any abnormal value always flagged for clinician
+  populationSensitive: boolean; // range depends on sex/age/fasting/pregnancy
+  plainEn: string;
+  plainZh: string;
+  source: string;
+}
+
+export type Classification = 'low' | 'normal' | 'high' | 'critical' | 'unclassified';
+export type GuardAction = 'classify' | 'abstain' | 'confirm';
+export type FlagSeverity = 'info' | 'caution' | 'urgent';
+
+export interface GuardFlag {
+  id: string; // rule id, e.g. 'R4-HIGH-STAKES-ANY-ABNORMAL'
+  severity: FlagSeverity;
+  messageEn: string;
+  messageZh: string;
+}
+
+export interface ExtractedRow {
+  name: string;
+  value: string | null; // kept as string to preserve exact decimal
+  unit: string | null;
+  printedRange: string | null; // reference range as printed on the report, if any
+  confidence: 'low' | 'medium' | 'high';
+}
+
+export interface GroundedRow {
+  extracted: ExtractedRow;
+  entry: ReferenceEntry | null;
+  valueNum: number | null;
+  classification: Classification;
+  action: GuardAction;
+  needsConfirm: boolean;
+  flags: GuardFlag[];
+}
+
+export interface GroundedReport {
+  rows: GroundedRow[];
+  sex: Sex;
+  generatedAt: number;
+}
