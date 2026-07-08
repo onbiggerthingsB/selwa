@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { downscaleToJpeg } from '@/lib/downscaleImage';
+import { assessQuality, toGray, escalateConfirm, RETAKE_GUIDANCE, type QualityVerdict } from '@/lib/imageQuality';
 import { groundExtraction } from '@/lib/grounding';
 import { LabExtractionSchema } from '@/lib/extractionSchema';
 import { NotesTranslationSchema } from '@/lib/notesSchema';
@@ -9,7 +10,30 @@ import { groundNotes } from '@/lib/notesGrounding';
 import { setPendingReport } from '@/lib/session';
 import type { GroundedNotes, Sex } from '@/lib/types';
 
-type Phase = 'idle' | 'preview' | 'extracting' | 'error';
+type Phase = 'idle' | 'preview' | 'quality' | 'extracting' | 'error';
+
+// Decode a Blob to a small grayscale image and score its quality on-device. Runs
+// on the POST-downscale image actually sent to Claude. Returns null if decoding
+// fails (never block the user on a decode error).
+async function blobQuality(blob: Blob): Promise<QualityVerdict | null> {
+  try {
+    const bitmap = await createImageBitmap(blob);
+    const maxDim = 400; // enough for blur/contrast/coverage; fast on low-end phones
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    const w = Math.max(3, Math.round(bitmap.width * scale));
+    const h = Math.max(3, Math.round(bitmap.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    const { data } = ctx.getImageData(0, 0, w, h);
+    return assessQuality(toGray(data, w, h));
+  } catch {
+    return null;
+  }
+}
 
 export function CaptureCard() {
   const router = useRouter();
@@ -20,6 +44,7 @@ export function CaptureCard() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [notesText, setNotesText] = useState('');
+  const [quality, setQuality] = useState<QualityVerdict | null>(null);
 
   function openPicker() {
     inputRef.current?.click();
@@ -34,11 +59,24 @@ export function CaptureCard() {
     setPhase('preview');
   }
 
-  async function submit() {
+  async function submit(overrideQuality = false) {
     if (!file) return;
     setPhase('extracting');
     try {
       const small = await downscaleToJpeg(file);
+
+      // H4 pre-gate: score the downscaled image on-device BEFORE it reaches Claude.
+      // A degraded photo makes the model fabricate digits, so prompt a retake unless
+      // the user overrides — and an override escalates every value to the confirm gate.
+      if (!overrideQuality) {
+        const q = await blobQuality(small);
+        if (q && !q.ok) {
+          setQuality(q);
+          setPhase('quality');
+          return;
+        }
+      }
+
       const fd = new FormData();
       fd.append('image', small, 'lab.jpg');
       const res = await fetch('/api/extract', { method: 'POST', body: fd });
@@ -48,7 +86,8 @@ export function CaptureCard() {
       }
       const { data } = await res.json();
       const extraction = LabExtractionSchema.parse(data);
-      const report = { ...groundExtraction(extraction, sex, age), generatedAt: Date.now() };
+      const base = { ...groundExtraction(extraction, sex, age), generatedAt: Date.now() };
+      const report = overrideQuality ? escalateConfirm(base) : base;
 
       // Doctor notes are optional and best-effort: a translation failure must never
       // block the lab report. The notes text transits the server transiently only.
@@ -81,6 +120,7 @@ export function CaptureCard() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(null);
     setPreviewUrl(null);
+    setQuality(null);
     setPhase('idle');
     openPicker();
   }
@@ -156,13 +196,38 @@ export function CaptureCard() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={previewUrl} alt="Your lab report" />
           <div className="preview-actions">
-            <button className="btn btn-primary btn-block" onClick={submit}>
+            <button className="btn btn-primary btn-block" onClick={() => submit()}>
               Use this photo · 使用这张
             </button>
             <button className="btn btn-ghost" onClick={retake}>
               Retake · 重拍
             </button>
           </div>
+        </div>
+      )}
+
+      {phase === 'quality' && quality && (
+        <div className="callout-error" role="alert">
+          <div className="err-row">
+            <CalmAlertGlyph />
+            <span>
+              This photo may be hard to read clearly.
+              <span className="zh" lang="zh">这张照片可能不够清晰。</span>
+            </span>
+          </div>
+          <ul className="quality-tips">
+            {quality.reasons.map((r) => (
+              <li key={r}>
+                {RETAKE_GUIDANCE[r].en} <span className="zh" lang="zh">{RETAKE_GUIDANCE[r].zh}</span>
+              </li>
+            ))}
+          </ul>
+          <button className="btn btn-primary btn-block" onClick={retake}>
+            Retake · 重拍
+          </button>
+          <button className="btn btn-ghost btn-block" onClick={() => submit(true)}>
+            Use it anyway · 仍然使用
+          </button>
         </div>
       )}
 
