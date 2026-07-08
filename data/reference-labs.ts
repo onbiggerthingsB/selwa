@@ -853,7 +853,10 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   {
     key: 'd_dimer', nameEn: 'D-dimer', nameZh: 'D-二聚体',
     aliases: ["D-dimer", "DD", "D-二聚体", "D二聚体", "DDi"],
-    unit: "mg/L FEU", allowedUnits: ["mg/L FEU", "mg/L"],
+    // H1.5: bare "mg/L" removed — FEU and DDU bases differ ~2× (see plainEn), so an
+    // unqualified unit is basis-ambiguous and must abstain (R2), not be read as FEU.
+    // "µg/mL FEU" is the exact equivalent of "mg/L FEU" (µg/mL = mg/L).
+    unit: "mg/L FEU", allowedUnits: ["mg/L FEU", "µg/mL FEU"],
     refLow: null, refHigh: 0.5,
     criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: true,
     absoluteLow: 0, absoluteHigh: 200,

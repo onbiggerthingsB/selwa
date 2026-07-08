@@ -8,11 +8,15 @@ export function convertValue(
   entry: ReferenceEntry,
 ): { value: number; unit: string } | null {
   if (unitMatches(fromUnit, entry)) return null; // already canonical/allowed — nothing to do
-  const conv = UNIT_CONVERSIONS.find((c) => c.analyteKey === entry.key);
-  if (!conv) return null; // no curated conversion (incl. deliberate abstain-traps) → caller abstains
   const from = normalizeUnit(fromUnit);
-  if (from === normalizeUnit(conv.conventionalUnit)) {
-    return { value: value * conv.factorConvToSI, unit: entry.unit };
+  // An analyte may have MORE THAN ONE curated conventional source unit (e.g. d-dimer
+  // ng/mL FEU and µg/L FEU both → mg/L FEU). Match the first whose conventionalUnit
+  // equals the report's unit. Absence (incl. deliberate abstain-traps) → null → abstain.
+  for (const conv of UNIT_CONVERSIONS) {
+    if (conv.analyteKey !== entry.key) continue;
+    if (from === normalizeUnit(conv.conventionalUnit)) {
+      return { value: value * conv.factorConvToSI, unit: entry.unit };
+    }
   }
-  return null; // unrecognized source unit for this analyte → abstain
+  return null; // no matching source unit for this analyte → abstain
 }

@@ -4,6 +4,7 @@ import { findEntry, unitMatches, parsePrintedRange } from '@/lib/reference';
 import { parseValue, classify } from '@/lib/classify';
 import { evaluateRow } from '@/lib/guard';
 import { convertValue } from '@/lib/convert';
+import { applyCrossRowChecks } from '@/lib/crossRowChecks';
 
 export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: number): GroundedReport {
   const rows: GroundedRow[] = extraction.rows.map((extracted) => {
@@ -70,5 +71,7 @@ export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: numb
   });
 
   // generatedAt stamped by the caller (Date is non-deterministic in tests).
-  return { rows, sex, age, generatedAt: 0 };
+  // H1.5: report-level cross-row integrity (e.g. direct ≤ total bilirubin) runs
+  // after every row is grounded, escalating inconsistent rows to the confirm gate.
+  return applyCrossRowChecks({ rows, sex, age, generatedAt: 0 });
 }

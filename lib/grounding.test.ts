@@ -76,4 +76,45 @@ describe('groundExtraction', () => {
     const { rows } = groundExtraction(ex, 'unknown');
     expect(rows[0].flags.map((f) => f.id)).not.toContain('R11-RANGE-DISAGREEMENT');
   });
+
+  // H1.5 — d-dimer FEU/DDU basis ambiguity. FEU and DDU units differ ~2× (the plainEn
+  // even warns of this), so a bare 'mg/L' with no basis qualifier must NOT be silently
+  // read as our canonical FEU value — abstain (matches the urea/calcium abstain-traps).
+  it('abstains on an unqualified d-dimer unit (bare mg/L is FEU/DDU-ambiguous)', () => {
+    const ex = { rows: [{ name: 'D-dimer', value: '0.3', unit: 'mg/L', printedRange: null, confidence: 'high' as const }] };
+    const { rows } = groundExtraction(ex, 'unknown');
+    const dd = rows.find((r) => r.entry?.key === 'd_dimer')!;
+    expect(dd.action).toBe('abstain');
+    expect(dd.flags.map((f) => f.id)).toContain('R2-UNIT-MISMATCH');
+  });
+
+  it('classifies a d-dimer with an explicit FEU basis (mg/L FEU and its exact µg/mL FEU equivalent)', () => {
+    for (const unit of ['mg/L FEU', 'µg/mL FEU']) {
+      const ex = { rows: [{ name: 'D-dimer', value: '0.3', unit, printedRange: null, confidence: 'high' as const }] };
+      const { rows } = groundExtraction(ex, 'unknown');
+      const dd = rows.find((r) => r.entry?.key === 'd_dimer')!;
+      expect(dd.action, `unit ${unit}`).toBe('classify');
+      expect(dd.classification).toBe('normal'); // 0.3 < 0.5 rule-out cutoff
+    }
+  });
+
+  it('converts a same-basis d-dimer (480 ng/mL FEU → 0.48 mg/L FEU, still below the rule-out cutoff)', () => {
+    // ng/mL FEU is the most common real report format; a same-basis decimal-scale
+    // conversion restores the rule-out reassurance (was abstaining pre-fix).
+    const ex = { rows: [{ name: 'D-dimer', value: '480', unit: 'ng/mL FEU', printedRange: null, confidence: 'high' as const }] };
+    const { rows } = groundExtraction(ex, 'unknown');
+    const dd = rows.find((r) => r.entry?.key === 'd_dimer')!;
+    expect(dd.action).toBe('classify');
+    expect(dd.valueNum).toBeCloseTo(0.48, 2);
+    expect(dd.classification).toBe('normal');
+    expect(dd.flags.map((f) => f.id)).toContain('R2b-UNIT-CONVERTED');
+  });
+
+  it('still abstains on a BASIS-less ng/mL d-dimer (no FEU/DDU qualifier → 1000× or 2× ambiguity)', () => {
+    const ex = { rows: [{ name: 'D-dimer', value: '480', unit: 'ng/mL', printedRange: null, confidence: 'high' as const }] };
+    const { rows } = groundExtraction(ex, 'unknown');
+    const dd = rows.find((r) => r.entry?.key === 'd_dimer')!;
+    expect(dd.action).toBe('abstain');
+    expect(dd.flags.map((f) => f.id)).toContain('R2-UNIT-MISMATCH');
+  });
 });
