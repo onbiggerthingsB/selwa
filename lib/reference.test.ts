@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { findEntry, normalizeUnit, unitMatches, resolveBounds } from './reference';
+import { findEntry, normalizeUnit, unitMatches, resolveBounds, parsePrintedRange } from './reference';
 
 describe('findEntry', () => {
   it('matches Chinese name', () => {
@@ -96,5 +96,26 @@ describe('absolute plausibility bounds (R13 data)', () => {
       expect(up.absoluteLow).toBeNull();
       expect(up.absoluteHigh).toBeNull();
     }
+  });
+});
+
+describe('parsePrintedRange', () => {
+  it('parses a two-sided range (various separators)', () => {
+    expect(parsePrintedRange('3.9-6.1')).toEqual({ low: 3.9, high: 6.1 });
+    expect(parsePrintedRange('3.9 ~ 6.1')).toEqual({ low: 3.9, high: 6.1 });
+    expect(parsePrintedRange('70–99')).toEqual({ low: 70, high: 99 });
+  });
+  it('parses a one-sided upper bound', () => {
+    expect(parsePrintedRange('<5.2')).toEqual({ low: null, high: 5.2 });
+    expect(parsePrintedRange('≤ 90')).toEqual({ low: null, high: 90 });
+  });
+  it('parses a one-sided lower bound', () => {
+    expect(parsePrintedRange('≥90')).toEqual({ low: 90, high: null });
+    expect(parsePrintedRange('> 1.0')).toEqual({ low: 1.0, high: null });
+  });
+  it('returns null for unparseable / empty input', () => {
+    expect(parsePrintedRange('normal')).toBeNull();
+    expect(parsePrintedRange(null)).toBeNull();
+    expect(parsePrintedRange('')).toBeNull();
   });
 });
