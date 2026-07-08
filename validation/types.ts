@@ -39,6 +39,7 @@ export const AbstainReasonSchema = z.enum([
   'number_unit_mismatch',
   'unit_conversion_ambiguous',
   'unknown_analyte', // analyte not present in the curated reference table
+  'implausible_value', // R13: value physiologically implausible in its unit (likely misread)
 ]);
 
 export const CorpusCaseSchema = z.object({

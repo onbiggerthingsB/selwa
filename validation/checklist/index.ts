@@ -4,9 +4,12 @@ import { UNIT_MISMATCH_DIR } from './cases/unit-mismatch.dir';
 import { OCR_NOISE_INV } from './cases/ocr-noise.inv';
 import { NEGATION_FLIP_DIR } from './cases/negation-flip.dir';
 import { DOSE_DRUG_DIR } from './cases/dose-drug.dir';
+import { IMPLAUSIBLE_VALUE_DIR } from './cases/implausible-value.dir';
+import { PRINTED_RANGE_FLIP_DIR } from './cases/printed-range-flip.dir';
 
 const RAW: BehavioralCase[] = [
   ...LABS_VERDICT_MFT, ...UNIT_MISMATCH_DIR, ...OCR_NOISE_INV, ...NEGATION_FLIP_DIR, ...DOSE_DRUG_DIR,
+  ...IMPLAUSIBLE_VALUE_DIR, ...PRINTED_RANGE_FLIP_DIR,
 ];
 
 // Schema-validate + duplicate-id guard at module load (mirrors corpus/index.ts).

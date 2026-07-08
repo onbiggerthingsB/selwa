@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseValue, classify } from './classify';
+import { parseValue, classify, classifyAgainstBounds } from './classify';
 import { findEntry } from './reference';
 
 describe('parseValue', () => {
@@ -58,5 +58,18 @@ describe('classify', () => {
     };
     expect(classify(70, banded, 'female', 10)).toBe('high');   // child band 20–60
     expect(classify(70, banded, 'female', 40)).toBe('normal'); // adult female 45–84
+  });
+});
+
+describe('classifyAgainstBounds', () => {
+  it('classifies on the low/normal/high scale against arbitrary bounds', () => {
+    expect(classifyAgainstBounds(5.5, 3.9, 6.1)).toBe('normal');
+    expect(classifyAgainstBounds(6.5, 3.9, 6.1)).toBe('high');
+    expect(classifyAgainstBounds(3.0, 3.9, 6.1)).toBe('low');
+  });
+  it('handles one-sided bounds (null low or high)', () => {
+    expect(classifyAgainstBounds(10, null, 5.2)).toBe('high');
+    expect(classifyAgainstBounds(3, null, 5.2)).toBe('normal');
+    expect(classifyAgainstBounds(50, 90, null)).toBe('low');
   });
 });

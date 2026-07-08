@@ -114,3 +114,51 @@ describe('evaluateRow', () => {
     expect(out.flags).toHaveLength(0);
   });
 });
+
+describe('R13 — implausible value suppression', () => {
+  const k = findEntry('钾')!; // potassium, absolute bounds 1.0–15 mmol/L
+  const kRow = (v: string) => row({ name: '钾', value: v, unit: 'mmol/L' });
+
+  it('a decimal-shift misread (K 40) is suppressed: abstain + needsConfirm + R13 flag, no classification', () => {
+    const out = evaluateRow(kRow('40'), k, 40, 'critical', 'unknown');
+    expect(out.action).toBe('abstain'); // no low/normal/high rendered
+    expect(out.needsConfirm).toBe(true); // confirm gate offers correction
+    expect(ids(out.flags)).toContain('R13-IMPLAUSIBLE-VALUE');
+  });
+
+  it('a real critical-but-plausible value (K 6.8) is NOT suppressed — it classifies', () => {
+    const out = evaluateRow(kRow('6.8'), k, 6.8, 'critical', 'unknown');
+    expect(out.action).toBe('classify');
+    expect(ids(out.flags)).not.toContain('R13-IMPLAUSIBLE-VALUE');
+  });
+
+  it('does not fire when the analyte has no bound on the exceeded side', () => {
+    const out = evaluateRow(kRow('40'), { ...k, absoluteHigh: null }, 40, 'high', 'unknown');
+    expect(out.action).not.toBe('abstain');
+  });
+});
+
+describe('R11 — flip-gated printed-range disagreement', () => {
+  // total_cholesterol is not high-stakes and has no critical band, so needsConfirm
+  // here is driven purely by R11 (no R4/R6 confounding).
+  const tc = findEntry('总胆固醇')!; // refHigh 5.2 (one-sided, desirable <5.2)
+
+  it('a disagreement that FLIPS the call → needsConfirm + caution', () => {
+    // value 5.5 is HIGH under our <5.2 but NORMAL under the report's <6.5 → flips.
+    const ex = row({ name: '总胆固醇', value: '5.5', unit: 'mmol/L', printedRange: '<6.5' });
+    const out = evaluateRow(ex, tc, parseValue(ex.value), classify(parseValue(ex.value), tc, 'unknown'), 'unknown');
+    const r11 = out.flags.find((f) => f.id === 'R11-RANGE-DISAGREEMENT');
+    expect(r11?.severity).toBe('caution');
+    expect(out.needsConfirm).toBe(true);
+  });
+
+  it('a disagreement that does NOT flip the call → info flag, no confirm', () => {
+    // value 4.0 is NORMAL under both our <5.2 and the report's <7.0; ranges differ
+    // materially (5.2 vs 7.0) but the call is unchanged → informational only.
+    const ex = row({ name: '总胆固醇', value: '4.0', unit: 'mmol/L', printedRange: '<7.0' });
+    const out = evaluateRow(ex, tc, parseValue(ex.value), classify(parseValue(ex.value), tc, 'unknown'), 'unknown');
+    const r11 = out.flags.find((f) => f.id === 'R11-RANGE-DISAGREEMENT');
+    expect(r11?.severity).toBe('info');
+    expect(out.needsConfirm).toBe(false);
+  });
+});

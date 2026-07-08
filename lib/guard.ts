@@ -6,7 +6,8 @@ import type {
   ReferenceEntry,
   Sex,
 } from '@/lib/types';
-import { unitMatches, resolveBounds } from '@/lib/reference';
+import { unitMatches, resolveBounds, parsePrintedRange, type PrintedRange } from '@/lib/reference';
+import { classifyAgainstBounds } from '@/lib/classify';
 
 const CONFIRM_CLINICIAN_EN = 'Confirm this with your clinician.';
 const CONFIRM_CLINICIAN_ZH = '请与您的医生确认。';
@@ -33,6 +34,16 @@ function structurallySuspicious(value: string | null, valueNum: number | null): 
   return false;
 }
 
+// R13: physiologically implausible magnitude in the analyte's unit — almost
+// certainly an OCR misread (decimal shift, inserted digit, wrong-row value). Bounds
+// are deliberately wide (source: docs/superpowers/specs/2026-07-08-absolute-bounds-source.md)
+// so a real survivable/critical value never lands here.
+function outsideAbsoluteBounds(valueNum: number, entry: ReferenceEntry): boolean {
+  if (entry.absoluteLow !== null && valueNum < entry.absoluteLow) return true;
+  if (entry.absoluteHigh !== null && valueNum > entry.absoluteHigh) return true;
+  return false;
+}
+
 export function evaluateRow(
   extracted: ExtractedRow,
   entry: ReferenceEntry | null,
@@ -40,6 +51,10 @@ export function evaluateRow(
   classification: Classification,
   sex: Sex,
   age?: number,
+  // R11 (harden-H1): the printed range already parsed + unit-normalized to our
+  // canonical unit by grounding.ts. Optional for back-compat with direct callers
+  // (whose printed range is in canonical units); falls back to parsing the raw string.
+  normalizedPrintedRange?: PrintedRange | null,
 ): GuardOutcome {
   const flags: GuardFlag[] = [];
 
@@ -67,6 +82,21 @@ export function evaluateRow(
       ),
     );
     return { action: 'abstain', needsConfirm: false, flags };
+  }
+
+  // R13 — implausible magnitude → suppress interpretation (likely misread). Abstain
+  // (no classification, raw value shown) AND needsConfirm (the confirm gate offers a
+  // correction). Bounds are wide so a real critical value is never suppressed here.
+  if (valueNum !== null && outsideAbsoluteBounds(valueNum, entry)) {
+    flags.push(
+      flag(
+        'R13-IMPLAUSIBLE-VALUE',
+        'caution',
+        'This value looks unusually far outside the physically possible range, so we may have misread it. Please check the number against your report.',
+        '该数值远超生理可能范围，我们可能读错了，请与您的报告核对该数字。',
+      ),
+    );
+    return { action: 'abstain', needsConfirm: true, flags };
   }
 
   let needsConfirm = false;
@@ -122,14 +152,28 @@ export function evaluateRow(
     );
   }
 
-  // R11 — report-printed range materially disagrees with ours.
-  if (extracted.printedRange && printedRangeDisagrees(extracted.printedRange, entry, sex, age)) {
+  // R11 — the report's own printed range disagrees with ours (unit-normalized).
+  const printed = normalizedPrintedRange ?? parsePrintedRange(extracted.printedRange);
+  if (printed && printedRangeDisagrees(printed, entry, sex, age)) {
+    // Flip-gate: route to confirm ONLY when the disagreement could change the
+    // low/normal/high call for THIS value; otherwise it is informational (no
+    // confirm), since legitimate assay/lab range differences are common.
+    const { low, high } = resolveBounds(entry, sex, age);
+    const flips =
+      valueNum !== null &&
+      classifyAgainstBounds(valueNum, low, high) !== classifyAgainstBounds(valueNum, printed.low, printed.high);
+    if (flips) needsConfirm = true;
     flags.push(
       flag(
         'R11-RANGE-DISAGREEMENT',
-        'caution',
-        'Your report’s own reference range differs from ours; ranges vary between labs. ' + CONFIRM_CLINICIAN_EN,
-        '您报告上的参考范围与我们的不同；不同实验室的范围会有差异。' + CONFIRM_CLINICIAN_ZH,
+        flips ? 'caution' : 'info',
+        flips
+          ? 'Your report’s reference range differs from ours in a way that could change whether this value is in range. ' +
+            CONFIRM_CLINICIAN_EN
+          : 'Your report’s own reference range differs slightly from ours; ranges vary between labs.',
+        flips
+          ? '您报告上的参考范围与我们的不同，这可能影响该数值是否属于正常范围。' + CONFIRM_CLINICIAN_ZH
+          : '您报告上的参考范围与我们的略有不同；不同实验室的范围会有差异。',
       ),
     );
   }
@@ -149,14 +193,10 @@ export function evaluateRow(
   return { action: 'classify', needsConfirm, flags };
 }
 
-function printedRangeDisagrees(printed: string, entry: ReferenceEntry, sex: Sex, age?: number): boolean {
-  const m = printed.match(/(-?\d+(?:\.\d+)?)\s*[-~–]\s*(-?\d+(?:\.\d+)?)/);
-  if (!m) return false;
-  const pLow = Number(m[1]);
-  const pHigh = Number(m[2]);
+function printedRangeDisagrees(printed: PrintedRange, entry: ReferenceEntry, sex: Sex, age?: number): boolean {
   const { low, high } = resolveBounds(entry, sex, age);
   const tol = 0.15; // 15% materiality threshold
-  const off = (ours: number | null, theirs: number) =>
-    ours !== null && Math.abs(ours - theirs) > Math.abs(ours) * tol;
-  return off(low, pLow) || off(high, pHigh);
+  const off = (ours: number | null, theirs: number | null) =>
+    ours !== null && theirs !== null && Math.abs(ours - theirs) > Math.abs(ours) * tol;
+  return off(low, printed.low) || off(high, printed.high);
 }

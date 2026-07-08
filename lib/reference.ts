@@ -87,3 +87,27 @@ export function resolveBounds(entry: ReferenceEntry, sex: Sex, age?: number): Re
     usedUnion: split && sex === 'unknown',
   };
 }
+
+export interface PrintedRange {
+  low: number | null;
+  high: number | null;
+}
+
+/**
+ * Parse a report's printed reference-range string into numeric bounds (in the
+ * range's own units — the caller unit-normalizes). Handles two-sided ranges
+ * ("3.9-6.1", "3.9~6.1", "3.9–6.1"), one-sided upper ("<5.2", "≤ 90", "＜5.2"),
+ * and one-sided lower (">90", "≥ 90"). Returns null when nothing numeric parses.
+ * Used by R11 to compare the report's own range against ours.
+ */
+export function parsePrintedRange(s: string | null): PrintedRange | null {
+  if (!s) return null;
+  const t = s.trim();
+  const two = t.match(/(\d+(?:\.\d+)?)\s*[-~–—]\s*(\d+(?:\.\d+)?)/);
+  if (two) return { low: Number(two[1]), high: Number(two[2]) };
+  const up = t.match(/[<≤＜]\s*=?\s*(\d+(?:\.\d+)?)/);
+  if (up) return { low: null, high: Number(up[1]) };
+  const lo = t.match(/[>≥＞]\s*=?\s*(\d+(?:\.\d+)?)/);
+  if (lo) return { low: Number(lo[1]), high: null };
+  return null;
+}
