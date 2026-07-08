@@ -8,12 +8,18 @@
 // focused purely on *correct extraction* — the 18-failure-mode comparison
 // lives in notesGuard.
 
-import type { Immutable } from './types';
+import type { Immutable, ImperativePolarity } from './types';
 import {
   NEGATION_MARKERS,
   DOSE_UNITS,
   FREQUENCY_TOKENS,
   KNOWN_DRUGS,
+  IMPERATIVE_MARKERS,
+  IMPERATIVE_INVERSION_MARKERS,
+  IMPERATIVE_MONITORING_OBJECTS,
+  IMPERATIVE_MED_ANAPHORS,
+  MED_CLASS_ANCHORS,
+  EN_MED_CLASS_ANCHORS,
   type NegationMarker,
 } from '@/data/medical-lexicon';
 
@@ -311,6 +317,151 @@ function detectDrugs(
   return out;
 }
 
+// --- Imperatives (R7b: medication hold/continue/dose-change polarity) --------
+// Detect the DIRECTIVE polarity of a medication instruction so a hold↔continue flip
+// or a dose-direction swap (the Khoong 2019 harm) can be caught in reconciliation.
+// Markers are multi-char + med-scoped (see IMPERATIVE_MARKERS) so findings don't fire.
+const IMPERATIVE_SORTED = [...IMPERATIVE_MARKERS].sort((a, b) => b.marker.length - a.marker.length);
+
+// Flip a polarity for an inverting negation ("不要停药" = do not stop = continue).
+function invertPolarity(p: ImperativePolarity): ImperativePolarity {
+  if (p === 'hold') return 'continue';
+  if (p === 'continue') return 'hold';
+  return 'unknown'; // negated dose-change ("don't increase") is genuinely ambiguous
+}
+
+// Does an inverting negation sit IMMEDIATELY before the marker? Adjacency (endsWith),
+// not a window scan — so 别的 (别 inside "other"), 不得不 (不得 inside "had to"), and EN
+// 'nevertheless' (never) can't spuriously flip a HOLD into a CONTINUE (the unsafe
+// direction: a real hold rendered as keep-taking).
+function precededByInversion(clause: string, idx: number, lang: 'en' | 'zh'): boolean {
+  const raw = (lang === 'en' ? clause.toLowerCase() : clause).slice(0, idx);
+  const prefix = lang === 'en' ? raw.replace(/\s+$/u, '') : raw;
+  return IMPERATIVE_INVERSION_MARKERS.filter((m) => m.lang === lang).some((m) => {
+    const needle = lang === 'en' ? m.marker.toLowerCase() : m.marker;
+    if (!prefix.endsWith(needle)) return false;
+    if (lang === 'en') {
+      const before = prefix[prefix.length - needle.length - 1];
+      if (before !== undefined && /[a-z0-9]/i.test(before)) return false; // word boundary
+    }
+    return true;
+  });
+}
+
+function nearestDrugId(clause: string, idx: number, drugs: Immutable[]): string | null {
+  let best: { dist: number; id: string | null } | null = null;
+  for (const d of drugs) {
+    const at = clause.indexOf(d.raw);
+    if (at === -1) continue;
+    const dist = Math.abs(at - idx);
+    if (best === null || dist < best.dist) best = { dist, id: d.drugId ?? null };
+  }
+  return best ? best.id : null;
+}
+
+function clauseHasMedAnaphor(clause: string, lang: 'en' | 'zh'): boolean {
+  const hay = lang === 'en' ? clause.toLowerCase() : clause;
+  if (IMPERATIVE_MED_ANAPHORS.filter((a) => a.lang === lang).some((a) => hay.includes(lang === 'en' ? a.token.toLowerCase() : a.token))) {
+    return true;
+  }
+  // Drug-class nouns (降压药 / "statin" / "blood thinner") are a medication referent too.
+  return lang === 'zh' ? MED_CLASS_ANCHORS.some((c) => clause.includes(c)) : EN_MED_CLASS_ANCHORS.some((c) => hay.includes(c));
+}
+
+// Chars that, right after a bare "停", make it a NON-medication word (停经 amenorrhea,
+// 停止 cease, 停产/停售 out-of-stock, 停搏/停跳 arrest, 停留 dwell, …) → don't fire hold.
+const STOP_FALSE_FRIEND_NEXT = new Set(['经', '诊', '产', '售', '搏', '跳', '留', '止', '工', '业', '学', '课', '滞', '顿', '车', '电', '水']);
+// Chars after "暂停" that make it govern a non-drug object (暂停期间 during the pause,
+// 暂停一下/片刻 pause briefly, 暂停后 after pausing) → don't fire hold.
+const PAUSE_FALSE_FRIEND_NEXT = new Set(['期', '间', '一', '片', '时', '刻', '后', '会', '歇', '下']);
+// ZH "停 …药" hold directive (停他汀类药物, 停降压药, 停这个药) — caught even when the
+// specific drug/class isn't in the known-drug list.
+const ZH_STOP_MED_RE = /停[一-龥]{1,8}?药/gu;
+// EN "cut … in half" (halve) even when a drug/object sits between the words.
+const EN_CUT_HALF_RE = /\bcut\b[a-z0-9\s'-]*\bin half\b/gi;
+
+function detectImperatives(clause: string, lang: 'en' | 'zh', drugs: Immutable[]): Immutable[] {
+  const out: Immutable[] = [];
+  const consumed: Array<[number, number]> = [];
+  const overlaps = (start: number, end: number) => consumed.some(([s, e]) => start < e && end > s);
+  const hasDrug = drugs.length > 0;
+  const hay = lang === 'en' ? clause.toLowerCase() : clause;
+
+  const emit = (idx: number, end: number, polarity: ImperativePolarity, doseDir: 'up' | 'down' | 'unknown' | undefined, drugId: string | null) => {
+    consumed.push([idx, end]);
+    const inverted = precededByInversion(clause, idx, lang);
+    const im: Immutable = { type: 'imperative', raw: clause.slice(idx, end), imperative: polarity, drugId };
+    if (polarity === 'dose-change') {
+      im.doseDir = inverted ? 'unknown' : doseDir ?? 'unknown'; // negated direction is unknowable
+    } else if (inverted) {
+      im.imperative = invertPolarity(polarity);
+    }
+    out.push(im);
+  };
+
+  for (const m of IMPERATIVE_SORTED) {
+    if (m.lang !== lang) continue;
+    const needle = lang === 'en' ? m.marker.toLowerCase() : m.marker;
+    let from = 0;
+    for (;;) {
+      const idx = hay.indexOf(needle, from);
+      if (idx === -1) break;
+      const end = idx + needle.length;
+      from = end;
+      if (overlaps(idx, end)) continue;
+      // EN: require word boundaries on the alnum edges (so 'hold' ≠ 'household').
+      if (lang === 'en') {
+        const before = idx === 0 ? '' : hay[idx - 1];
+        const after = end >= hay.length ? '' : hay[end];
+        if (/[a-z0-9]/i.test(before) || /[a-z0-9]/i.test(after)) continue;
+      }
+      // Bare "停"/"暂停" that is really a finding/state word (停经/停止/暂停期间…) — not a drug order.
+      // Bare 停 preceded by 暂 is the 停 inside a (possibly-suppressed) 暂停 — never a separate order.
+      if (m.marker === '停' && (STOP_FALSE_FRIEND_NEXT.has(clause[end]) || clause[idx - 1] === '暂')) continue;
+      if (m.marker === '暂停' && PAUSE_FALSE_FRIEND_NEXT.has(clause[end])) continue;
+      // Monitoring suppression: a bare CONTINUE marker followed by 观察/随访/… is a
+      // monitoring instruction, not a drug directive (继续观察 ≠ keep taking).
+      if (m.polarity === 'continue') {
+        const rest = clause.slice(end);
+        if (IMPERATIVE_MONITORING_OBJECTS.some((o) => rest.startsWith(o))) continue;
+      }
+      // Drug-scope gate for ambiguous bare markers (继续/维持/hold/停): require a drug in
+      // the clause, OR a medication anaphor ("继续这个药" / "keep taking this medication")
+      // so a directive on a pronoun-referenced drug still gets checked (bind drugId=null).
+      let drugId = nearestDrugId(clause, idx, drugs);
+      if (m.requiresDrugScope && !hasDrug) {
+        if (!clauseHasMedAnaphor(clause, lang)) continue;
+        drugId = null;
+      }
+      emit(idx, end, m.polarity, m.doseDir, drugId);
+    }
+  }
+
+  // ZH "停 …药" hold directive (drug/class need not be a known drug).
+  if (lang === 'zh') {
+    for (const mt of clause.matchAll(ZH_STOP_MED_RE)) {
+      const idx = mt.index ?? 0;
+      const end = idx + mt[0].length;
+      if (overlaps(idx, end)) continue;
+      // Don't bridge a false-friend 停 (停经/停止/停产…) to a later 药 (停经后…用某药).
+      if (STOP_FALSE_FRIEND_NEXT.has(clause[idx + 1])) continue;
+      emit(idx, end, 'hold', undefined, nearestDrugId(clause, idx, drugs));
+    }
+  }
+
+  // EN "cut … in half" (halve) — drug-scoped so "cut the pizza in half" doesn't fire.
+  if (lang === 'en' && (hasDrug || clauseHasMedAnaphor(clause, lang))) {
+    for (const mt of hay.matchAll(EN_CUT_HALF_RE)) {
+      const idx = mt.index ?? 0;
+      const end = idx + mt[0].length;
+      if (overlaps(idx, end)) continue;
+      emit(idx, end, 'dose-change', 'down', nearestDrugId(clause, idx, drugs));
+    }
+  }
+
+  return out;
+}
+
 // --- Bare numbers -----------------------------------------------------------
 // Numbers not already consumed by a dose, with an optional trailing unit-ish
 // token. Used by the guard to catch dropped/altered counts (e.g. 3 days).
@@ -346,7 +497,9 @@ export function detectImmutables(text: string, lang: 'en' | 'zh'): Immutable[] {
     result.push(...detectNegations(clause, lang));
     const { doses, spans } = detectDoses(clause, lang);
     result.push(...doses);
-    result.push(...detectDrugs(clause, lang, spans));
+    const drugs = detectDrugs(clause, lang, spans);
+    result.push(...drugs);
+    result.push(...detectImperatives(clause, lang, drugs)); // after drugs: needs spans for scope
     result.push(...detectBareNumbers(clause, spans));
   }
   return result;
