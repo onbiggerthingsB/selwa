@@ -144,3 +144,34 @@ describe('report + checklist gate', () => {
     expect(failed).toHaveLength(0);
   });
 });
+
+describe('confirm burden (harden-extraction H0)', () => {
+  // An emitted high-stakes labs row (glucose is high-stakes) is routed to the
+  // confirm gate by R6, so it counts as confirmed. This is the baseline the
+  // harden-extraction rules will move.
+  const LABS: CorpusCase[] = [
+    {
+      id: 'lb-glucose-normal',
+      lang: 'en',
+      kind: 'labs',
+      sourceText: '空腹血糖 5.5 mmol/L',
+      goldTranslation: 'Fasting glucose 5.5 mmol/L',
+      immutables: { negations: [], dosages: [], drugs: [], numbers: [{ value: '5.5', unit: 'mmol/L' }] },
+      shouldAbstain: false,
+      highStakes: true,
+    },
+  ];
+
+  it('counts an emitted high-stakes labs row as confirmed (R6)', async () => {
+    const report = await runValidation(LABS, [offlineAdapter]);
+    expect(report.confirmBurden.emitted).toBe(1);
+    expect(report.confirmBurden.confirmed).toBe(1);
+    expect(report.confirmBurden.confirmRate).toBe(1);
+    expect(Object.keys(report.confirmBurden.byRule)).toContain('R6-HIGH-STAKES-MANDATORY-CONFIRM');
+  });
+
+  it('renders a Confirm burden section in the report', async () => {
+    const md = renderMarkdown(await runValidation(LABS, [offlineAdapter]));
+    expect(md).toContain('Confirm burden (labs)');
+  });
+});

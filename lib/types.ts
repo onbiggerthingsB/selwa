@@ -22,7 +22,11 @@ export interface ReferenceEntry {
 }
 
 export type Classification = 'low' | 'normal' | 'high' | 'critical' | 'unclassified';
-export type GuardAction = 'classify' | 'abstain' | 'confirm';
+// The guard's row-level verdict. 'confirm' is intentionally NOT a value here: the
+// confirm-the-values gate is driven by the separate GroundedRow.needsConfirm
+// boolean (evaluateRow only ever returns 'classify' or 'abstain'). Keeping a dead
+// 'confirm' action here previously misled a design pass — see harden-extraction H0.
+export type GuardAction = 'classify' | 'abstain';
 export type FlagSeverity = 'info' | 'caution' | 'urgent';
 
 export interface GuardFlag {
