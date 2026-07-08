@@ -291,6 +291,294 @@ export const KNOWN_DRUGS: KnownDrug[] = RAW_DRUGS.map((d) => {
   return { id: d.generic.toLowerCase(), forms: Array.from(new Set(forms)) };
 });
 
+// --- R7b (harden-H2): medication imperative-polarity markers ---
+// A hold↔continue flip or a dose-direction swap is the highest-harm notes failure
+// (Khoong 2019). Markers are DELIBERATELY multi-character and med-scoped (停药 not bare
+// 停, 继续服用 not bare 继续) so disease/finding false-friends (停经 amenorrhea, 继续观察
+// continue-observation, 恢复良好 recovering-well) never fire. `requiresDrugScope` markers
+// only emit when a drug is in the same clause; the rest carry a med morpheme (药/服/用/量)
+// and are medication directives on their own.
+export interface ImperativeMarker {
+  marker: string;
+  lang: 'en' | 'zh';
+  polarity: 'hold' | 'continue' | 'dose-change';
+  doseDir?: 'up' | 'down' | 'unknown';
+  requiresDrugScope?: boolean;
+}
+
+// ZH monitoring/finding objects that turn a bare CONTINUE marker into a NON-medication
+// instruction (继续观察 = keep observing). Suppress emission when a marker is followed
+// by one of these.
+export const IMPERATIVE_MONITORING_OBJECTS: string[] = ['观察', '随访', '监测', '复查', '复诊', '门诊'];
+
+// Medication anaphors: when a bare requiresDrugScope directive (继续/维持/hold/…) has no
+// named drug in its clause but refers to one of these, it is still a medication order —
+// emit it (so a flip on "继续这个药" / "keep taking this medication" is caught) rather
+// than silently skip. Multi-char only (no bare "it"/"them") to avoid substring noise.
+export const IMPERATIVE_MED_ANAPHORS: { lang: 'en' | 'zh'; token: string }[] = [
+  { lang: 'zh', token: '这个药' }, { lang: 'zh', token: '该药' }, { lang: 'zh', token: '此药' },
+  { lang: 'zh', token: '这药' }, { lang: 'zh', token: '这些药' }, { lang: 'zh', token: '这种药' },
+  { lang: 'zh', token: '该药物' }, { lang: 'zh', token: '原药' },
+  { lang: 'en', token: 'this one' }, { lang: 'en', token: 'that one' },
+  { lang: 'en', token: 'this medication' }, { lang: 'en', token: 'the medication' },
+  { lang: 'en', token: 'your medication' }, { lang: 'en', token: 'this medicine' },
+  { lang: 'en', token: 'the medicine' }, { lang: 'en', token: 'this pill' }, { lang: 'en', token: 'the pill' },
+];
+
+// Chinese drug-CLASS nouns (降压药 = "blood-pressure medicine"). These are NOT specific
+// drugs (detectDrugs won't recognize them) but ARE a medication referent, so a scoped
+// directive (停/继续/别吃/…) or a 不要/别 inversion must fire on "降压药别停" / "先停降糖药".
+// Treated as anaphors (bind drugId=null) via clauseHasMedAnaphor.
+export const MED_CLASS_ANCHORS: string[] = [
+  '降压药', '降糖药', '降脂药', '调脂药', '抗凝药', '抗凝剂', '抗血小板药', '抗生素', '消炎药',
+  '止痛药', '镇痛药', '安眠药', '助眠药', '激素', '糖皮质激素', '利尿药', '利尿剂', '平喘药',
+  '化疗药', '止血药', '抗病毒药', '免疫抑制剂', '他汀类', '他汀', '胰岛素类', '中药', '西药',
+];
+
+// English drug-class referents — same role as MED_CLASS_ANCHORS: a bare requiresDrugScope
+// directive ("keep on your statin", "stop the blood thinner") must fire even though the
+// class noun isn't a specific known drug. Lowercased; matched as a substring.
+export const EN_MED_CLASS_ANCHORS: string[] = [
+  'statin', 'statins', 'beta blocker', 'beta blockers', 'beta-blocker', 'ace inhibitor',
+  'ace inhibitors', 'arb', 'blood thinner', 'blood thinners', 'blood pressure pill',
+  'blood pressure pills', 'blood pressure medication', 'blood pressure medicine',
+  'blood pressure med', 'water pill', 'water pills', 'steroid', 'steroids', 'antibiotic',
+  'antibiotics', 'painkiller', 'painkillers', 'pain medication', 'diuretic', 'diuretics', 'inhaler',
+];
+
+// Negation tokens that INVERT an adjacent imperative (不要停药 = do NOT stop = CONTINUE;
+// 不要继续 = do NOT continue = HOLD). Reused for EN too.
+// Matched by IMMEDIATE adjacency (endsWith over each token independently). These are the
+// explicit directive negators ("不要停药" = do not stop). Bare 不 is deliberately EXCLUDED:
+// it would make 不得不停用 ("had to stop" = a real HOLD) wrongly invert to continue (the
+// 不 tail of 不得不) — the dangerous direction. Real "don't stop" orders use 不要/不可/不能/别.
+export const IMPERATIVE_INVERSION_MARKERS: { lang: 'en' | 'zh'; marker: string }[] = [
+  { lang: 'zh', marker: '不要' }, { lang: 'zh', marker: '不可' }, { lang: 'zh', marker: '不能' },
+  { lang: 'zh', marker: '勿' }, { lang: 'zh', marker: '切勿' }, { lang: 'zh', marker: '别' },
+  { lang: 'zh', marker: '无需' }, { lang: 'zh', marker: '不用' }, { lang: 'zh', marker: '不得' },
+  { lang: 'en', marker: 'do not' }, { lang: 'en', marker: "don't" }, { lang: 'en', marker: 'never' },
+  { lang: 'en', marker: 'no need to' }, { lang: 'en', marker: 'avoid' },
+];
+
+export const IMPERATIVE_MARKERS: ImperativeMarker[] = [
+  // --- HOLD (stop/pause the medication) ---
+  { lang: 'zh', marker: '停药', polarity: 'hold' },
+  { lang: 'zh', marker: '停用', polarity: 'hold' },
+  { lang: 'zh', marker: '停服', polarity: 'hold' },
+  { lang: 'zh', marker: '停止服用', polarity: 'hold' },
+  { lang: 'zh', marker: '停止使用', polarity: 'hold' },
+  { lang: 'zh', marker: '停止服药', polarity: 'hold' },
+  { lang: 'zh', marker: '暂停服用', polarity: 'hold' },
+  { lang: 'zh', marker: '暂停用药', polarity: 'hold' },
+  { lang: 'zh', marker: '暂时停用', polarity: 'hold' },
+  { lang: 'zh', marker: '暂时停药', polarity: 'hold' },
+  { lang: 'zh', marker: '暂停', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '停药观察', polarity: 'hold' },
+  { lang: 'zh', marker: '逐渐停药', polarity: 'hold' },
+  { lang: 'zh', marker: '逐步停药', polarity: 'hold' },
+  { lang: 'zh', marker: '减停', polarity: 'hold' },
+  { lang: 'zh', marker: '撤药', polarity: 'hold' },
+  { lang: 'zh', marker: '撤停', polarity: 'hold' },
+  { lang: 'zh', marker: '禁用', polarity: 'hold' },
+  { lang: 'zh', marker: '禁服', polarity: 'hold' },
+  { lang: 'zh', marker: '忌服', polarity: 'hold' },
+  { lang: 'zh', marker: '中断用药', polarity: 'hold' },
+  { lang: 'zh', marker: '中断治疗', polarity: 'hold' },
+  { lang: 'zh', marker: '不要再吃', polarity: 'hold' },
+  { lang: 'zh', marker: '不要再服', polarity: 'hold' },
+  { lang: 'zh', marker: '不要再用', polarity: 'hold' },
+  { lang: 'zh', marker: '别吃了', polarity: 'hold' },
+  { lang: 'zh', marker: '别再吃', polarity: 'hold' },
+  { lang: 'zh', marker: '别用了', polarity: 'hold' },
+  { lang: 'zh', marker: '别服了', polarity: 'hold' },
+  // Bare transitive 停/停掉/停了/先停: only when a drug is in the clause (停经/停诊 don't
+  // fire). "停" + …药 (停他汀类药物, 停降压药) is handled by a regex in detectImperatives.
+  { lang: 'zh', marker: '停掉', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '停了', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '先停', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '停', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'hold off on', polarity: 'hold' },
+  { lang: 'en', marker: 'hold off', polarity: 'hold' },
+  { lang: 'en', marker: 'stop taking', polarity: 'hold' },
+  { lang: 'en', marker: 'stop using', polarity: 'hold' },
+  { lang: 'en', marker: 'do not take', polarity: 'hold' },
+  { lang: 'en', marker: "don't take", polarity: 'hold' },
+  { lang: 'en', marker: 'do not use', polarity: 'hold' },
+  { lang: 'en', marker: 'discontinue', polarity: 'hold' },
+  { lang: 'en', marker: 'discontinued', polarity: 'hold' },
+  { lang: 'en', marker: 'withhold', polarity: 'hold' },
+  { lang: 'en', marker: 'cease taking', polarity: 'hold' },
+  { lang: 'en', marker: 'no longer take', polarity: 'hold' },
+  { lang: 'en', marker: 'hold', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'suspend', polarity: 'hold', requiresDrugScope: true },
+  // --- CONTINUE (keep/resume the medication) ---
+  { lang: 'zh', marker: '继续服用', polarity: 'continue' },
+  { lang: 'zh', marker: '继续用药', polarity: 'continue' },
+  { lang: 'zh', marker: '继续使用', polarity: 'continue' },
+  { lang: 'zh', marker: '继续吃', polarity: 'continue' },
+  { lang: 'zh', marker: '接着吃', polarity: 'continue' },
+  { lang: 'zh', marker: '续用', polarity: 'continue' },
+  { lang: 'zh', marker: '续服', polarity: 'continue' },
+  { lang: 'zh', marker: '维持治疗', polarity: 'continue' },
+  { lang: 'zh', marker: '维持原量', polarity: 'continue' },
+  { lang: 'zh', marker: '维持原剂量', polarity: 'continue' },
+  { lang: 'zh', marker: '按原剂量', polarity: 'continue' },
+  { lang: 'zh', marker: '恢复用药', polarity: 'continue' },
+  { lang: 'zh', marker: '恢复服用', polarity: 'continue' },
+  { lang: 'zh', marker: '恢复使用', polarity: 'continue' },
+  { lang: 'zh', marker: '恢复吃药', polarity: 'continue' },
+  { lang: 'zh', marker: '重新服用', polarity: 'continue' },
+  { lang: 'zh', marker: '坚持服用', polarity: 'continue' },
+  { lang: 'zh', marker: '坚持用药', polarity: 'continue' },
+  { lang: 'zh', marker: '规律服用', polarity: 'continue' },
+  { lang: 'zh', marker: '按时服用', polarity: 'continue' },
+  { lang: 'zh', marker: '长期服用', polarity: 'continue' },
+  { lang: 'zh', marker: '长期用药', polarity: 'continue' },
+  { lang: 'zh', marker: '继续', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'zh', marker: '维持', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'en', marker: 'continue taking', polarity: 'continue' },
+  { lang: 'en', marker: 'continue to take', polarity: 'continue' },
+  { lang: 'en', marker: 'keep taking', polarity: 'continue' },
+  { lang: 'en', marker: 'keep on taking', polarity: 'continue' },
+  { lang: 'en', marker: 'resume taking', polarity: 'continue' },
+  { lang: 'en', marker: 'remain on', polarity: 'continue' },
+  { lang: 'en', marker: 'stay on', polarity: 'continue' },
+  { lang: 'en', marker: 'continue', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'en', marker: 'resume', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'en', marker: 'keep using', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'en', marker: 'maintain', polarity: 'continue', requiresDrugScope: true },
+  // --- DOSE-CHANGE down ---
+  { lang: 'zh', marker: '减量', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'zh', marker: '减药', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'zh', marker: '减少剂量', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'zh', marker: '减半', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'zh', marker: '半量', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'zh', marker: '逐渐减量', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'zh', marker: '缓慢减量', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'en', marker: 'decrease', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'en', marker: 'reduce', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'en', marker: 'lower the dose', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'en', marker: 'taper', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'en', marker: 'halve', polarity: 'dose-change', doseDir: 'down' },
+  // --- DOSE-CHANGE up ---
+  { lang: 'zh', marker: '加量', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'zh', marker: '增量', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'zh', marker: '增加剂量', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'zh', marker: '加倍', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'zh', marker: '逐渐加量', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'en', marker: 'increase', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'en', marker: 'double the dose', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'en', marker: 'up-titrate', polarity: 'dose-change', doseDir: 'up' },
+  // --- DOSE-CHANGE unknown direction → unverifiable (abstain) ---
+  { lang: 'zh', marker: '调整剂量', polarity: 'dose-change', doseDir: 'unknown' },
+  { lang: 'zh', marker: '剂量调整', polarity: 'dose-change', doseDir: 'unknown' },
+  { lang: 'zh', marker: '调整用量', polarity: 'dose-change', doseDir: 'unknown' },
+  // (改为/改成 intentionally NOT markers: they also cover route/frequency/regimen changes
+  //  — 改为口服 — so treating them as dose-change over-abstains. A dose VALUE change via
+  //  改为 is still caught by the dose immutable. See harden-H2 review.)
+  { lang: 'en', marker: 'adjust the dose', polarity: 'dose-change', doseDir: 'unknown' },
+  { lang: 'en', marker: 'adjust your dose', polarity: 'dose-change', doseDir: 'unknown' },
+  { lang: 'en', marker: 'titrate', polarity: 'dose-change', doseDir: 'unknown' },
+  // --- R7b hardening (adversarial-review completeness passes): common real phrasings the
+  //     first lexicon missed — each an UNSAFE gap (a flip would render). Bare/ambiguous
+  //     markers carry requiresDrugScope (need a drug OR a med anaphor/class-anchor in the
+  //     clause) so lifestyle/NPO/navigation/vitals sentences don't spuriously abstain. ---
+  // EN HOLD — bare 'stop' (drug-scoped) is the most common English hold + enables 'do not
+  // stop X' inversion; perioperative/outpatient/chart-shorthand verbs.
+  { lang: 'en', marker: 'stop', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'skip', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'omit', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'pause', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'stay off', polarity: 'hold', requiresDrugScope: true }, // not "stay off your feet"
+  { lang: 'en', marker: 'come off', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'leave off', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'lay off', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'keep off', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'get off', polarity: 'hold', requiresDrugScope: true }, // not "get off your feet"
+  { lang: 'en', marker: 'quit taking', polarity: 'hold' },
+  { lang: 'en', marker: 'quit', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'take a break from', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'cut out', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'en', marker: 'd/c', polarity: 'hold', requiresDrugScope: true }, // not "d/c home" (discharge)
+  { lang: 'en', marker: 'dc', polarity: 'hold', requiresDrugScope: true },
+  // EN CONTINUE
+  { lang: 'en', marker: 'keep on', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'en', marker: 'stick with', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'en', marker: 'stick to', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'en', marker: 'carry on with', polarity: 'continue' },
+  { lang: 'en', marker: 'carry on', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'en', marker: 'stay the course', polarity: 'continue', requiresDrugScope: true },
+  // EN DOSE — taper/titration family with no numeric anchor (all drug-scoped: oxygen/
+  // ventilator weaning, "cut back on salt", "go up to the 3rd floor" must not fire).
+  { lang: 'en', marker: 'wean off', polarity: 'dose-change', doseDir: 'down', requiresDrugScope: true },
+  { lang: 'en', marker: 'wean', polarity: 'dose-change', doseDir: 'down', requiresDrugScope: true },
+  { lang: 'en', marker: 'cut back', polarity: 'dose-change', doseDir: 'down', requiresDrugScope: true },
+  { lang: 'en', marker: 'back off', polarity: 'dose-change', doseDir: 'down', requiresDrugScope: true },
+  { lang: 'en', marker: 'step down', polarity: 'dose-change', doseDir: 'down', requiresDrugScope: true },
+  { lang: 'en', marker: 'step up', polarity: 'dose-change', doseDir: 'up', requiresDrugScope: true },
+  { lang: 'en', marker: 'bump up', polarity: 'dose-change', doseDir: 'up', requiresDrugScope: true },
+  { lang: 'en', marker: 'drop the dose', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'en', marker: 'increase the dose', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'en', marker: 'up the dose', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'en', marker: 'raise the dose', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'en', marker: 'bump the dose', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'en', marker: 'cut the dose', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'en', marker: 'double the', polarity: 'dose-change', doseDir: 'up', requiresDrugScope: true },
+  { lang: 'en', marker: 'double up on', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'en', marker: 'go up to', polarity: 'dose-change', doseDir: 'up', requiresDrugScope: true },
+  { lang: 'en', marker: 'go down to', polarity: 'dose-change', doseDir: 'down', requiresDrugScope: true },
+  { lang: 'en', marker: 'drop down to', polarity: 'dose-change', doseDir: 'down', requiresDrugScope: true },
+  { lang: 'en', marker: 'drop to', polarity: 'dose-change', doseDir: 'down', requiresDrugScope: true },
+  // ZH HOLD — colloquial 别/不要 + verb (drug-scoped so 别吃辣/不要用力/暂时别吃(食物) don't fire)
+  { lang: 'zh', marker: '别吃', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '别服', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '别用', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '别再吃了', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '别再服了', polarity: 'hold' },
+  { lang: 'zh', marker: '别再用了', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '不要吃', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '不要服', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '不要用', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '暂时不吃', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '暂时别吃', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '先别吃', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '先别用', polarity: 'hold', requiresDrugScope: true },
+  { lang: 'zh', marker: '先别服', polarity: 'hold' }, // 服 implies medication
+  { lang: 'zh', marker: '停一停', polarity: 'hold', requiresDrugScope: true },
+  // ZH CONTINUE — keep-the-current-regimen phrasings
+  { lang: 'zh', marker: '维持原方案', polarity: 'continue' },
+  { lang: 'zh', marker: '继续原方案', polarity: 'continue' },
+  { lang: 'zh', marker: '照原方案', polarity: 'continue' },
+  { lang: 'zh', marker: '按原方案', polarity: 'continue' },
+  { lang: 'zh', marker: '按原样吃', polarity: 'continue' },
+  { lang: 'zh', marker: '按原样用', polarity: 'continue' },
+  { lang: 'zh', marker: '继续原剂量', polarity: 'continue' },
+  { lang: 'zh', marker: '照常服用', polarity: 'continue' },
+  { lang: 'zh', marker: '照常吃', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'zh', marker: '照常用', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'zh', marker: '照常', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'zh', marker: '一直吃', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'zh', marker: '一直服', polarity: 'continue' },
+  { lang: 'zh', marker: '接着用', polarity: 'continue', requiresDrugScope: true },
+  { lang: 'zh', marker: '用药不变', polarity: 'continue' },
+  { lang: 'zh', marker: '方案不变', polarity: 'continue' },
+  { lang: 'zh', marker: '维持不变', polarity: 'continue', requiresDrugScope: true }, // not a stable vital
+  { lang: 'zh', marker: '照旧', polarity: 'continue', requiresDrugScope: true },
+  // ZH DOSE — …到/…至 target forms (drug-scoped: a bare lab/weight/BP target isn't a dose)
+  // + magnitude-only 加大/减小剂量 + doubling synonyms 翻倍/翻一倍.
+  { lang: 'zh', marker: '减到', polarity: 'dose-change', doseDir: 'down', requiresDrugScope: true },
+  { lang: 'zh', marker: '减至', polarity: 'dose-change', doseDir: 'down', requiresDrugScope: true },
+  { lang: 'zh', marker: '加到', polarity: 'dose-change', doseDir: 'up', requiresDrugScope: true },
+  { lang: 'zh', marker: '加至', polarity: 'dose-change', doseDir: 'up', requiresDrugScope: true },
+  { lang: 'zh', marker: '增至', polarity: 'dose-change', doseDir: 'up', requiresDrugScope: true },
+  { lang: 'zh', marker: '增到', polarity: 'dose-change', doseDir: 'up', requiresDrugScope: true },
+  { lang: 'zh', marker: '加大剂量', polarity: 'dose-change', doseDir: 'up' },
+  { lang: 'zh', marker: '减小剂量', polarity: 'dose-change', doseDir: 'down' },
+  { lang: 'zh', marker: '翻倍', polarity: 'dose-change', doseDir: 'up', requiresDrugScope: true },
+  { lang: 'zh', marker: '翻一倍', polarity: 'dose-change', doseDir: 'up', requiresDrugScope: true },
+  { lang: 'zh', marker: '调到', polarity: 'dose-change', doseDir: 'unknown', requiresDrugScope: true },
+];
+
 export const HIGH_RISK_PAIRS: HighRiskPair[] = [
   { zh: '良性', en: 'benign', note: 'Antonym pair with 恶性/malignant. A swap inverts the entire prognosis — the single highest-stakes false friend. notesGuard must verify the polarity token in source maps to the same-polarity token in output; any 良性↔malignant or 恶性↔benign cross is an abstain-level mismatch.' },
   { zh: '恶性', en: 'malignant', note: 'See 良性/benign. Also guard 恶性 vs 阳性 (malignant vs positive) — visually/semantically distinct but both ominous; do not let LLM collapse them.' },

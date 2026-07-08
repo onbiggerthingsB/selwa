@@ -127,12 +127,14 @@ describe('groundNotes — original-text reconciliation (completeness)', () => {
   });
 
   it('partial drop: a dropped drug raises a completeness flag', () => {
-    // Original names two drugs; segments cover only one — aspirin is dropped.
-    const original = '继续服用二甲双胍。停用阿司匹林。';
+    // Original names two drugs; segments cover only one — aspirin is dropped. (No
+    // imperative words here, so this isolates the drug-drop path; a dropped hold/
+    // continue directive is covered separately by the R7b imperative-flip tests.)
+    const original = '二甲双胍 850mg 每日两次。阿司匹林 100mg 每日一次。';
     const grounded = groundNotes(
       {
         segments: [
-          { sourceText: '继续服用二甲双胍。', translatedText: 'Keep taking metformin.', kind: 'medication' },
+          { sourceText: '二甲双胍 850mg 每日两次。', translatedText: 'Metformin 850 mg twice daily.', kind: 'medication' },
         ],
       },
       original,

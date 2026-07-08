@@ -3,6 +3,66 @@ import { detectImmutables } from '@/lib/notesDetect';
 import type { GroundedNotes, GroundedSegment, GuardFlag, Immutable, SegmentAction } from '@/lib/types';
 import type { NotesTranslation } from '@/lib/notesSchema';
 
+// --- R7b imperative-polarity reconciliation ---------------------------------
+const N_IMPERATIVE_FLIP = 'N-IMPERATIVE-FLIP';
+function imperativeFlipFlag(): GuardFlag {
+  return {
+    id: N_IMPERATIVE_FLIP,
+    severity: 'urgent',
+    messageEn:
+      'A medication instruction (whether to stop, keep taking, or change the dose) may not have carried over correctly, so your notes are shown exactly as written. Please confirm this with your clinician.',
+    messageZh: '用药指示（停药、继续服用或调整剂量）可能未被正确传达，已按原文显示。请务必与您的医生确认。',
+  };
+}
+
+// Language-independent directive polarity (hold | continue | dose-change:dir).
+function polarityKey(im: Immutable): string {
+  return im.imperative === 'dose-change' ? `dose-change:${im.doseDir ?? 'unknown'}` : im.imperative ?? 'unknown';
+}
+// Drug-scoped key — catches a per-drug SWAP: hold(A)+continue(B) rendered as continue(A)+
+// hold(B), which a polarity-only multiset would miss. Cross-language safe (二甲双胍 and
+// "metformin" → same drugId); unknown drug (null) keys by '?'.
+function drugScopedKey(im: Immutable): string {
+  return `${im.drugId ?? '?'}:${polarityKey(im)}`;
+}
+
+function isUnverifiable(im: Immutable): boolean {
+  return im.imperative === 'unknown' || (im.imperative === 'dose-change' && im.doseDir === 'unknown');
+}
+
+// Detect imperatives under BOTH lexicons and union — so a mixed-script text (an English
+// note carrying a Chinese drug name, or the reverse) can never route detection to the
+// wrong lexicon and silently skip a directive (the unsafe direction). ZH markers are CJK
+// and EN markers ASCII, so scanning the wrong script matches nothing → no double count.
+function imperativesOf(text: string): Immutable[] {
+  return [
+    ...detectImmutables(text, 'zh').filter((im) => im.type === 'imperative'),
+    ...detectImmutables(text, 'en').filter((im) => im.type === 'imperative'),
+  ];
+}
+
+// True when the original's medication directives are NOT faithfully reproduced in the
+// model's translation — a polarity flip (hold→continue), a per-drug swap, a dropped
+// directive, or an inherently unverifiable one (bare "adjust"). Compares the ORIGINAL
+// against the model TRANSLATION (not its echoed sourceText), because a flip is baked in at
+// generation and the per-segment sourceText-vs-translatedText guard is blind to it. Bias: any doubt → true.
+function imperativesInconsistent(original: string, translation: NotesTranslation): boolean {
+  const origImp = imperativesOf(original);
+  if (origImp.length === 0) return false; // no directive to protect
+  if (origImp.some(isUnverifiable)) return true; // can't prove fidelity of an ambiguous order
+  const transText = translation.segments.map((s) => s.translatedText).join('\n');
+  const transImp = imperativesOf(transText);
+  // A per-drug SWAP is only possible when ≥2 distinct polarities are in play. When every
+  // directive on both sides is the SAME polarity, drug binding can't hide a flip — so key
+  // by polarity ALONE, avoiding a false mismatch when a shared directive ("continue A and
+  // B") binds to a different drug on each side after clause-splitting/reordering.
+  const distinctPols = new Set([...origImp, ...transImp].map(polarityKey));
+  const keyOf = distinctPols.size > 1 ? drugScopedKey : polarityKey;
+  const orig = origImp.map(keyOf).sort().join('|');
+  const trans = transImp.map(keyOf).sort().join('|');
+  return orig !== trans;
+}
+
 // Severity ordering for the overall verdict: abstain (unsafe) > flag (caution) > render (clean).
 const ACTION_RANK: Record<SegmentAction, number> = { render: 0, flag: 1, abstain: 2 };
 function maxAction(a: SegmentAction, b: SegmentAction): SegmentAction {
@@ -114,6 +174,18 @@ export function groundNotes(translation: NotesTranslation, originalText?: string
     const coveredKeys = new Set(
       detectImmutables(coveredSource, inferLang(coveredSource)).flatMap(immutableKeys),
     );
+
+    // R7b: a medication hold/continue/dose-direction flip is the highest-harm notes
+    // failure — and unlike a DROP, a flipped segment still carries a WRONG translation that
+    // the per-segment guard renders. So do not merely append: REPLACE the whole note with
+    // the verbatim original (like a total drop), guaranteeing the wrong instruction is never
+    // surfaced. (Requires originalText — the app always supplies it.)
+    if (imperativesInconsistent(original, translation)) {
+      return {
+        segments: [makeFallbackSegment(original, imperativeFlipFlag())],
+        overallAction: 'abstain',
+      };
+    }
 
     const dropped = originalIm.filter((im) => {
       const keys = immutableKeys(im);

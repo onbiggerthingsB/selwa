@@ -79,8 +79,14 @@ export interface AgeBand {
 }
 
 // --- M3: doctor-notes immutables ---
-export type ImmutableType = 'negation' | 'dosage' | 'drug' | 'number';
+export type ImmutableType = 'negation' | 'dosage' | 'drug' | 'number' | 'imperative';
 export type Polarity = 'present' | 'absent' | 'uncertain';
+// R7b (harden-H2): medication-directive polarity. A hold↔continue flip (Khoong 2019's
+// flagship harm: "hold the kidney medicine" → "keep taking it") or a dose-direction
+// swap must force an abstain. 'unknown' = a directive we cannot confidently classify
+// (bare 调整/adjust) → also abstain, since a missed flip is the only dangerous class.
+export type ImperativePolarity = 'hold' | 'continue' | 'dose-change' | 'unknown';
+export type DoseDir = 'up' | 'down' | 'unknown';
 
 export interface Immutable {
   type: ImmutableType;
@@ -92,8 +98,10 @@ export interface Immutable {
   unitDim?: string;            // dosage: normalized unit dimension key (mg, mL, mcg, IU, tablet…)
   frequency?: string;          // dosage: canonical frequency
   range?: { min: string; max: string }; // dosage range, e.g. 1–2 tablets
-  drugId?: string | null;      // drug: canonical known id, or null = unknown-med
+  drugId?: string | null;      // drug/imperative: canonical known id in scope, or null = unknown-med
   numUnit?: string | null;     // number: trailing unit if any
+  imperative?: ImperativePolarity; // imperative: hold/continue/dose-change/unknown
+  doseDir?: DoseDir;           // imperative: direction of a dose-change directive
 }
 
 export type SegmentKind = 'finding' | 'medication' | 'instruction' | 'followup' | 'other';
