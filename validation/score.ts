@@ -88,3 +88,25 @@ export function countMatchedImmutables(c: CorpusCase, candidate: string): number
   }
   return matched;
 }
+
+export interface CategoryCounts {
+  negations: number;
+  dosages: number;
+  drugs: number;
+  numbers: number;
+}
+
+/**
+ * Like countMatchedImmutables but split by immutable category — the input to
+ * MQM severity weighting (severity.ts). Uses the same deterministic predicates.
+ */
+export function countMatchedByCategory(c: CorpusCase, candidate: string): CategoryCounts {
+  const counts: CategoryCounts = { negations: 0, dosages: 0, drugs: 0, numbers: 0 };
+  if (!candidate) return counts;
+  for (const neg of c.immutables.negations) if (negationPreserved(neg, candidate)) counts.negations += 1;
+  for (const dose of c.immutables.dosages) if (dosagePreserved(dose, candidate)) counts.dosages += 1;
+  for (const drug of c.immutables.drugs)
+    if (drugPreserved(drug.surface, drug.canonicalId, candidate)) counts.drugs += 1;
+  for (const num of c.immutables.numbers) if (numberPreserved(num.value, candidate)) counts.numbers += 1;
+  return counts;
+}
