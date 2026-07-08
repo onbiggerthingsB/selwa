@@ -37,6 +37,7 @@ import { AGREEMENT_DEMO } from './agreement-demo';
 import { CHECKLIST } from './checklist/index';
 import { runBehavioralCase, type CaseResult as ChecklistResult } from './checklist/run';
 import { renderChecklist } from './checklist/render';
+import { confirmBurden, type ConfirmRow, type ConfirmBurden } from './confirmBurden';
 
 // A single OURS run: the scored CaseResult plus the exact string scored for
 // immutable survival ('' when abstained). The candidate is threaded out so the
@@ -45,6 +46,9 @@ import { renderChecklist } from './checklist/render';
 interface OursRun {
   result: CaseResult;
   candidate: string;
+  // Labs only: the confirm-gate detail (needsConfirm + which rules fired) for the
+  // confirm-burden metric. Undefined for notes/mixed (which have no needsConfirm).
+  confirmRow?: ConfirmRow;
 }
 
 // --- OURS: run a single corpus case through the guarded pipeline -------------
@@ -83,6 +87,11 @@ function runOursOnCase(c: CorpusCase): OursRun {
         matchedImmutables: abstained ? 0 : countMatchedImmutables(c, c.sourceText),
       },
       candidate: scored,
+      confirmRow: {
+        emitted: !abstained,
+        needsConfirm: row.needsConfirm,
+        ruleIds: row.flags.map((f) => f.id),
+      },
     };
   }
 
@@ -161,6 +170,8 @@ export interface ValidationReport {
   // CheckList behavioral-suite results + whether any safety-bearing (MFT/DIR) case failed.
   checklistResults: ChecklistResult[];
   checklistRegression: boolean;
+  // Confirm burden over the labs pipeline (harden-extraction H0 baseline).
+  confirmBurden: ConfirmBurden;
   // True when OURS missed any highStakes gold-abstain case OR a CheckList safety case failed.
   releaseBlocker: boolean;
 }
@@ -215,6 +226,12 @@ export async function runValidation(
   ours.severityWeightedFidelity = severityWeightedFidelity(severityEntries);
   ours.coverage = riskCoveragePoint(selective);
 
+  // Confirm burden (labs) — the H0 baseline the harden-extraction rules will move.
+  const confirmRows = oursRuns
+    .map((r) => r.confirmRow)
+    .filter((x): x is ConfirmRow => x !== undefined);
+  const confirmBurdenStats = confirmBurden(confirmRows);
+
   const baselineScores: PipelineScore[] = [];
   for (const baseline of baselines) {
     const results: CaseResult[] = [];
@@ -259,6 +276,7 @@ export async function runValidation(
     errorAnalysis,
     checklistResults,
     checklistRegression,
+    confirmBurden: confirmBurdenStats,
     releaseBlocker,
   };
 }
@@ -308,6 +326,26 @@ export function renderMarkdown(report: ValidationReport): string {
       `selective risk ${fmt(report.ours.coverage.selectiveRisk)}. Abstaining lowers risk at the cost of coverage.`,
   );
   lines.push(`Advisory-signal curve (demonstration): AURC ${fmt(aurc(demoCurve))} over ${demoCurve.length} points.`);
+  lines.push('');
+
+  // --- Confirm burden (labs; harden-extraction H0 baseline) ---
+  const cb = report.confirmBurden;
+  lines.push('## Confirm burden (labs)');
+  lines.push('');
+  lines.push(
+    `OURS routes ${cb.confirmed}/${cb.emitted} emitted labs rows to the confirm-the-values gate ` +
+      `(confirm rate ${fmt(cb.confirmRate)}). Baseline the harden-extraction rules (R13 suppression, ` +
+      `strengthened R11, extraction-reliability) will move — a rising rate is hardening only if paired with ` +
+      `fewer silent misreads; otherwise it is confirm-fatigue.`,
+  );
+  if (Object.keys(cb.byRule).length > 0) {
+    lines.push('');
+    lines.push('| Rule | Confirmed rows |');
+    lines.push('| --- | --- |');
+    for (const [id, n] of Object.entries(cb.byRule).sort((a, b) => b[1] - a[1])) {
+      lines.push(`| ${id} | ${n} |`);
+    }
+  }
   lines.push('');
 
   // --- Calibration of the advisory confidence signal (demonstration) ---
