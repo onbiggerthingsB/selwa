@@ -44,3 +44,19 @@ describe('buildSummary', () => {
     expect(hcy.refRange).toBe('');
   });
 });
+
+describe('R13 suppression rendering', () => {
+  it('an implausible (misread) value shows raw + Not assessed + no clinical meaning + the R13 flag', () => {
+    // 钾 40 mmol/L is a decimal-shift misread — R13 abstains.
+    const report = groundExtraction(
+      { rows: [{ name: '钾', value: '40', unit: 'mmol/L', printedRange: null, confidence: 'high' }] },
+      'unknown',
+    );
+    const s = buildSummary(report, 'en').sections[0];
+    expect(s.status).toBe('unclassified'); // NOT classified as critical
+    expect(s.statusLabelEn.toLowerCase()).toContain('not assessed');
+    expect(s.plainEn).toBe(''); // no plain-language clinical meaning rendered
+    expect(s.valueText).toContain('40'); // raw value still shown for the user to check
+    expect(s.flags.some((f) => /misread|check the number/i.test(f.messageEn))).toBe(true);
+  });
+});
