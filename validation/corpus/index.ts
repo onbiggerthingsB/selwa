@@ -10,12 +10,16 @@ import { NEGATION_CASES } from './negation.case';
 import { DOSE_CASES } from './dose.case';
 import { DRUG_CASES } from './drug.case';
 import { LABS_CASES } from './labs.case';
+import { UNIT_TRAP_CASES } from './unit-trap.case';
+import { UNKNOWN_ANALYTE_CASES } from './unknown-analyte.case';
 
 const RAW_CASES: CorpusCase[] = [
   ...NEGATION_CASES,
   ...DOSE_CASES,
   ...DRUG_CASES,
   ...LABS_CASES,
+  ...UNIT_TRAP_CASES,
+  ...UNKNOWN_ANALYTE_CASES,
 ];
 
 // Validate + freeze. Duplicate ids are a corpus authoring bug, so reject them.

@@ -38,6 +38,7 @@ export const AbstainReasonSchema = z.enum([
   'drug_ambiguous',
   'number_unit_mismatch',
   'unit_conversion_ambiguous',
+  'unknown_analyte', // analyte not present in the curated reference table
 ]);
 
 export const CorpusCaseSchema = z.object({
