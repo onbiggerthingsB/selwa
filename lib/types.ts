@@ -13,6 +13,15 @@ export interface ReferenceEntry {
   refHigh: Bound | null; // null when only a lower bound is meaningful (e.g. eGFR, HDL)
   criticalLow: number | null; // SI; null when no panic band defined
   criticalHigh: number | null; // SI
+  // R13 (harden-H1): absolute PLAUSIBILITY bounds — hard OCR-integrity min/max in
+  // the canonical SI unit, deliberately far wider than the reference/critical band
+  // so every real survivable/critical value passes; only magnitude-absurd misreads
+  // (decimal shifts, inserted digits, wrong-row values) fall outside. NOT a
+  // reference range, NOT a panic threshold, NOT biological impossibility. null = no
+  // meaningful numeric bound on that side (qualitative fields).
+  // Source: docs/superpowers/specs/2026-07-08-absolute-bounds-source.md
+  absoluteLow: number | null;
+  absoluteHigh: number | null;
   highStakes: boolean; // any abnormal value always flagged for clinician
   populationSensitive: boolean; // range depends on sex/age/fasting/pregnancy
   ageBands?: AgeBand[];

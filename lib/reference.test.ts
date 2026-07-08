@@ -81,3 +81,20 @@ describe('resolveBounds with age bands', () => {
     expect(resolveBounds(k, 'unknown')).toEqual({ low: 3.5, high: 5.3, usedUnion: false });
   });
 });
+
+describe('absolute plausibility bounds (R13 data)', () => {
+  it('potassium carries conservatively-wide absolute bounds (wider than the critical band)', () => {
+    const k = findEntry('钾')!;
+    expect(k.absoluteLow).toBe(1.0);
+    expect(k.absoluteHigh).toBe(15);
+    expect(k.absoluteHigh).toBeGreaterThan(k.criticalHigh ?? 0);
+  });
+
+  it('qualitative urine fields have null bounds (R13 does not apply)', () => {
+    const up = findEntry('urine_protein');
+    if (up) {
+      expect(up.absoluteLow).toBeNull();
+      expect(up.absoluteHigh).toBeNull();
+    }
+  });
+});

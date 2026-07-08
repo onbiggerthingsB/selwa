@@ -72,4 +72,24 @@ describe('reference table integrity', () => {
       if (e.criticalHigh !== null && high !== null) expect(e.criticalHigh).toBeGreaterThanOrEqual(high);
     }
   });
+
+  it('R13 absolute bounds are well-formed and NEVER clip the reference/critical band', () => {
+    for (const e of REFERENCE_LABS) {
+      expect(e.absoluteLow === null || typeof e.absoluteLow === 'number').toBe(true);
+      expect(e.absoluteHigh === null || typeof e.absoluteHigh === 'number').toBe(true);
+      if (e.absoluteLow !== null && e.absoluteHigh !== null) {
+        expect(e.absoluteHigh).toBeGreaterThan(e.absoluteLow);
+      }
+      // The bound must sit OUTSIDE every reference/critical value so a real
+      // survivable/critical result is never suppressed by R13.
+      const refLoMin =
+        typeof e.refLow === 'number' ? e.refLow : e.refLow ? Math.min(e.refLow.male, e.refLow.female) : null;
+      const refHiMax =
+        typeof e.refHigh === 'number' ? e.refHigh : e.refHigh ? Math.max(e.refHigh.male, e.refHigh.female) : null;
+      if (e.absoluteLow !== null && refLoMin !== null) expect(e.absoluteLow).toBeLessThanOrEqual(refLoMin);
+      if (e.absoluteHigh !== null && refHiMax !== null) expect(e.absoluteHigh).toBeGreaterThanOrEqual(refHiMax);
+      if (e.absoluteLow !== null && e.criticalLow !== null) expect(e.absoluteLow).toBeLessThanOrEqual(e.criticalLow);
+      if (e.absoluteHigh !== null && e.criticalHigh !== null) expect(e.absoluteHigh).toBeGreaterThanOrEqual(e.criticalHigh);
+    }
+  });
 });
