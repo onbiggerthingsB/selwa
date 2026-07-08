@@ -33,6 +33,16 @@ function structurallySuspicious(value: string | null, valueNum: number | null): 
   return false;
 }
 
+// R13: physiologically implausible magnitude in the analyte's unit — almost
+// certainly an OCR misread (decimal shift, inserted digit, wrong-row value). Bounds
+// are deliberately wide (source: docs/superpowers/specs/2026-07-08-absolute-bounds-source.md)
+// so a real survivable/critical value never lands here.
+function outsideAbsoluteBounds(valueNum: number, entry: ReferenceEntry): boolean {
+  if (entry.absoluteLow !== null && valueNum < entry.absoluteLow) return true;
+  if (entry.absoluteHigh !== null && valueNum > entry.absoluteHigh) return true;
+  return false;
+}
+
 export function evaluateRow(
   extracted: ExtractedRow,
   entry: ReferenceEntry | null,
@@ -67,6 +77,21 @@ export function evaluateRow(
       ),
     );
     return { action: 'abstain', needsConfirm: false, flags };
+  }
+
+  // R13 — implausible magnitude → suppress interpretation (likely misread). Abstain
+  // (no classification, raw value shown) AND needsConfirm (the confirm gate offers a
+  // correction). Bounds are wide so a real critical value is never suppressed here.
+  if (valueNum !== null && outsideAbsoluteBounds(valueNum, entry)) {
+    flags.push(
+      flag(
+        'R13-IMPLAUSIBLE-VALUE',
+        'caution',
+        'This value looks unusually far outside the physically possible range, so we may have misread it. Please check the number against your report.',
+        '该数值远超生理可能范围，我们可能读错了，请与您的报告核对该数字。',
+      ),
+    );
+    return { action: 'abstain', needsConfirm: true, flags };
   }
 
   let needsConfirm = false;

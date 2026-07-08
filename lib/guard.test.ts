@@ -114,3 +114,26 @@ describe('evaluateRow', () => {
     expect(out.flags).toHaveLength(0);
   });
 });
+
+describe('R13 — implausible value suppression', () => {
+  const k = findEntry('钾')!; // potassium, absolute bounds 1.0–15 mmol/L
+  const kRow = (v: string) => row({ name: '钾', value: v, unit: 'mmol/L' });
+
+  it('a decimal-shift misread (K 40) is suppressed: abstain + needsConfirm + R13 flag, no classification', () => {
+    const out = evaluateRow(kRow('40'), k, 40, 'critical', 'unknown');
+    expect(out.action).toBe('abstain'); // no low/normal/high rendered
+    expect(out.needsConfirm).toBe(true); // confirm gate offers correction
+    expect(ids(out.flags)).toContain('R13-IMPLAUSIBLE-VALUE');
+  });
+
+  it('a real critical-but-plausible value (K 6.8) is NOT suppressed — it classifies', () => {
+    const out = evaluateRow(kRow('6.8'), k, 6.8, 'critical', 'unknown');
+    expect(out.action).toBe('classify');
+    expect(ids(out.flags)).not.toContain('R13-IMPLAUSIBLE-VALUE');
+  });
+
+  it('does not fire when the analyte has no bound on the exceeded side', () => {
+    const out = evaluateRow(kRow('40'), { ...k, absoluteHigh: null }, 40, 'high', 'unknown');
+    expect(out.action).not.toBe('abstain');
+  });
+});
