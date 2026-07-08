@@ -927,3 +927,7 @@ a {
     display: none;
   }
 }
+
+/* H4 photo-quality retake tips */
+.quality-tips { margin: 10px 0 14px; padding-left: 18px; display: grid; gap: 6px; }
+.quality-tips li { line-height: 1.4; }
