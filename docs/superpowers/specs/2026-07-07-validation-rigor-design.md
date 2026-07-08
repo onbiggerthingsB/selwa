@@ -31,7 +31,7 @@ This directly serves the three stated goals: **real users at scale** (retires th
 | Direction | **"Prove the number"** — validation rigor + the paper-shaped contribution (chosen over harden-extraction / deepen-comprehension / de-risk-for-scale). |
 | Cycle ambition | **"Machinery first"** — build the rigorous validation machinery to completion (pure, deterministic, TDD'd, zero external blockers), *including* a ready-to-run MedRepBench extraction harness and a MIMIC-IV grounding-validator interface. **Executing** the real benchmarks (needs dataset access + API key + spend + weeks-long PhysioNet credentialing) is out of scope — the harness lands one command away. |
 | CheckList form | **Data-driven, scored, rendered** behavioral suite (not opaque unit tests), so R1–R12/notesGuard become an enumerable artifact a clinician-reviewer inspects line-by-line — *and* it doubles as regression tests. |
-| Corpus | Extend the existing synthetic corpus with **adversarial, deliberately-enriched** trap cases (unit-ambiguity, unknown-analyte, negation/imperative flips), reported transparently as enriched (not natural-prevalence). |
+| Corpus | Extend the existing synthetic corpus with **adversarial, deliberately-enriched** trap cases (uncurated-unit traps, unknown-analyte, negation/dose/drug flips), reported transparently as enriched (not natural-prevalence). Imperative (hold→continue) flips are **out of scope** — see §6.1. |
 | Real data | **Public, PHI-free** only: MedRepBench (Chinese lab images) + MIMIC-IV (real ranges/flags). Adapters land; execution deferred. |
 
 **Out of scope for this cycle (explicitly):** any change to `app/`, `lib/`, or `data/`; the **R13 physiological-bounds guard rule** and every other product/UI change (those belong to the *harden-extraction* and *deepen-comprehension* directions); actually running MedRepBench/MIMIC; the human teach-back / PEMAT comprehension study; automated health-literacy scoring of templates; any regulatory-wording change to templates.
@@ -70,10 +70,12 @@ validation/
     index.ts               # CREATE — schema-validated aggregate (mirrors corpus/index.ts)
     *.test.ts              # CREATE — every behavioral case must pass (regression)
   corpus/
-    unit-trap.case.ts      # CREATE — mg/dL↔mmol/L ambiguity across high-stakes analytes
+    unit-trap.case.ts      # CREATE — known analyte in an UNCURATED unit (glucose g/L) → gold-abstain
     unknown-analyte.case.ts# CREATE — off-table analytes → gold-abstain
-    imperative-flip.case.ts# CREATE — Khoong-style "hold the medicine"→"keep taking it"
     index.ts               # MODIFY — spread the new case files into RAW_CASES
+    # NOTE: an imperative-flip family was scoped out — see §6.1 (the guard does not yet
+    #       catch hold→continue medication reversals; it is a documented known-gap, not
+    #       a measurable release-gated case this cycle).
   extraction/              # CREATE — MedRepBench OCR-extraction benchmark (ready-to-run)
     types.ts               # ExtractionSample + gold rows (name/value/unit/range/flag)
     fieldRecall.ts         # field-level recall scorer (MedRepBench metric)
@@ -148,12 +150,18 @@ For the clinician gold: report agreement **correctly** on a skewed distribution 
 Recast R1–R12 + notesGuard as an enumerable **behavioral-testing** artifact (Ribeiro et al., ACL 2020 — MFT/INV/DIR), executed against the *real* guard so it is simultaneously (a) a re-runnable regression suite and (b) the auditable safety artifact a clinician-reviewer reads line-by-line.
 
 - **`BehavioralCase`** = `{ id, capability (e.g. 'R1-unknown-analyte'), testType, kind: 'labs'|'notes', input, expect }`:
-  - **MFT** (minimum functionality): a single input → a required `action` (`abstain` | `flag` | `render`). E.g. unknown analyte → `abstain`; unit mismatch → `abstain`.
-  - **INV** (invariance): a base input + a list of **label-preserving perturbations** (extra whitespace, analyte synonym/alias, a confusable-digit swap that a human reads identically, benign OCR noise) that must **not** change the low/normal/high call.
-  - **DIR** (directional): a base input + a transform that **must** change the action a specific way (mg/dL↔mmol/L swap → `abstain`; drop/flip a negation → `flag`/`abstain`; alter a dose / substitute a drug → `flag`/`abstain`).
+  - **MFT** (minimum functionality): a single input → a required verdict (`abstain` | `flag` | `render`). E.g. unknown analyte → `abstain`; known analyte in an uncurated unit → `abstain`; benign in-range non-high-stakes analyte → `render`; high-stakes analyte (even normal) → `flag` (confirm-the-values gate).
+  - **INV** (invariance): a base input + a list of **label-preserving** perturbations (extra whitespace, analyte synonym/alias, letter-case) that must **not** change the verdict *or* the low/normal/high classification. (Digit/decimal changes are **not** label-preserving — those are DIR, or the deferred R13 physiological-bounds work — never INV.)
+  - **DIR** (directional): a base input + a transform that **must** change the verdict a specific way. Verified against the real guard: a known analyte in a genuinely **uncurated / non-convertible unit** (e.g. **urea `mg/dL`**, or **glucose `g/L`**) → `abstain`; flip a negation → `flag`; alter a dose beyond the guard's magnitude-ratio bound (≥2×) or substitute a drug → `abstain`. **Important:** `mg/dL`↔`mmol/L` for glucose / cholesterols / creatinine / bilirubin / uric-acid are **curated safe auto-conversions (R2b)** and correctly *classify* — they are a success case, **not** a trap. The trap is an *uncurated* unit (urea/BUN, calcium) where `convertValue` returns null and the guard abstains.
+
+> **A verdict is normalized from the guard's real output**, not read off `action` directly: labs high-stakes/critical rows return `action: 'classify'` with `needsConfirm: true` (and a "confirm with clinician" flag), so `fromLabs` = `abstain → abstain`, else `needsConfirm || flags.length > 0 → flag`, else `render`. Notes use `overallAction` (`render|flag|abstain`) directly.
 - **`run.ts`** executes each case through `groundExtraction` (labs) / `groundNotes` (notes) — the exact entry points the runner already uses — and returns `{ id, capability, testType, expected, actual, pass, ruleFired }`.
 - **`render.ts`** emits a Markdown table for the report; **`checklist.test.ts`** asserts every case passes (a failure is a real regression).
 - Enriched deliberately with adversarial cases; enrichment is stated in the artifact so results are never mistaken for natural-prevalence performance.
+
+### 6.1 A documented known-gap the CheckList surfaces (not a bug in this cycle)
+
+Verified against the real guard while authoring the plan: the guard **flags** a negation-*polarity* mismatch (`未见明显积液` → "effusion is present" → `flag`) but has **no rule for medication-instruction imperative reversal** (`暂停服用降压药` / "hold your BP medicine" → "keep taking it" → `render`, no flag). That hold→continue flip is Khoong et al.'s flagship *life-threatening* failure. It cannot be a release-gated corpus case here (the guard would miss it and block the gate forever, and changing the guard is out of scope). It is therefore recorded as a **known gap** in `docs/VALIDATION-METHODOLOGY.md` — the motivating target for a future harden-extraction rule (call it **R7b**, imperative-polarity), and a concrete example of the CheckList's value: it makes an un-caught failure *visible and named* rather than hidden.
 
 ## 7. Real-data adapters (land green without data or a key)
 
@@ -209,6 +217,6 @@ Each milestone is independently green and leaves `npm run validate` runnable. M1
 
 ## 11. What this explicitly does NOT do
 
-- No edits to `app/`, `lib/`, or `data/` — no new guard rule (R13 and physiological bounds are a *separate* harden-extraction cycle), no template wording change, no UI.
+- No edits to `app/`, `lib/`, or `data/` — **no new guard rule** (R13 physiological bounds *and* R7b imperative-polarity are a *separate* harden-extraction cycle; the imperative-flip gap is documented, not fixed, here — §6.1), no template wording change, no UI.
 - No execution of the real benchmarks (no dataset download committed, no API spend, no PhysioNet credentialing) — those are one command / one process away, by design.
 - No human-subjects comprehension study, no health-literacy template scoring, no regulatory-doc changes — those belong to other approved directions and can be sequenced next.
