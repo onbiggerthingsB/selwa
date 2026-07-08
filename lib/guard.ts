@@ -7,6 +7,7 @@ import type {
   Sex,
 } from '@/lib/types';
 import { unitMatches, resolveBounds, parsePrintedRange, type PrintedRange } from '@/lib/reference';
+import { classifyAgainstBounds } from '@/lib/classify';
 
 const CONFIRM_CLINICIAN_EN = 'Confirm this with your clinician.';
 const CONFIRM_CLINICIAN_ZH = '请与您的医生确认。';
@@ -154,12 +155,25 @@ export function evaluateRow(
   // R11 — the report's own printed range disagrees with ours (unit-normalized).
   const printed = normalizedPrintedRange ?? parsePrintedRange(extracted.printedRange);
   if (printed && printedRangeDisagrees(printed, entry, sex, age)) {
+    // Flip-gate: route to confirm ONLY when the disagreement could change the
+    // low/normal/high call for THIS value; otherwise it is informational (no
+    // confirm), since legitimate assay/lab range differences are common.
+    const { low, high } = resolveBounds(entry, sex, age);
+    const flips =
+      valueNum !== null &&
+      classifyAgainstBounds(valueNum, low, high) !== classifyAgainstBounds(valueNum, printed.low, printed.high);
+    if (flips) needsConfirm = true;
     flags.push(
       flag(
         'R11-RANGE-DISAGREEMENT',
-        'caution',
-        'Your report’s own reference range differs from ours; ranges vary between labs. ' + CONFIRM_CLINICIAN_EN,
-        '您报告上的参考范围与我们的不同；不同实验室的范围会有差异。' + CONFIRM_CLINICIAN_ZH,
+        flips ? 'caution' : 'info',
+        flips
+          ? 'Your report’s reference range differs from ours in a way that could change whether this value is in range. ' +
+            CONFIRM_CLINICIAN_EN
+          : 'Your report’s own reference range differs slightly from ours; ranges vary between labs.',
+        flips
+          ? '您报告上的参考范围与我们的不同，这可能影响该数值是否属于正常范围。' + CONFIRM_CLINICIAN_ZH
+          : '您报告上的参考范围与我们的略有不同；不同实验室的范围会有差异。',
       ),
     );
   }
