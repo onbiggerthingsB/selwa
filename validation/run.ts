@@ -28,8 +28,27 @@ import { offlineAdapter } from './baseline/offlineAdapter';
 import { groundNotes } from '@/lib/notesGrounding';
 import { groundExtraction } from '@/lib/grounding';
 
+import { severityWeightedFidelity, type SeverityEntry } from './severity';
+import { riskCoveragePoint, riskCoverageCurve, aurc, type SelectiveCase, type CoveragePoint } from './coverage';
+import { reliabilityBins, expectedCalibrationError } from './calibration';
+import { agreementStats } from './agreement';
+import { CALIBRATION_DEMO } from './calibration-demo';
+import { AGREEMENT_DEMO } from './agreement-demo';
+import { CHECKLIST } from './checklist/index';
+import { runBehavioralCase, type CaseResult as ChecklistResult } from './checklist/run';
+import { renderChecklist } from './checklist/render';
+
+// A single OURS run: the scored CaseResult plus the exact string scored for
+// immutable survival ('' when abstained). The candidate is threaded out so the
+// severity-weighted fidelity (severity.ts) scores the SAME string as the primary
+// term-weighted fidelity — labs → sourceText, notes → emittedText.
+interface OursRun {
+  result: CaseResult;
+  candidate: string;
+}
+
 // --- OURS: run a single corpus case through the guarded pipeline -------------
-function runOursOnCase(c: CorpusCase): CaseResult {
+function runOursOnCase(c: CorpusCase): OursRun {
   const candidate = c.candidateTranslation ?? c.goldTranslation;
 
   if (c.kind === 'labs') {
@@ -53,13 +72,17 @@ function runOursOnCase(c: CorpusCase): CaseResult {
     );
     const row = grounded.rows[0];
     const abstained = row.action === 'abstain';
+    // For an emitted lab row the value survives (we display it verbatim); an
+    // abstained row shows the source only, so nothing is "translated".
+    const scored = abstained ? '' : c.sourceText;
     return {
-      id: c.id,
-      abstained,
-      emitted: !abstained,
-      // For an emitted lab row the value survives (we display it verbatim);
-      // an abstained row shows the source only, so nothing is "translated".
-      matchedImmutables: abstained ? 0 : countMatchedImmutables(c, c.sourceText),
+      result: {
+        id: c.id,
+        abstained,
+        emitted: !abstained,
+        matchedImmutables: abstained ? 0 : countMatchedImmutables(c, c.sourceText),
+      },
+      candidate: scored,
     };
   }
 
@@ -73,10 +96,13 @@ function runOursOnCase(c: CorpusCase): CaseResult {
     ? ''
     : grounded.segments.map((s) => s.translated).join(' ');
   return {
-    id: c.id,
-    abstained,
-    emitted: !abstained,
-    matchedImmutables: abstained ? 0 : countMatchedImmutables(c, emittedText),
+    result: {
+      id: c.id,
+      abstained,
+      emitted: !abstained,
+      matchedImmutables: abstained ? 0 : countMatchedImmutables(c, emittedText),
+    },
+    candidate: emittedText,
   };
 }
 
@@ -108,6 +134,10 @@ export interface PipelineScore {
   abstentionPrecision: number;
   abstentionRecall: number;
   highStakesRecall: number;
+  // MQM severity-weighted fidelity + risk-coverage operating point (OURS only;
+  // baselines leave these NaN since they never abstain).
+  severityWeightedFidelity: number;
+  coverage: CoveragePoint;
   results: CaseResult[];
 }
 
@@ -128,7 +158,10 @@ export interface ValidationReport {
   ours: PipelineScore;
   baselines: PipelineScore[];
   errorAnalysis: ErrorAnalysisRow[];
-  // True when OURS missed any highStakes gold-abstain case (release blocker).
+  // CheckList behavioral-suite results + whether any safety-bearing (MFT/DIR) case failed.
+  checklistResults: ChecklistResult[];
+  checklistRegression: boolean;
+  // True when OURS missed any highStakes gold-abstain case OR a CheckList safety case failed.
   releaseBlocker: boolean;
 }
 
@@ -148,6 +181,8 @@ function scorePipeline(id: string, results: CaseResult[], gold: GoldCase[]): Pip
     abstentionPrecision: abstentionPrecision(results, gold),
     abstentionRecall: abstentionRecall(results, gold),
     highStakesRecall: abstentionRecall(results, gold, { highStakesOnly: true }),
+    severityWeightedFidelity: NaN, // OURS overwrites this in runValidation
+    coverage: { coverage: NaN, selectiveRisk: NaN },
     results,
   };
 }
@@ -162,8 +197,23 @@ export async function runValidation(
 ): Promise<ValidationReport> {
   const gold = toGold(cases);
 
-  const oursResults = cases.map(runOursOnCase);
+  const oursRuns = cases.map(runOursOnCase);
+  const oursResults = oursRuns.map((r) => r.result);
   const ours = scorePipeline('ours', oursResults, gold);
+
+  // MQM severity-weighted fidelity + the risk-coverage operating point (OURS).
+  const severityEntries: SeverityEntry[] = cases.map((c, i) => ({
+    case: c,
+    emitted: oursResults[i].emitted,
+    candidate: oursRuns[i].candidate,
+  }));
+  const selective: SelectiveCase[] = oursResults.map((r, i) => ({
+    emitted: r.emitted,
+    // emitted but wrong: dropped ≥1 immutable, or emitted where gold said abstain
+    error: r.emitted && (r.matchedImmutables < totalImmutables(cases[i]) || cases[i].shouldAbstain),
+  }));
+  ours.severityWeightedFidelity = severityWeightedFidelity(severityEntries);
+  ours.coverage = riskCoveragePoint(selective);
 
   const baselineScores: PipelineScore[] = [];
   for (const baseline of baselines) {
@@ -191,7 +241,14 @@ export async function runValidation(
     };
   });
 
-  const releaseBlocker = errorAnalysis.some((e) => e.oursMissedHighStakes);
+  // CheckList behavioral suite — a failing safety-bearing (MFT/DIR) case blocks release.
+  const checklistResults = CHECKLIST.map(runBehavioralCase);
+  const checklistRegression = checklistResults.some(
+    (r) => !r.pass && (r.testType === 'MFT' || r.testType === 'DIR'),
+  );
+
+  const releaseBlocker =
+    errorAnalysis.some((e) => e.oursMissedHighStakes) || checklistRegression;
 
   return {
     generatedAt: new Date().toISOString(),
@@ -200,6 +257,8 @@ export async function runValidation(
     ours,
     baselines: baselineScores,
     errorAnalysis,
+    checklistResults,
+    checklistRegression,
     releaseBlocker,
   };
 }
@@ -230,6 +289,57 @@ export function renderMarkdown(report: ValidationReport): string {
   lines.push('Fidelity is term-weighted over emitted cases only. Abstention precision/recall');
   lines.push('are reported as N/A (never 1.0) when their denominator is empty.');
   lines.push('');
+
+  // --- MQM severity-weighted fidelity (corpus, real) ---
+  lines.push('## Severity-weighted fidelity (MQM, corpus)');
+  lines.push('');
+  lines.push(
+    `OURS: ${fmt(report.ours.severityWeightedFidelity)} — a missed Critical immutable ` +
+      `(flipped negation / altered dose / substituted drug / dropped high-stakes number) collapses the score.`,
+  );
+  lines.push('');
+
+  // --- Risk–coverage: corpus operating point (real) + advisory-signal curve (demonstration) ---
+  const demoCurve = riskCoverageCurve(CALIBRATION_DEMO.map((c) => ({ score: c.score, error: !c.correct })));
+  lines.push('## Risk–coverage (selective prediction)');
+  lines.push('');
+  lines.push(
+    `OURS operating point (corpus): coverage ${fmt(report.ours.coverage.coverage)}, ` +
+      `selective risk ${fmt(report.ours.coverage.selectiveRisk)}. Abstaining lowers risk at the cost of coverage.`,
+  );
+  lines.push(`Advisory-signal curve (demonstration): AURC ${fmt(aurc(demoCurve))} over ${demoCurve.length} points.`);
+  lines.push('');
+
+  // --- Calibration of the advisory confidence signal (demonstration) ---
+  lines.push('## Calibration of the advisory confidence signal (demonstration)');
+  lines.push('');
+  lines.push(
+    `ECE ${fmt(expectedCalibrationError(CALIBRATION_DEMO, 10))} over ${CALIBRATION_DEMO.length} labelled points ` +
+      `— the deterministic guard is NOT gated on this signal; this quantifies why (model confidence is miscalibrated).`,
+  );
+  lines.push('');
+  lines.push('| score bin | mean score | accuracy | n |');
+  lines.push('| --- | --- | --- | --- |');
+  for (const b of reliabilityBins(CALIBRATION_DEMO, 5)) {
+    if (b.count === 0) continue;
+    lines.push(`| ${b.lo.toFixed(1)}–${b.hi.toFixed(1)} | ${fmt(b.meanScore)} | ${fmt(b.accuracy)} | ${b.count} |`);
+  }
+  lines.push('');
+
+  // --- Inter-rater agreement (demonstration; paradox-resistant) ---
+  const ag = agreementStats(AGREEMENT_DEMO);
+  lines.push('## Inter-rater agreement (demonstration; paradox-resistant)');
+  lines.push('');
+  lines.push(
+    `raw ${fmt(ag.rawAgreement)}, prevalence ${fmt(ag.prevalence)}, ` +
+      `Cohen's κ ${fmt(ag.cohensKappa)}, Gwet's AC1 ${fmt(ag.gwetAC1)}, PABAK ${fmt(ag.pabak)}. ` +
+      `On a skewed abstain/normal split κ deflates (the kappa paradox) while AC1/PABAK hold — report all four, never κ alone.`,
+  );
+  lines.push('');
+
+  // --- CheckList behavioral suite ---
+  lines.push(renderChecklist(report.checklistResults));
+
   lines.push('## High-stakes release gate');
   lines.push('');
   lines.push(
@@ -274,9 +384,14 @@ async function main(): Promise<void> {
 
   console.log(renderMarkdown(report));
 
-  // High-stakes recall < 1.0 is a release blocker → non-zero exit.
+  // A release blocker fires on a missed high-stakes abstention OR a CheckList safety regression.
   if (report.releaseBlocker) {
-    console.error('\nRELEASE BLOCKER: high-stakes abstention recall < 1.0');
+    if (report.checklistRegression) {
+      console.error('\nRELEASE BLOCKER: CheckList safety regression (an MFT/DIR case failed).');
+    }
+    if (report.errorAnalysis.some((e) => e.oursMissedHighStakes)) {
+      console.error('\nRELEASE BLOCKER: high-stakes abstention recall < 1.0');
+    }
     process.exit(1);
   }
 }

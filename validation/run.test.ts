@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { runValidation, renderMarkdown } from './run';
 import { offlineAdapter } from './baseline/offlineAdapter';
 import type { CorpusCase } from './types';
+import { CHECKLIST } from './checklist/index';
+import { runBehavioralCase } from './checklist/run';
 
 // A 3-case fixture mirroring the worked example shape: two should-abstain
 // (high-stakes) notes cases the guard genuinely abstains on, and one faithful
@@ -121,5 +123,24 @@ describe('runValidation (offline smoke test)', () => {
     expect(md).toContain('| ours |');
     expect(md).toContain('High-stakes release gate');
     expect(md).toContain('PASS');
+  });
+});
+
+describe('report + checklist gate', () => {
+  it('report renders all four metric families + the checklist table', async () => {
+    const report = await runValidation();
+    const md = renderMarkdown(report);
+    expect(md).toContain('Severity-weighted fidelity'); // corpus (real)
+    expect(md).toContain('Risk–coverage');              // corpus point + demo curve/AURC
+    expect(md).toContain('Calibration');                // ECE demo
+    expect(md).toContain('Inter-rater agreement');      // agreement demo
+    expect(md).toContain('CheckList behavioral suite');
+    expect(report.ours.severityWeightedFidelity).toBeDefined();
+    expect(report.ours.coverage.coverage).toBeGreaterThanOrEqual(0);
+  });
+
+  it('checklistRegression is false when every behavioral case passes', () => {
+    const failed = CHECKLIST.map(runBehavioralCase).filter((r) => !r.pass);
+    expect(failed).toHaveLength(0);
   });
 });
