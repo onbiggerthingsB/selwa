@@ -1,6 +1,6 @@
 import type { GroundedReport, GroundedRow, Sex } from '@/lib/types';
 import type { LabExtraction } from '@/lib/extractionSchema';
-import { findEntry, unitMatches } from '@/lib/reference';
+import { findEntry, unitMatches, parsePrintedRange } from '@/lib/reference';
 import { parseValue, classify } from '@/lib/classify';
 import { evaluateRow } from '@/lib/guard';
 import { convertValue } from '@/lib/convert';
@@ -24,9 +24,29 @@ export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: numb
     }
     const effectiveUnit = converted ? entry!.unit : extracted.unit;
 
+    // Normalize the report's printed reference range to our canonical unit so R11
+    // compares like-with-like (a mg/dL printed range vs our mmol/L band, etc.).
+    // When the value was unit-converted, apply the SAME conversion to the range.
+    let normalizedPrintedRange = parsePrintedRange(extracted.printedRange);
+    if (normalizedPrintedRange && converted && entry && extracted.unit) {
+      const cl =
+        normalizedPrintedRange.low !== null ? convertValue(normalizedPrintedRange.low, extracted.unit, entry) : null;
+      const ch =
+        normalizedPrintedRange.high !== null ? convertValue(normalizedPrintedRange.high, extracted.unit, entry) : null;
+      normalizedPrintedRange = { low: cl ? cl.value : null, high: ch ? ch.value : null };
+    }
+
     // classify only when grounded against a matched entry; the guard owns abstention.
     const classification = entry ? classify(valueNum, entry, sex, age) : 'unclassified';
-    const outcome = evaluateRow({ ...extracted, unit: effectiveUnit }, entry, valueNum, classification, sex, age);
+    const outcome = evaluateRow(
+      { ...extracted, unit: effectiveUnit },
+      entry,
+      valueNum,
+      classification,
+      sex,
+      age,
+      normalizedPrintedRange,
+    );
 
     // Surface the conversion as a non-blocking info flag (EN + ZH).
     if (converted) {

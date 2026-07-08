@@ -6,7 +6,7 @@ import type {
   ReferenceEntry,
   Sex,
 } from '@/lib/types';
-import { unitMatches, resolveBounds } from '@/lib/reference';
+import { unitMatches, resolveBounds, parsePrintedRange, type PrintedRange } from '@/lib/reference';
 
 const CONFIRM_CLINICIAN_EN = 'Confirm this with your clinician.';
 const CONFIRM_CLINICIAN_ZH = '请与您的医生确认。';
@@ -50,6 +50,10 @@ export function evaluateRow(
   classification: Classification,
   sex: Sex,
   age?: number,
+  // R11 (harden-H1): the printed range already parsed + unit-normalized to our
+  // canonical unit by grounding.ts. Optional for back-compat with direct callers
+  // (whose printed range is in canonical units); falls back to parsing the raw string.
+  normalizedPrintedRange?: PrintedRange | null,
 ): GuardOutcome {
   const flags: GuardFlag[] = [];
 
@@ -147,8 +151,9 @@ export function evaluateRow(
     );
   }
 
-  // R11 — report-printed range materially disagrees with ours.
-  if (extracted.printedRange && printedRangeDisagrees(extracted.printedRange, entry, sex, age)) {
+  // R11 — the report's own printed range disagrees with ours (unit-normalized).
+  const printed = normalizedPrintedRange ?? parsePrintedRange(extracted.printedRange);
+  if (printed && printedRangeDisagrees(printed, entry, sex, age)) {
     flags.push(
       flag(
         'R11-RANGE-DISAGREEMENT',
@@ -174,14 +179,10 @@ export function evaluateRow(
   return { action: 'classify', needsConfirm, flags };
 }
 
-function printedRangeDisagrees(printed: string, entry: ReferenceEntry, sex: Sex, age?: number): boolean {
-  const m = printed.match(/(-?\d+(?:\.\d+)?)\s*[-~–]\s*(-?\d+(?:\.\d+)?)/);
-  if (!m) return false;
-  const pLow = Number(m[1]);
-  const pHigh = Number(m[2]);
+function printedRangeDisagrees(printed: PrintedRange, entry: ReferenceEntry, sex: Sex, age?: number): boolean {
   const { low, high } = resolveBounds(entry, sex, age);
   const tol = 0.15; // 15% materiality threshold
-  const off = (ours: number | null, theirs: number) =>
-    ours !== null && Math.abs(ours - theirs) > Math.abs(ours) * tol;
-  return off(low, pLow) || off(high, pHigh);
+  const off = (ours: number | null, theirs: number | null) =>
+    ours !== null && theirs !== null && Math.abs(ours - theirs) > Math.abs(ours) * tol;
+  return off(low, printed.low) || off(high, printed.high);
 }

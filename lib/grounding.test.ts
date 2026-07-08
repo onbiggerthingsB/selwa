@@ -65,4 +65,15 @@ describe('groundExtraction', () => {
     expect(urea.action).toBe('abstain');
     expect(urea.flags.map((f) => f.id)).toContain('R2-UNIT-MISMATCH');
   });
+
+  it('R11 unit-aware: a mg/dL printed range no longer false-disagrees with our mmol/L band', () => {
+    // Glucose 99 mg/dL (printed range 70-99 mg/dL) auto-converts to ~5.49 mmol/L.
+    // The printed range must be normalized to mmol/L (~3.9-5.5) before comparing to
+    // our 3.9-6.1 — pre-fix this compared 70-99 to 3.9-6.1 and false-fired R11.
+    const ex = {
+      rows: [{ name: '空腹血糖', value: '99', unit: 'mg/dL', printedRange: '70-99', confidence: 'high' as const }],
+    };
+    const { rows } = groundExtraction(ex, 'unknown');
+    expect(rows[0].flags.map((f) => f.id)).not.toContain('R11-RANGE-DISAGREEMENT');
+  });
 });
