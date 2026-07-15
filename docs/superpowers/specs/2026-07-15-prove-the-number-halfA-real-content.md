@@ -17,16 +17,26 @@ images with author-provided gold field annotations) straight through `groundExtr
 classify → guard`. Image-free, no API. Harness: `validation/real-corpus/` — run
 `npx tsx validation/real-corpus/run.ts`.
 
-## The numbers (11 real reports, 73 analyte rows, diverse panels)
+## The numbers (25 real reports, 143 analyte rows, diverse panels)
 
 | metric | value | reading |
 |---|---|---|
-| recognized by our 89-analyte table | **21 / 73 (28.8%)** | most real rows never map |
-| **ABSTAIN-RATE** | **87.7%** (64/73) | on a real report the app is nearly silent |
-| **CONFIRM-RATE** | **22.2%** (2/9 interpreted) | NOT confirm-fatigue |
-| **AGREEMENT** | **100%** (9/9 scorable) | when we speak, we're right (small n) |
+| recognized by our 89-analyte table | **43 / 143 (30.1%)** | most real rows never map |
+| **ABSTAIN-RATE** | **79.0%** (113/143) | on a real report the app is largely silent |
+| **CONFIRM-RATE** | **33.3%** (10/30 interpreted) | NOT confirm-fatigue |
+| **AGREEMENT** | **96.7%** (29/30 scorable) | when we speak, we're right |
 
-Abstain breakdown: **52 R1-unknown-analyte · 8 R2-unit-mismatch · 4 non-numeric.**
+Abstain breakdown: **100 R1-unknown-analyte · 9 R2-unit-mismatch · 4 non-numeric.**
+Split (coverage work develops on TRAIN, is gated on HELD-OUT it never sees):
+`train` 16 rpt / 97 rows — abstain 80.4%, agree 94.7% (n=19) · `heldout` 9 rpt / 46 rows —
+abstain 76.1%, agree 100% (n=11).
+
+**The single agreement miss is SAFE, not silent.** `谷草转氨酶` (AST) 11 U/L, printed range
+2–40 → we call it *low* (our band's floor > 11) while the report calls it normal — but R11
+fires and routes it to **confirm** ("we read this as low; it disagrees with your report's
+range"). And R11's flip-gating is correct on real data: the same rule fires WITHOUT confirm
+when the band difference doesn't change the call (AST 19.1, both normal). So the guard's
+safety holds on real content: 29/30 agree outright, and the 30th is confirm-flagged.
 
 ## What this actually says (the reframe)
 
@@ -51,14 +61,17 @@ genuinely un-interpretable" — without touching the safety core that just score
 
 ## Caveats (honesty)
 
-- Convenience sample of the first ~24 dataset rows, transcribed VERBATIM via WebFetch (sandbox
-  blocks curl) — may carry minor transcription noise; a rigorous rerun downloads the CSV.
-- Deliberately diverse (I included allergen/serology/urine/cytology panels), so 87.7% is the
-  abstain-rate on *mixed* real reports; on a routine-chemistry/CBC-only slice the recoverable
+- Convenience sample of dataset rows ~1–45 (25 reports w/ items), transcribed VERBATIM via
+  WebFetch (sandbox blocks curl; HF datasets-server 503s). May carry minor transcription noise.
+  The **defensible** number needs the raw CSV: `MEDREPBENCH_CSV=/path/datasets-meta-zhCN.csv
+  npx tsx validation/real-corpus/run.ts` (loader + deterministic held-out split already built).
+- Deliberately diverse (allergen/serology/urine/cytology/HPV/genotype panels included), so 79%
+  is the abstain-rate on *mixed* real reports; on a routine-chemistry/CBC slice the recoverable
   name/unit misses dominate and the achievable rate is far lower.
-- Agreement n=9 is small — directional, not a headline. The abstain-rate is the robust number.
-- `is_abnormal` is each report's OWN flag (vs its printed range), so agreement partly measures
-  whether our reference bands match the lab's.
+- Agreement n=30 (up from 9) — firmer, still modest. The abstain-rate is the robust number.
+- `is_abnormal` is each report's OWN flag (vs its printed range), so a disagreement can mean our
+  reference band differs from the lab's — and when that difference flips the call, R11 catches
+  it and routes to confirm (verified: the one miss is confirm-flagged, not silent).
 
 ## Next (only if pursued — not another hardening cycle)
 
