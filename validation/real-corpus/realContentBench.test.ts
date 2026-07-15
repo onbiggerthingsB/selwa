@@ -18,6 +18,15 @@ describe('real-content grounding harness', () => {
     expect(s.agreement).toBeLessThanOrEqual(1);
   });
 
+  it('SAFETY GATE: no confidently-wrong row on real content (a disagreement must be confirm-flagged, never silent)', () => {
+    // This is the gate for coverage work: widening recognition may raise the abstain-rate
+    // floor and add confirm-flagged disagreements, but must NEVER produce a row we present
+    // confidently (needsConfirm=false) that disagrees with the report's own flag.
+    const s = scoreRealCorpus(MEDREPBENCH_SAMPLE);
+    expect(s.confidentlyWrong).toHaveLength(0);
+    expect(s.confidentAgreement).toBe(1);
+  });
+
   it('split is deterministic, disjoint, and total', () => {
     const a = splitCorpus(MEDREPBENCH_SAMPLE);
     const b = splitCorpus(MEDREPBENCH_SAMPLE);

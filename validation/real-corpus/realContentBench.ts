@@ -17,6 +17,7 @@ export interface ClassifiedDetail {
   value: string;
   unit: string;
   ourClass: string;
+  needsConfirm: boolean;
   datasetFlag: 'normal' | 'abnormal' | 'unscored';
   agree: boolean | null; // null = not scorable (dataset flag missing)
 }
@@ -33,6 +34,12 @@ export interface RealCorpusSummary {
   confirmByRule: Record<string, number>;
   agreementScored: number;
   agreement: number; // fraction matching the report's own flag
+  // The REAL safety gate: agreement among rows we present CONFIDENTLY (needsConfirm=false).
+  // A confirm-flagged disagreement (e.g. R11 band-vs-printed-range) is safe, not a wrong call,
+  // so it must not count against safety — only a confidently-wrong row does.
+  confidentScored: number;
+  confidentAgreement: number;
+  confidentlyWrong: ClassifiedDetail[]; // MUST stay empty — a confident wrong call is the failure
   classifiedDetail: ClassifiedDetail[];
   disagreements: ClassifiedDetail[];
 }
@@ -100,11 +107,13 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
         rowAgree = ours === (it.is_abnormal === '1');
         if (rowAgree) agree += 1;
       }
-      classifiedDetail.push({ name: it.item_name.trim(), value: it.item_value, unit: it.item_unit, ourClass: row.classification, datasetFlag, agree: rowAgree });
+      classifiedDetail.push({ name: it.item_name.trim(), value: it.item_value, unit: it.item_unit, ourClass: row.classification, needsConfirm: row.needsConfirm, datasetFlag, agree: rowAgree });
     }
   }
 
   const cb = confirmBurden(confirmRows);
+  const confident = classifiedDetail.filter((d) => !d.needsConfirm && d.agree !== null);
+  const confidentAgree = confident.filter((d) => d.agree === true).length;
   return {
     reports: reports.length,
     items,
@@ -117,6 +126,9 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
     confirmByRule: cb.byRule,
     agreementScored,
     agreement: agreementScored === 0 ? NaN : agree / agreementScored,
+    confidentScored: confident.length,
+    confidentAgreement: confident.length === 0 ? NaN : confidentAgree / confident.length,
+    confidentlyWrong: confident.filter((d) => d.agree === false),
     classifiedDetail,
     disagreements: classifiedDetail.filter((d) => d.agree === false),
   };
