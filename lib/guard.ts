@@ -152,30 +152,36 @@ export function evaluateRow(
     );
   }
 
-  // R11 — the report's own printed range disagrees with ours (unit-normalized).
+  // R11 — the report's own printed range vs ours (unit-normalized). Fire on a VALUE-LEVEL
+  // FLIP (our band and the printed range give a different low/normal/high call for THIS
+  // value) REGARDLESS of overall band closeness — a value sitting in the narrow gap between
+  // the two bands is a real disagreement that must confirm, even when the bands are within
+  // the materiality tolerance. Band differences that don't flip this value are informational
+  // only (assay/lab reference ranges legitimately vary). Surfaced by the real-content
+  // measurement: HCT 49.9% (our sex-unknown union band vs a narrower printed range).
   const printed = normalizedPrintedRange ?? parsePrintedRange(extracted.printedRange);
-  if (printed && printedRangeDisagrees(printed, entry, sex, age)) {
-    // Flip-gate: route to confirm ONLY when the disagreement could change the
-    // low/normal/high call for THIS value; otherwise it is informational (no
-    // confirm), since legitimate assay/lab range differences are common.
+  if (printed) {
     const { low, high } = resolveBounds(entry, sex, age);
-    const flips =
+    const valueFlips =
       valueNum !== null &&
       classifyAgainstBounds(valueNum, low, high) !== classifyAgainstBounds(valueNum, printed.low, printed.high);
-    if (flips) needsConfirm = true;
-    flags.push(
-      flag(
-        'R11-RANGE-DISAGREEMENT',
-        flips ? 'caution' : 'info',
-        flips
-          ? 'Your report’s reference range differs from ours in a way that could change whether this value is in range. ' +
-            CONFIRM_CLINICIAN_EN
-          : 'Your report’s own reference range differs slightly from ours; ranges vary between labs.',
-        flips
-          ? '您报告上的参考范围与我们的不同，这可能影响该数值是否属于正常范围。' + CONFIRM_CLINICIAN_ZH
-          : '您报告上的参考范围与我们的略有不同；不同实验室的范围会有差异。',
-      ),
-    );
+    const bandsDiffer = printedRangeDisagrees(printed, entry, sex, age);
+    if (valueFlips || bandsDiffer) {
+      if (valueFlips) needsConfirm = true;
+      flags.push(
+        flag(
+          'R11-RANGE-DISAGREEMENT',
+          valueFlips ? 'caution' : 'info',
+          valueFlips
+            ? 'Your report’s reference range differs from ours in a way that could change whether this value is in range. ' +
+              CONFIRM_CLINICIAN_EN
+            : 'Your report’s own reference range differs slightly from ours; ranges vary between labs.',
+          valueFlips
+            ? '您报告上的参考范围与我们的不同，这可能影响该数值是否属于正常范围。' + CONFIRM_CLINICIAN_ZH
+            : '您报告上的参考范围与我们的略有不同；不同实验室的范围会有差异。',
+        ),
+      );
+    }
   }
 
   // R12 — population-sensitive analyte with unknown sex or missing age (we widened the band).

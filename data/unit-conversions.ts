@@ -22,6 +22,10 @@ export const UNIT_CONVERSIONS: UnitConversion[] = [
   // most common real report format (e.g. 480 ng/mL FEU = 0.48 mg/L FEU, below the 0.5 cutoff).
   { analyteKey: 'd_dimer', conventionalUnit: 'ng/mL FEU', siUnit: 'mg/L FEU', factorConvToSI: 0.001, factorSIToConv: 1000, source: 'Decimal-scale unit change within FEU basis (1 mg/L = 1000 ng/mL); exact' },
   { analyteKey: 'd_dimer', conventionalUnit: 'µg/L FEU', siUnit: 'mg/L FEU', factorConvToSI: 0.001, factorSIToConv: 1000, source: 'Decimal-scale unit change within FEU basis (1 mg/L = 1000 µg/L); exact' },
+  // Hematocrit %: the fraction expressed as a percentage. 39% = 0.39 L/L (×0.01), exact. Safe
+  // because % and L/L are MAGNITUDE-SEPARABLE (H1.5 mode-a: a value is plausible in exactly one
+  // — 1-70 only as %, 0.1-0.7 only as L/L), so no ambiguity; a mis-scaled value is caught by R13.
+  { analyteKey: 'hematocrit', conventionalUnit: '%', siUnit: 'L/L', factorConvToSI: 0.01, factorSIToConv: 100, source: 'HCT % → L/L (×0.01); magnitude-separable, unambiguous' },
   // NOTE: urea/BUN and calcium are DELIBERATELY EXCLUDED (abstain-traps: urea-vs-BUN ×2.14
   // ambiguity, calcium mg/dL vs mEq/L). Absence from this list ⇒ convertValue() returns null
   // ⇒ the caller abstains (R2-UNIT-MISMATCH) rather than risk a wrong conversion.

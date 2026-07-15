@@ -12,7 +12,8 @@ function line(label: string, s: RealCorpusSummary): void {
   console.log(
     `${label.padEnd(10)} reports ${String(s.reports).padStart(3)} · rows ${String(s.items).padStart(4)} · ` +
       `abstain ${pct(s.abstainRate).padStart(6)} · confirm ${pct(s.confirmRate).padStart(6)} · ` +
-      `agree ${pct(s.agreement).padStart(6)} (n=${s.agreementScored})`,
+      `agree ${pct(s.agreement).padStart(6)} (n=${s.agreementScored}) · ` +
+      `CONFIDENT-agree ${pct(s.confidentAgreement).padStart(6)} (n=${s.confidentScored}) · wrong ${s.confidentlyWrong.length}`,
   );
 }
 

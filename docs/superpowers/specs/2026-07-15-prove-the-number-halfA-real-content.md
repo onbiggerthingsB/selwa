@@ -73,6 +73,26 @@ genuinely un-interpretable" — without touching the safety core that just score
   reference band differs from the lab's — and when that difference flips the call, R11 catches
   it and routes to confirm (verified: the one miss is confirm-flagged, not silent).
 
+## Step 2 — first coverage bite (done, merged)
+
+Two ZERO-band-risk unit fixes the measurement pinpointed (analyte + band already correct, we
+just weren't accepting the real unit spelling), plus one R11 correctness fix they surfaced:
+- **D-dimer `mg/L(FEU)`** — `normalizeUnit` now strips parens but keeps the basis token, so
+  the paren form ≡ our `mg/L FEU`. Bare basis-less `mg/L` / `(DDU)` still abstain (safety kept).
+- **Hematocrit `%`** — `%`→`L/L` ×0.01 conversion (magnitude-separable per H1.5; R13 catches
+  mis-scaling). Analyte-scoped, so a `%` on a non-hematocrit is unaffected.
+- **R11 flip-gate fix** — surfaced by HCT 49.9%: R11 pre-filtered on the *bands* differing
+  >15% before checking the flip, so a value in the narrow gap between our (sex-unknown, wider)
+  band and a narrower printed range flipped silently. R11 now fires on a VALUE-LEVEL flip
+  regardless of band closeness. Strictly adds confirms — never removes — so it can't make a
+  safe row unsafe.
+
+Result (gated on held-out): abstain **76.1% → 73.9%** on held-out (R2 unit-mismatches 9→6),
+raw agreement dipped (96.7→93.9%) as HCT % added 2 band-vs-report disagreements — **both now
+confirm-flagged**, so **confident-agreement stayed 100% and confidently-wrong = 0** (locked as
+a harness safety-gate test). 326 lib/data/validation tests pass. The disciplined loop works:
+measure → safe fix → re-measure on held-out → abstain down, safety intact.
+
 ## Next (only if pursued — not another hardening cycle)
 
 Coverage work, measured against THIS harness as the gate (watch the abstain-rate fall without

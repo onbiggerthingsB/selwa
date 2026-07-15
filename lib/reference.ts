@@ -28,6 +28,7 @@ export function normalizeUnit(u: string): string {
     .trim()
     .replace(/µ|μ/g, 'u') // micro sign variants → u
     .replace(/×/g, 'x')
+    .replace(/[()（）]/g, '') // strip parens but KEEP content: 'mg/L(FEU)' ≡ 'mg/L FEU' (basis preserved)
     .replace(/\s+/g, '')
     .toLowerCase();
 }
