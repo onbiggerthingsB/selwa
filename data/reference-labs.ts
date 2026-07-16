@@ -40,7 +40,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   {
     key: 'platelet_count', nameEn: 'Platelet count', nameZh: '血小板计数',
     aliases: ['PLT', '血小板', '血小板计数'],
-    unit: '10^9/L', allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L'],
+    unit: '10^9/L', allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L', 'K/uL', '10^3/uL'],
     refLow: 125, refHigh: 350, criticalLow: 20, criticalHigh: 1000, highStakes: false, populationSensitive: false,
     absoluteLow: 0, absoluteHigh: 5000,
     plainEn: 'Cell fragments that help blood clot; very low counts raise bleeding risk.',
@@ -447,7 +447,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   {
     key: 'bicarbonate', nameEn: 'Bicarbonate (total CO2)', nameZh: '碳酸氢盐(二氧化碳结合力)',
     aliases: ["HCO3", "HCO3-", "CO2", "CO2-CP", "TCO2", "二氧化碳结合力", "碳酸氢根"],
-    unit: "mmol/L", allowedUnits: ["mmol/L"],
+    unit: "mmol/L", allowedUnits: ["mmol/L", "mEq/L"],
     refLow: 22, refHigh: 29,
     criticalLow: 10, criticalHigh: 40, highStakes: true, populationSensitive: false,
     absoluteLow: 1, absoluteHigh: 70,
@@ -491,7 +491,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   {
     key: 'amylase', nameEn: 'Amylase', nameZh: '淀粉酶',
     aliases: ["AMY", "AMS", "淀粉酶", "血清淀粉酶"],
-    unit: "U/L", allowedUnits: ["U/L"],
+    unit: "U/L", allowedUnits: ["U/L", "IU/L"],
     refLow: 35, refHigh: 135,
     criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
     absoluteLow: 0, absoluteHigh: 30000,
@@ -502,7 +502,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   {
     key: 'lipase', nameEn: 'Lipase', nameZh: '脂肪酶',
     aliases: ["LIP", "LPS", "脂肪酶", "血清脂肪酶"],
-    unit: "U/L", allowedUnits: ["U/L"],
+    unit: "U/L", allowedUnits: ["U/L", "IU/L"],
     refLow: 13, refHigh: 60,
     criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
     absoluteLow: 0, absoluteHigh: 50000,

@@ -26,6 +26,11 @@ export const UNIT_CONVERSIONS: UnitConversion[] = [
   // because % and L/L are MAGNITUDE-SEPARABLE (H1.5 mode-a: a value is plausible in exactly one
   // — 1-70 only as %, 0.1-0.7 only as L/L), so no ambiguity; a mis-scaled value is caught by R13.
   { analyteKey: 'hematocrit', conventionalUnit: '%', siUnit: 'L/L', factorConvToSI: 0.01, factorSIToConv: 100, source: 'HCT % → L/L (×0.01); magnitude-separable, unambiguous' },
+  // US conventional-unit coverage (MIMIC beachhead). g/dL→g/L (×10) and phosphate mg/dL→mmol/L
+  // are magnitude-separable / explicitly-labelled (not the mEq/L divalent trap), so unambiguous.
+  { analyteKey: 'hemoglobin', conventionalUnit: 'g/dL', siUnit: 'g/L', factorConvToSI: 10, factorSIToConv: 0.1, source: 'Hb g/dL → g/L (×10); mass conc, exact, magnitude-separable' },
+  { analyteKey: 'mchc', conventionalUnit: 'g/dL', siUnit: 'g/L', factorConvToSI: 10, factorSIToConv: 0.1, source: 'MCHC g/dL → g/L (×10); mass conc, exact, magnitude-separable' },
+  { analyteKey: 'phosphate', conventionalUnit: 'mg/dL', siUnit: 'mmol/L', factorConvToSI: 0.3229, factorSIToConv: 3.097, source: 'IFCC (phosphorus MW 30.97); mg/dL is explicit (not the mEq/L trap)' },
   // NOTE: urea/BUN and calcium are DELIBERATELY EXCLUDED (abstain-traps: urea-vs-BUN ×2.14
   // ambiguity, calcium mg/dL vs mEq/L). Absence from this list ⇒ convertValue() returns null
   // ⇒ the caller abstains (R2-UNIT-MISMATCH) rather than risk a wrong conversion.
