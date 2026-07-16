@@ -52,3 +52,38 @@ describe('real-unit coverage — hematocrit %', () => {
     expect(g('嗜碱性粒细胞百分比', '0.1', '%', '0-1').entry?.key).not.toBe('hematocrit');
   });
 });
+
+describe('US conventional-unit coverage (MIMIC beachhead) — safe subset', () => {
+  it('Bicarbonate mEq/L ≡ mmol/L (monovalent) classifies', () => {
+    const r = g('Bicarbonate', '24', 'mEq/L', '22-30');
+    expect(r.action).toBe('classify');
+    expect(r.entry?.key).toBe('bicarbonate');
+  });
+
+  it('Hemoglobin g/dL converts (×10 → g/L) and classifies', () => {
+    const r = g('Hemoglobin', '9.2', 'g/dL', '13.7-17.5');
+    expect(r.action).toBe('classify'); // 92 g/L, below band → high-stakes confirm, still classified
+    expect(r.entry?.key).toBe('hemoglobin');
+  });
+
+  it('Platelet Count K/uL ≡ 10^9/L classifies', () => {
+    expect(g('Platelet Count', '250', 'K/uL', '150-400').action).toBe('classify');
+  });
+
+  it('MCHC g/dL converts (×10 → g/L); Amylase/Lipase IU/L ≡ U/L classify', () => {
+    expect(g('MCHC', '33', 'g/dL', '32-36').action).toBe('classify');
+    expect(g('Amylase', '60', 'IU/L', '30-110').action).toBe('classify');
+    expect(g('Lipase', '30', 'IU/L', '10-60').action).toBe('classify');
+  });
+
+  it('Phosphate mg/dL converts (×0.3229 → mmol/L) and classifies', () => {
+    expect(g('Phosphate', '3.5', 'mg/dL', '2.5-4.5').action).toBe('classify');
+  });
+
+  it('SAFETY: the H1.5 traps stay abstained — Calcium & Magnesium mg/dL, and pH "units"', () => {
+    expect(g('Calcium, Total', '9.5', 'mg/dL', '8.5-10.5').action).toBe('abstain'); // mg/dL vs mEq/L trap
+    expect(g('Magnesium', '2.0', 'mg/dL', '1.7-2.4').action).toBe('abstain'); // divalent trap
+    // A blood-gas pH would mis-map to urine_ph; leaving "units" unmatched keeps it abstained.
+    expect(g('pH', '7.4', 'units', '5-8').action).toBe('abstain');
+  });
+});

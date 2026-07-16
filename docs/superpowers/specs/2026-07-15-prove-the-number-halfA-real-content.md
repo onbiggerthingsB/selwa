@@ -115,6 +115,17 @@ Hemoglobin g/dL→g/L (×10), Platelet K/uL→10⁹/L (×1), pH `units` alias, L
 **Trap-adjacent — do NOT add blindly:** Calcium & Magnesium `mg/dL`→mmol/L are H1.5's deliberate
 abstain-traps (mg/dL vs mEq/L divalent ambiguity); they need the full adversarial-review cycle.
 
+### Step 3b — US-unit coverage bite (done, merged)
+Shipped the SAFE subset only: `mEq/L` on **bicarbonate** (monovalent 1:1), `K/uL`+`10^3/uL` on
+**platelet** (count_1e9 1:1), `IU/L` on **amylase/lipase** (enzyme 1:1) — all within the
+whitelist-audit's reviewed equivalence groups — plus **hemoglobin/MCHC** `g/dL`→`g/L` (×10) and
+**phosphate** `mg/dL`→`mmol/L` (×0.3229) conversions (explicit, magnitude-separable, R13-backstopped).
+**Deliberately deferred** (still abstain, verified by test): Calcium & Magnesium `mg/dL` (H1.5 traps),
+pH `units` (blood-vs-urine `pH` name-collision would mis-map a critical blood pH to the urine range),
+MCHC `%`. Result (held-out-gated): US abstain **74.8% → 63.0%** (held-out 62.2%), R2 unit-mismatch
+**67 → 29 rows**, **confident-agreement 100%, confidently-wrong 0**. 342 tests; whitelist audit still
+green (proves the aliases are 1:1). The remaining unit abstains are the deferred traps.
+
 ## Next (only if pursued — not another hardening cycle)
 
 Coverage work, measured against THIS harness as the gate (watch the abstain-rate fall without
