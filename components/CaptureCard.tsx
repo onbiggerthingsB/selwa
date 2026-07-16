@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { downscaleToJpeg } from '@/lib/downscaleImage';
 import { assessQuality, toGray, escalateConfirm, RETAKE_GUIDANCE, type QualityVerdict } from '@/lib/imageQuality';
 import { hasConsent, grantConsent } from '@/lib/consent';
+import { applyRedactions, rectFromDrag, isMeaningful, type Rect } from '@/lib/redact';
 import { groundExtraction } from '@/lib/grounding';
 import { LabExtractionSchema } from '@/lib/extractionSchema';
 import { NotesTranslationSchema } from '@/lib/notesSchema';
@@ -11,7 +12,7 @@ import { groundNotes } from '@/lib/notesGrounding';
 import { setPendingReport } from '@/lib/session';
 import type { GroundedNotes, Sex } from '@/lib/types';
 
-type Phase = 'idle' | 'preview' | 'consent' | 'quality' | 'extracting' | 'error';
+type Phase = 'idle' | 'preview' | 'redact' | 'consent' | 'quality' | 'extracting' | 'error';
 
 // Decode a Blob to a small grayscale image and score its quality on-device. Runs
 // on the POST-downscale image actually sent to Claude. Returns null if decoding
@@ -46,6 +47,56 @@ export function CaptureCard() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [notesText, setNotesText] = useState('');
   const [quality, setQuality] = useState<QualityVerdict | null>(null);
+  // On-device redaction: the user covers their own identifiers before the transfer.
+  const redactBoxRef = useRef<HTMLDivElement>(null);
+  const [rects, setRects] = useState<Rect[]>([]);
+  // The in-flight drag lives in a REF (source of truth) and is mirrored to state only for
+  // rendering — a pointer sequence can fire faster than React re-renders, and reading `drag`
+  // from a stale closure would silently drop the box.
+  const dragRef = useRef<{ ax: number; ay: number; bx: number; by: number } | null>(null);
+  const [drag, setDrag] = useState<{ ax: number; ay: number; bx: number; by: number } | null>(null);
+
+  function dragPoint(e: React.PointerEvent) {
+    const box = redactBoxRef.current?.getBoundingClientRect();
+    return box ? { x: e.clientX - box.left, y: e.clientY - box.top } : { x: 0, y: 0 };
+  }
+  function onRedactDown(e: React.PointerEvent) {
+    const p = dragPoint(e);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* capture is a nicety — the drag still works without it */
+    }
+    dragRef.current = { ax: p.x, ay: p.y, bx: p.x, by: p.y };
+    setDrag(dragRef.current);
+  }
+  function onRedactMove(e: React.PointerEvent) {
+    if (!dragRef.current) return;
+    const p = dragPoint(e);
+    dragRef.current = { ...dragRef.current, bx: p.x, by: p.y };
+    setDrag({ ...dragRef.current });
+  }
+  function onRedactUp() {
+    const d = dragRef.current;
+    const box = redactBoxRef.current?.getBoundingClientRect();
+    dragRef.current = null;
+    setDrag(null);
+    if (!d || !box) return;
+    const r = rectFromDrag(d.ax, d.ay, d.bx, d.by, box.width, box.height);
+    if (isMeaningful(r)) setRects((rs) => [...rs, r]);
+  }
+  // Burn the boxes into the PIXELS on-device, then continue with the redacted image only —
+  // the un-redacted original is dropped here and never reaches the network.
+  async function applyRedactionsAndBack() {
+    if (!file) return;
+    const out = await applyRedactions(file, rects);
+    const redacted = new File([out], 'lab.jpg', { type: 'image/jpeg' });
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setFile(redacted);
+    setPreviewUrl(URL.createObjectURL(redacted));
+    setRects([]); // now part of the image itself
+    setPhase('preview');
+  }
 
   function openPicker() {
     inputRef.current?.click();
@@ -206,9 +257,59 @@ export function CaptureCard() {
             <button className="btn btn-primary btn-block" onClick={() => submit()}>
               Use this photo · 使用这张
             </button>
+            <button className="btn btn-ghost btn-block" onClick={() => setPhase('redact')}>
+              Cover personal details · 遮盖个人信息
+            </button>
             <button className="btn btn-ghost" onClick={retake}>
               Retake · 重拍
             </button>
+          </div>
+        </div>
+      )}
+
+      {phase === 'redact' && previewUrl && (
+        <div className="preview">
+          <p className="extracting-note">
+            Drag over anything you don’t want to send — your name, ID number, or hospital. It’s blacked out on
+            this device before the photo is sent, and only the covered version leaves your phone.
+            <span className="zh" lang="zh">
+              拖动遮盖您不想发送的内容（姓名、证件号、医院）。在照片发送前，这些内容会在本机被涂黑，只有遮盖后的版本会离开您的手机。
+            </span>
+          </p>
+          <div
+            ref={redactBoxRef}
+            style={{ position: 'relative', touchAction: 'none', cursor: 'crosshair', userSelect: 'none' }}
+            onPointerDown={onRedactDown}
+            onPointerMove={onRedactMove}
+            onPointerUp={onRedactUp}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewUrl} alt="Your lab report" style={{ display: 'block', width: '100%', pointerEvents: 'none' }} />
+            {rects.map((r, i) => (
+              <div
+                key={i}
+                style={{ position: 'absolute', background: '#000', left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.w * 100}%`, height: `${r.h * 100}%` }}
+              />
+            ))}
+            {drag && redactBoxRef.current && (() => {
+              const b = redactBoxRef.current.getBoundingClientRect();
+              const r = rectFromDrag(drag.ax, drag.ay, drag.bx, drag.by, b.width, b.height);
+              return (
+                <div
+                  style={{ position: 'absolute', background: 'rgba(0,0,0,0.6)', outline: '2px solid #fff', left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.w * 100}%`, height: `${r.h * 100}%` }}
+                />
+              );
+            })()}
+          </div>
+          <div className="preview-actions">
+            <button className="btn btn-primary btn-block" onClick={applyRedactionsAndBack}>
+              {rects.length > 0 ? `Cover ${rects.length} area${rects.length > 1 ? 's' : ''} · 确认遮盖` : 'Done · 完成'}
+            </button>
+            {rects.length > 0 && (
+              <button className="btn btn-ghost" onClick={() => setRects([])}>
+                Start over · 重新开始
+              </button>
+            )}
           </div>
         </div>
       )}
