@@ -35,13 +35,13 @@ function Section({ s, lang }: { s: SummarySection; lang: Lang }) {
   const en = lang === 'en';
   const namePrimary = en ? s.nameEn : s.nameZh;
   const nameSecondary = en ? s.nameZh : s.nameEn;
-  const labelPrimary = en ? s.statusLabelEn : s.statusLabelZh;
-  const labelSecondary = en ? s.statusLabelZh : s.statusLabelEn;
+  const labelPrimary = en ? s.chipEn : s.chipZh;
+  const labelSecondary = en ? s.chipZh : s.chipEn;
   const plainPrimary = en ? s.plainEn : s.plainZh;
   const plainSecondary = en ? s.plainZh : s.plainEn;
 
   return (
-    <li className={`row status-${s.status}`}>
+    <li className={`row status-${s.tone}`}>
       <div className="row-head">
         <div className="row-name">
           <div className={`name-primary ${en ? '' : 'zh'}`} lang={en ? 'en' : 'zh'}>
@@ -91,12 +91,18 @@ function Section({ s, lang }: { s: SummarySection; lang: Lang }) {
         </div>
       )}
 
-      {(s.refRange || s.source) && (
+      {(s.reportRange || s.typicalRange || s.source) && (
         <div className="row-foot">
-          {s.refRange && (
+          {s.reportRange && (
             <span className="ref num">
-              {en ? 'Reference range ' : '参考范围 '}
-              {s.refRange}
+              {en ? 'Your report’s range ' : '报告所列范围 '}
+              {s.reportRange}
+            </span>
+          )}
+          {s.typicalRange && (
+            <span className="ref num">
+              {en ? 'Typical range, varies by lab ' : '一般范围（各实验室不同） '}
+              {s.typicalRange}
             </span>
           )}
           {s.source && (

@@ -2,13 +2,22 @@
 type: project
 title: "Beachhead + regulatory decision memo — PIPL / FDA / US-privacy"
 created: 2026-07-15
-status: decision-needed
+status: decided
 owner: agent
 disclaimer: "Regulatory ORIENTATION, not legal advice. Classification/scope are fact-specific and the underlying FDA guidances were revised Jan 2026 — confirm with qualified counsel before launch."
 source: "Sourced multi-agent research (Opus), 2026-07-15; grounded in lib/anthropic.ts (the cross-border transfer point)"
 ---
 
 # Beachhead + regulatory decision memo
+
+> **DECIDED 2026-07-16 — A = US Mandarin diaspora · B = B1 comprehension/translation (non-device).**
+> Consequences now driving the work: (1) the output layer must reframe from *verdict on your
+> value* → *comprehension of your report* (surface the report's OWN flags/ranges + general
+> education + route "is mine OK?" to the clinician); (2) the beachhead corpus is **US-lab reports
+> (English names, US conventional units)**, not the Chinese/SI MedRepBench set — the measurement &
+> coverage track re-targets accordingly (recognition still matters: you must recognize an analyte
+> to translate/educate on it); (3) privacy hygiene before real users + on-device/de-identified OCR
+> as the convergent architecture.
 
 **The one input still needed from you.** Everything else in the coverage/measurement track is
 merged; this memo forces the decision the strategy panel flagged as gating the whole
