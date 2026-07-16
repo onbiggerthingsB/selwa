@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { downscaleToJpeg } from '@/lib/downscaleImage';
 import { assessQuality, toGray, escalateConfirm, RETAKE_GUIDANCE, type QualityVerdict } from '@/lib/imageQuality';
+import { hasConsent, grantConsent } from '@/lib/consent';
 import { groundExtraction } from '@/lib/grounding';
 import { LabExtractionSchema } from '@/lib/extractionSchema';
 import { NotesTranslationSchema } from '@/lib/notesSchema';
@@ -10,7 +11,7 @@ import { groundNotes } from '@/lib/notesGrounding';
 import { setPendingReport } from '@/lib/session';
 import type { GroundedNotes, Sex } from '@/lib/types';
 
-type Phase = 'idle' | 'preview' | 'quality' | 'extracting' | 'error';
+type Phase = 'idle' | 'preview' | 'consent' | 'quality' | 'extracting' | 'error';
 
 // Decode a Blob to a small grayscale image and score its quality on-device. Runs
 // on the POST-downscale image actually sent to Claude. Returns null if decoding
@@ -61,6 +62,12 @@ export function CaptureCard() {
 
   async function submit(overrideQuality = false) {
     if (!file) return;
+    // Privacy gate: the image is about to be sent to Anthropic (US) for OCR. Require an
+    // affirmative opt-in BEFORE anything leaves the device (FTC §5 / WA MHMDA).
+    if (!hasConsent()) {
+      setPhase('consent');
+      return;
+    }
     setPhase('extracting');
     try {
       const small = await downscaleToJpeg(file);
@@ -185,7 +192,7 @@ export function CaptureCard() {
             </span>
             <span className="cap-sub">or choose from your photos · 或从相册选择</span>
             <span className="on-device">
-              <LockGlyph /> Your photo stays on this device · 照片只保存在本机
+              <LockGlyph /> Your results are saved only on this device · 结果只保存在本机
             </span>
           </button>
         </>
@@ -203,6 +210,34 @@ export function CaptureCard() {
               Retake · 重拍
             </button>
           </div>
+        </div>
+      )}
+
+      {phase === 'consent' && (
+        <div className="callout-error" role="dialog" aria-label="Before we read your report">
+          <div className="err-row">
+            <LockGlyph />
+            <span>
+              Before we read your report
+              <span className="zh" lang="zh">在读取您的化验单之前</span>
+            </span>
+          </div>
+          <ul className="quality-tips">
+            <li>
+              To turn your photo into text, the image — including any name, values, or hospital shown on it — is sent to Anthropic (a US company) for text recognition only.
+              <span className="zh" lang="zh">为了把照片转换成文字，我们会将图片（包括其中的姓名、数值或医院信息）发送给美国公司 Anthropic，仅用于文字识别。</span>
+            </li>
+            <li>
+              The meaning of your results is worked out on this device. Your photo is not saved on our servers, not used to train AI models, and never used for advertising.
+              <span className="zh" lang="zh">结果的含义在本设备上计算。您的照片不会保存在我们的服务器上，不用于训练 AI 模型，也绝不用于广告。</span>
+            </li>
+          </ul>
+          <button className="btn btn-primary btn-block" onClick={() => { grantConsent(); submit(); }}>
+            I agree — read my report · 我同意，读取报告
+          </button>
+          <button className="btn btn-ghost btn-block" onClick={() => setPhase('preview')}>
+            Back · 返回
+          </button>
         </div>
       )}
 
