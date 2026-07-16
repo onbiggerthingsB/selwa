@@ -93,6 +93,28 @@ confirm-flagged**, so **confident-agreement stayed 100% and confidently-wrong = 
 a harness safety-gate test). 326 lib/data/validation tests pass. The disciplined loop works:
 measure → safe fix → re-measure on held-out → abstain down, safety intact.
 
+## Step 3 — re-target to the BEACHHEAD corpus: US-lab reports (done, merged)
+
+The US-diaspora decision means the beachhead photographs US-lab reports (English names, US
+*conventional* units), not Chinese/SI. Sourced the **MIMIC-IV Clinical Database Demo v2.2**
+(`validation/real-corpus/us-sample.ts`) — 100 real de-identified US patients (Beth Israel
+Deaconess), **fully public, no credentialing**, ODbL — with all five fields (analyte, value, US
+unit, ref range, abnormal flag). 22 real panels / 322 rows, non-cherry-picked (hash-sampled).
+
+Result: recognized **46.9%** (up from 30.1% — English names match our aliases better),
+**abstain 74.8%, confident-agreement 100%, confidently-wrong 0** (safety holds on US data too;
+locked as a US gate test). The tell is the abstain breakdown: **R2 unit-mismatch jumped from 9
+(Chinese/SI) to 67 rows (21%)** — because our table is SI and US reports use conventional units.
+The offenders (recognized analytes abstaining purely on unit): Bicarbonate `mEq/L`, Hemoglobin
+`g/dL`, Platelet `K/uL`, Magnesium/Calcium/Phosphate `mg/dL`, MCHC `g/dL`, pH `units`,
+Lipase/Amylase `IU/L`.
+
+**→ The beachhead's defining coverage gap is US conventional-unit support, not analyte breadth.**
+Safe subset for the next bite (unambiguous / magnitude-separable): Bicarbonate mEq/L→mmol/L (×1),
+Hemoglobin g/dL→g/L (×10), Platelet K/uL→10⁹/L (×1), pH `units` alias, Lipase/Amylase IU/L≡U/L.
+**Trap-adjacent — do NOT add blindly:** Calcium & Magnesium `mg/dL`→mmol/L are H1.5's deliberate
+abstain-traps (mg/dL vs mEq/L divalent ambiguity); they need the full adversarial-review cycle.
+
 ## Next (only if pursued — not another hardening cycle)
 
 Coverage work, measured against THIS harness as the gate (watch the abstain-rate fall without

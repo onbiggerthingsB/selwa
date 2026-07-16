@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { MEDREPBENCH_SAMPLE } from './sample';
+import { MIMIC_US_SAMPLE } from './us-sample';
 import { splitCorpus } from './corpus';
 import { scoreRealCorpus } from './realContentBench';
 
@@ -23,6 +24,13 @@ describe('real-content grounding harness', () => {
     // floor and add confirm-flagged disagreements, but must NEVER produce a row we present
     // confidently (needsConfirm=false) that disagrees with the report's own flag.
     const s = scoreRealCorpus(MEDREPBENCH_SAMPLE);
+    expect(s.confidentlyWrong).toHaveLength(0);
+    expect(s.confidentAgreement).toBe(1);
+  });
+
+  it('SAFETY GATE (US beachhead / MIMIC-IV demo): no confidently-wrong row on real US content', () => {
+    const s = scoreRealCorpus(MIMIC_US_SAMPLE);
+    expect(s.items).toBeGreaterThan(200);
     expect(s.confidentlyWrong).toHaveLength(0);
     expect(s.confidentAgreement).toBe(1);
   });
