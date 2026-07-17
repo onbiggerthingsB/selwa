@@ -26,15 +26,21 @@ describe('buildSummary', () => {
     expect(glu.valueText).toBe('7.8 mmol/L');
     // 7.8 is above the report's printed 3.9-6.1 → the chip reproduces the report, not an
     // independent "High" verdict from our table.
-    expect(glu.tone).toBe('high');
     expect(glu.chipEn).toMatch(/above your report/i);
     expect(glu.chipZh).toBe('高于报告所列范围');
+    // TONE IS NEUTRAL even though the value is out of range: colour would assert OUR judgment
+    // that this is bad — wrong for HDL/HBsAb/eGFR where out-of-range is good. The chip text
+    // carries the (reproduced) position; the tint does not editorialise it.
+    expect(glu.tone).toBe('normal');
     expect(glu.plainEn).toMatch(/blood sugar/i);
     expect(glu.plainZh).toMatch(/血糖/);
     expect(glu.reportRange).toBe('3.9-6.1'); // the report's own range, verbatim
     expect(glu.typicalRange).toMatch(/3\.9–6\.1 mmol\/L/); // ours, shown as general context
-    expect(glu.flags.length).toBeGreaterThan(0); // high-stakes
+    expect(glu.flags.length).toBeGreaterThan(0); // high-stakes → R6 routing flag
     expect(glu.flags.every((f) => f.messageEn.length > 0 && f.messageZh.length > 0)).toBe(true);
+    // B1: the surfaced flag may only talk about OUR READING — never a verdict on the value.
+    expect(glu.flags.every((f) => /confirm the value we read|misread/i.test(f.messageEn))).toBe(true);
+    expect(glu.flags.some((f) => /outside the usual range|critical range/i.test(f.messageEn))).toBe(false);
   });
 
   it('a classified value WITHIN the report’s range defers, not "in range" as a verdict', () => {

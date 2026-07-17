@@ -18,7 +18,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'wbc_count', nameEn: 'White blood cell count', nameZh: '白细胞计数',
-    aliases: ['WBC', '白细胞', '白血球', '白细胞计数'],
+    aliases: ['WBC', 'White Blood Cells', 'White Blood Cell Count', '白细胞', '白血球', '白细胞计数'],
     unit: '10^9/L', allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L'],
     refLow: 3.5, refHigh: 9.5, criticalLow: 2.0, criticalHigh: 30, highStakes: false, populationSensitive: false,
     absoluteLow: 0, absoluteHigh: 2500,
@@ -28,7 +28,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'rbc_count', nameEn: 'Red blood cell count', nameZh: '红细胞计数',
-    aliases: ['RBC', '红细胞', '红细胞计数'],
+    aliases: ['RBC', 'Red Blood Cells', 'Red Blood Cell Count', '红细胞', '红细胞计数'],
     unit: '10^12/L', allowedUnits: ['10^12/L', '10*12/L', 'x10^12/L', '×10^12/L', 'T/L'],
     refLow: { male: 4.3, female: 3.8 }, refHigh: { male: 5.8, female: 5.1 },
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: true,
@@ -409,7 +409,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'calcium_total', nameEn: 'Calcium (total)', nameZh: '血钙(总钙)',
-    aliases: ["Ca", "Ca2+", "总钙", "血清钙", "钙"],
+    aliases: ["Ca", "Ca2+", "Calcium", "Total Calcium", "总钙", "血清钙", "钙"],
     unit: "mmol/L", allowedUnits: ["mmol/L"],
     refLow: 2.20, refHigh: 2.55,
     criticalLow: 1.75, criticalHigh: 3.0, highStakes: true, populationSensitive: false,
@@ -760,7 +760,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'troponin_i', nameEn: 'Cardiac troponin I', nameZh: '心肌肌钙蛋白I',
-    aliases: ["cTnI", "hs-cTnI", "TnI", "肌钙蛋白I", "心肌肌钙蛋白I", "高敏肌钙蛋白I"],
+    aliases: ["cTnI", "hs-cTnI", "TnI", "Troponin I", "Troponin-I", "肌钙蛋白I", "心肌肌钙蛋白I", "高敏肌钙蛋白I"],
     unit: "ng/L", allowedUnits: ["ng/L"],
     refLow: null, refHigh: { male: 12.5, female: 9.6 },
     criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
@@ -980,7 +980,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'urine_ph', nameEn: 'Urine pH', nameZh: '尿酸碱度',
-    aliases: ["Urine pH", "pH", "尿酸碱度", "尿pH值", "酸碱度"],
+    aliases: ["Urine pH", "尿酸碱度", "尿pH值", "酸碱度"],
     unit: "pH", allowedUnits: ["pH"],
     refLow: 5.0, refHigh: 8.0,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,

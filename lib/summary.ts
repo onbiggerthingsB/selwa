@@ -40,29 +40,55 @@ const REPORT_STATUS_LABEL: Record<ReportStatus, { en: string; zh: string }> = {
   none: { en: 'Ask your clinician to interpret', zh: '请由医生解读' },
 };
 
-// Abstained rows never assert a comparison (the value itself is uncertain / unrecognized).
+// Abstained rows never assert a comparison (the value itself is uncertain / unrecognized) —
+// so they never carry a verdict chip. low/normal/high map to "Not assessed" defensively: an
+// abstained row should always be 'unclassified', but if any future guard path abstains while
+// leaving a classification set, this must not leak "Low"/"High" as a verdict (B1 gate).
 const ABSTAIN_LABEL: Record<Classification, { en: string; zh: string }> = {
-  low: { en: 'Low', zh: '偏低' },
-  normal: { en: 'In range', zh: '正常' },
-  high: { en: 'High', zh: '偏高' },
-  critical: { en: 'Confirm with clinician', zh: '请与医生确认' },
+  low: { en: 'Not assessed', zh: '未评估' },
+  normal: { en: 'Not assessed', zh: '未评估' },
+  high: { en: 'Not assessed', zh: '未评估' },
+  critical: { en: 'Ask your clinician to interpret', zh: '请由医生解读' },
   unclassified: { en: 'Not assessed', zh: '未评估' },
 };
+
+// B1 RULE (see validation/b1VerdictLeakage.test.ts): a user-visible message may describe only
+// (a) our confidence in the READING, or (b) the REPORT'S OWN information — never a conclusion
+// about the patient's value derived from our table. So ONLY these two flags are speakable:
+//   R6  — "confirm the value we read"      (routing; about our reading)
+//   R13 — "we may have misread it"          (routing; about our reading)
+// Everything else (R3 critical verdict+triage, R4 "your value is outside the usual range",
+// R11/R12/R2b which reveal we judged the value against OUR range) stays INTERNAL: it still
+// drives needsConfirm and still feeds the confirm-burden metrics — it just isn't spoken.
+// The guard computes; the summary decides what is speakable.
+const SURFACING_FLAGS = new Set(['R6-HIGH-STAKES-MANDATORY-CONFIRM', 'R13-IMPLAUSIBLE-VALUE']);
 
 // Reproduce the report's OWN determination: where does the value sit in the range PRINTED on
 // the report? Uses the raw value + raw printed range (report's own units) — pure arithmetic on
 // what is visible on the page, not our reference table.
 function reportStatus(row: GroundedRow): ReportStatus {
   const pr = parsePrintedRange(row.extracted.printedRange);
-  const v = row.valueNum;
-  if (!pr || v === null) return 'none';
+  // MUST use the RAW extracted value, NOT row.valueNum: valueNum has been CONVERTED to our SI
+  // unit, while the printed range is the report's own text in the report's own units. Comparing
+  // the two frames is a real bug (HCT 39% -> valueNum 0.39 vs printed "35-48" -> "Below"; a
+  // normal Troponin 0.02 ng/mL -> 20 ng/L vs "0-0.04" -> "Above"). Both frames must be the
+  // report's. This is also what makes the chip table-independent — pure arithmetic on the page.
+  const v = Number.parseFloat(row.extracted.value ?? '');
+  if (!pr || !Number.isFinite(v)) return 'none';
   if (pr.low !== null && v < pr.low) return 'below';
   if (pr.high !== null && v > pr.high) return 'above';
   return 'within';
 }
 
-// Map the report-relative status to the existing CSS tone classes (reused, no new styles).
-const REPORT_TONE: Record<ReportStatus, string> = { below: 'low', within: 'normal', above: 'high', none: 'unclassified' };
+// TONE IS NEUTRAL (B1). Position within the report's range is stated in the CHIP TEXT, which is
+// faithful reproduction. COLOUR is not: the tinted "abnormal" tones (low/high/critical) read as
+// "this is bad" — and that is our judgment, not the report's, and it is WRONG for the many
+// analytes where out-of-range is good or benign (HDL 2.5 = protective; HBsAb 569 = well
+// vaccinated; a high eGFR is fine). We have no direction-of-concern data to colour by, and
+// inventing one for the decoupled long tail is impossible. So every report-relative status maps
+// to the untinted tone; the text carries the meaning. Cost, accepted: no at-a-glance triage —
+// which B1 routes to the clinician anyway.
+const REPORT_TONE: Record<ReportStatus, string> = { below: 'normal', within: 'normal', above: 'normal', none: 'unclassified' };
 
 function valueText(row: GroundedRow): string {
   const v = row.extracted.value ?? '—';
@@ -111,7 +137,9 @@ export function buildSummary(
       chipZh,
       plainEn: classified ? entry!.plainEn : '',
       plainZh: classified ? entry!.plainZh : '',
-      flags: row.flags.map((f) => ({ severity: f.severity, messageEn: f.messageEn, messageZh: f.messageZh })),
+      flags: row.flags
+        .filter((f) => SURFACING_FLAGS.has(f.id))
+        .map((f) => ({ severity: f.severity, messageEn: f.messageEn, messageZh: f.messageZh })),
       // Ranges only on classified rows — abstained/unknown rows stay neutral (value + flags only).
       reportRange: classified ? (row.extracted.printedRange ?? '') : '',
       typicalRange: classified ? formatRefRange(entry!, report.sex, report.age) : '',
