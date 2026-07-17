@@ -6,7 +6,7 @@ import type {
   ReferenceEntry,
   Sex,
 } from '@/lib/types';
-import { unitMatches, resolveBounds, parsePrintedRange, type PrintedRange } from '@/lib/reference';
+import { unitMatches, resolveBounds, parsePrintedRange, statusAgainstPrinted, type PrintedRange } from '@/lib/reference';
 import { classifyAgainstBounds } from '@/lib/classify';
 
 const CONFIRM_CLINICIAN_EN = 'Confirm this with your clinician.';
@@ -162,9 +162,13 @@ export function evaluateRow(
   const printed = normalizedPrintedRange ?? parsePrintedRange(extracted.printedRange);
   if (printed) {
     const { low, high } = resolveBounds(entry, sex, age);
-    const valueFlips =
-      valueNum !== null &&
-      classifyAgainstBounds(valueNum, low, high) !== classifyAgainstBounds(valueNum, printed.low, printed.high);
+    // The PRINTED side must honour bound strictness ("<5.2" excludes 5.2), so it goes through the
+    // same shared helper the chip uses. classifyAgainstBounds() takes bare numbers and would
+    // silently treat "<5.2" as "<=5.2" — the flip would be missed and no confirm raised.
+    const oursSays = valueNum === null ? null : classifyAgainstBounds(valueNum, low, high);
+    const printedSays = statusAgainstPrinted(valueNum, printed);
+    const asOurs = printedSays === 'below' ? 'low' : printedSays === 'above' ? 'high' : printedSays === 'within' ? 'normal' : null;
+    const valueFlips = oursSays !== null && asOurs !== null && oursSays !== asOurs;
     const bandsDiffer = printedRangeDisagrees(printed, entry, sex, age);
     if (valueFlips || bandsDiffer) {
       if (valueFlips) needsConfirm = true;

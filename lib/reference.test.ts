@@ -100,18 +100,20 @@ describe('absolute plausibility bounds (R13 data)', () => {
 });
 
 describe('parsePrintedRange', () => {
-  it('parses a two-sided range (various separators)', () => {
-    expect(parsePrintedRange('3.9-6.1')).toEqual({ low: 3.9, high: 6.1 });
-    expect(parsePrintedRange('3.9 ~ 6.1')).toEqual({ low: 3.9, high: 6.1 });
-    expect(parsePrintedRange('70–99')).toEqual({ low: 70, high: 99 });
+  // Bounds now carry STRICTNESS (see lib/parsePrintedRange.test.ts): "<5.2" excludes 5.2 while
+  // "≤5.2" includes it. Collapsing the two made a value of 5.2 read as "within" a printed "<5.2".
+  it('parses a two-sided range (various separators) — inclusive at both ends', () => {
+    expect(parsePrintedRange('3.9-6.1')).toEqual({ low: 3.9, high: 6.1, lowInclusive: true, highInclusive: true });
+    expect(parsePrintedRange('3.9 ~ 6.1')).toEqual({ low: 3.9, high: 6.1, lowInclusive: true, highInclusive: true });
+    expect(parsePrintedRange('70–99')).toEqual({ low: 70, high: 99, lowInclusive: true, highInclusive: true });
   });
-  it('parses a one-sided upper bound', () => {
-    expect(parsePrintedRange('<5.2')).toEqual({ low: null, high: 5.2 });
-    expect(parsePrintedRange('≤ 90')).toEqual({ low: null, high: 90 });
+  it('parses a one-sided upper bound, preserving strictness', () => {
+    expect(parsePrintedRange('<5.2')).toEqual({ low: null, high: 5.2, lowInclusive: true, highInclusive: false });
+    expect(parsePrintedRange('≤ 90')).toEqual({ low: null, high: 90, lowInclusive: true, highInclusive: true });
   });
-  it('parses a one-sided lower bound', () => {
-    expect(parsePrintedRange('≥90')).toEqual({ low: 90, high: null });
-    expect(parsePrintedRange('> 1.0')).toEqual({ low: 1.0, high: null });
+  it('parses a one-sided lower bound, preserving strictness', () => {
+    expect(parsePrintedRange('≥90')).toEqual({ low: 90, high: null, lowInclusive: true, highInclusive: true });
+    expect(parsePrintedRange('> 1.0')).toEqual({ low: 1.0, high: null, lowInclusive: false, highInclusive: true });
   });
   it('returns null for unparseable / empty input', () => {
     expect(parsePrintedRange('normal')).toBeNull();

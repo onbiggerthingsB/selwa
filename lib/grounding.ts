@@ -34,7 +34,15 @@ export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: numb
         normalizedPrintedRange.low !== null ? convertValue(normalizedPrintedRange.low, extracted.unit, entry) : null;
       const ch =
         normalizedPrintedRange.high !== null ? convertValue(normalizedPrintedRange.high, extracted.unit, entry) : null;
-      normalizedPrintedRange = { low: cl ? cl.value : null, high: ch ? ch.value : null };
+      // Unit conversion rescales the BOUNDS; it must not silently change their STRICTNESS.
+      // "<5.2 mg/dL" is still a strict upper bound after conversion — dropping the flags here
+      // would let R11 treat it as inclusive and miss the flip.
+      normalizedPrintedRange = {
+        low: cl ? cl.value : null,
+        high: ch ? ch.value : null,
+        lowInclusive: normalizedPrintedRange.lowInclusive,
+        highInclusive: normalizedPrintedRange.highInclusive,
+      };
     }
 
     // classify only when grounded against a matched entry; the guard owns abstention.

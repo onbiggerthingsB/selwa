@@ -10,9 +10,10 @@
 // describe what the user actually risks:
 //   • chipCoverage — fraction of rows where the chip reproduces the report's own comparison
 //                    (the delivered value; ceiling = rows that print a range)
-//   • r6Coverage   — of rows we know to be high-stakes, fraction reaching the confirm gate.
-//                    An analyte we cannot NAME (a US "Troponin I") scores 0 here — which is
-//                    exactly the gap this number exists to scream about.
+//   • r6Coverage   — of rows we RECOGNISE as high-stakes, fraction reaching the confirm gate.
+//                    NOTE: an analyte we cannot NAME drops out of numerator AND denominator, so
+//                    this does NOT detect the recognition gap (an earlier comment here claimed
+//                    it did — it was wrong). Needs independent gold labels to fix.
 //   • defer rate   — chipDeferred: where we honestly assert nothing.
 // Two invariants are enforced as tests, not numbers: validation/b1VerdictLeakage.test.ts (no
 // verdict may surface) and validation/chipFidelity.test.ts (the chip must match the report).
@@ -45,7 +46,14 @@ export interface RealCorpusSummary {
   chipCoverage: number; // reproduced / items  (ceiling = rows that print a range)
   highStakesRows: number; // rows whose analyte we know to be high-stakes
   highStakesConfirmed: number; // ...of those, routed to the confirm gate (R6)
-  r6Coverage: number; // confirmed / highStakes — a Troponin we cannot NAME scores 0 here
+  // confirmed / highStakes, over rows we RECOGNISE as high-stakes.
+  // KNOWN LIMITATION (do not misread this number): an analyte we fail to NAME is excluded from
+  // BOTH numerator and denominator — it does not score 0. So this measures "of the high-stakes
+  // rows we can see, how many confirm", NOT "how many high-stakes rows are protected". A US
+  // "Troponin I" we cannot resolve is invisible here. Closing that needs an INDEPENDENT gold
+  // label for high-stakes status per row; until then this number cannot detect the recognition
+  // gap it was introduced to expose.
+  r6Coverage: number;
   recognized: number; // analyte mapped to our reference table (entry !== null)
   classified: number; // action !== 'abstain' — an interpretation was shown
   abstained: number; // withheld → source only

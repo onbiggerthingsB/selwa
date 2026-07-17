@@ -1,5 +1,5 @@
 import type { Classification, GroundedReport, GroundedRow, ReferenceEntry, Sex } from '@/lib/types';
-import { resolveBounds, parsePrintedRange } from '@/lib/reference';
+import { resolveBounds, parsePrintedRange, parseScalar, statusAgainstPrinted } from '@/lib/reference';
 import { disclaimers } from '@/lib/disclaimers';
 
 export type Lang = 'en' | 'zh';
@@ -67,17 +67,16 @@ const SURFACING_FLAGS = new Set(['R6-HIGH-STAKES-MANDATORY-CONFIRM', 'R13-IMPLAU
 // the report? Uses the raw value + raw printed range (report's own units) — pure arithmetic on
 // what is visible on the page, not our reference table.
 function reportStatus(row: GroundedRow): ReportStatus {
-  const pr = parsePrintedRange(row.extracted.printedRange);
   // MUST use the RAW extracted value, NOT row.valueNum: valueNum has been CONVERTED to our SI
   // unit, while the printed range is the report's own text in the report's own units. Comparing
   // the two frames is a real bug (HCT 39% -> valueNum 0.39 vs printed "35-48" -> "Below"; a
   // normal Troponin 0.02 ng/mL -> 20 ng/L vs "0-0.04" -> "Above"). Both frames must be the
   // report's. This is also what makes the chip table-independent — pure arithmetic on the page.
-  const v = Number.parseFloat(row.extracted.value ?? '');
-  if (!pr || !Number.isFinite(v)) return 'none';
-  if (pr.low !== null && v < pr.low) return 'below';
-  if (pr.high !== null && v > pr.high) return 'above';
-  return 'within';
+  //
+  // The comparison itself is DELEGATED to statusAgainstPrinted (lib/reference.ts), shared with
+  // R11. A local re-implementation is how this drifted: it used Number.parseFloat (which turns
+  // "3-15" into 3) and ignored bound strictness (so 5.2 read as "within" a printed "<5.2").
+  return statusAgainstPrinted(parseScalar(row.extracted.value), parsePrintedRange(row.extracted.printedRange));
 }
 
 // TONE IS NEUTRAL (B1). Position within the report's range is stated in the CHIP TEXT, which is

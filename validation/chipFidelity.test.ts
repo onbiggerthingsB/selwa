@@ -18,7 +18,6 @@
 import { describe, it, expect } from 'vitest';
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary } from '@/lib/summary';
-import { parsePrintedRange } from '@/lib/reference';
 import { MIMIC_US_SAMPLE } from './real-corpus/us-sample';
 import { MEDREPBENCH_SAMPLE } from './real-corpus/sample';
 
@@ -27,13 +26,49 @@ function chipFor(name: string, value: string, unit: string | null, range: string
   return buildSummary(rep, 'en').sections[0].chipEn;
 }
 
-// The truth, computed independently of the app: raw value vs raw printed range.
+// AN ACTUALLY INDEPENDENT ORACLE.
+//
+// The previous version of this function imported the production `parsePrintedRange` and reused
+// the production `Number.parseFloat`. It therefore agreed with the code by construction and
+// blessed every parser bug Codex later found (strict `<` read as `<=`, `-2-2` mis-parsed as
+// 2..2, `parseFloat('3-15')` -> 3, `2--40` unparsed). An oracle built from the implementation
+// is not an oracle — it is a mirror. This one re-derives the answer from the report text with
+// its own deliberately-simple, independently-written logic, and refuses anything it is not
+// certain about (returns null → the row is not scored) so it can never rubber-stamp a guess.
 function expectedChip(value: string, range: string): string | null {
-  const pr = parsePrintedRange(range);
-  const v = Number.parseFloat(value);
-  if (!pr || !Number.isFinite(v)) return null; // not scoreable
-  if (pr.low !== null && v < pr.low) return 'Below your report’s range';
-  if (pr.high !== null && v > pr.high) return 'Above your report’s range';
+  const v = value.trim().replace(/[↑↓HL]+$/i, '').trim();
+  // a strict scalar, written from scratch
+  if (!/^[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(v)) return null;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+
+  const r = range.trim().replace(/\s+/g, '');
+  const NUM = String.raw`[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?`;
+
+  // one-sided, strictness respected
+  let m = r.match(new RegExp(`^([<>≤≥])(=?)(${NUM})$`));
+  if (m) {
+    const b = Number(m[3]);
+    const inclusive = m[2] === '=' || m[1] === '≤' || m[1] === '≥';
+    const isUpper = m[1] === '<' || m[1] === '≤';
+    if (isUpper) return (inclusive ? n > b : n >= b) ? 'Above your report’s range' : 'Within your report’s range';
+    return (inclusive ? n < b : n <= b) ? 'Below your report’s range' : 'Within your report’s range';
+  }
+
+  // two-sided: enumerate readings, accept only an unambiguous one (mirrors nothing — this is
+  // simply the only defensible way to read "-3--1" style text)
+  const readings: [number, number][] = [];
+  for (const sep of ['--', '-', '~', '–', '—']) {
+    const mm = r.match(new RegExp(`^(${NUM})${sep}(${NUM})$`));
+    if (!mm) continue;
+    const lo = Number(mm[1]);
+    const hi = Number(mm[2]);
+    if (Number.isFinite(lo) && Number.isFinite(hi) && lo <= hi && !readings.some(([a, b]) => a === lo && b === hi)) readings.push([lo, hi]);
+  }
+  if (readings.length !== 1) return null; // unparseable or ambiguous → don't score
+  const [lo, hi] = readings[0];
+  if (n < lo) return 'Below your report’s range';
+  if (n > hi) return 'Above your report’s range';
   return 'Within your report’s range';
 }
 
