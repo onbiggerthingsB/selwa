@@ -63,14 +63,19 @@ describe('buildSummary', () => {
     expect(s.reportRange).toBe(''); // nothing to reproduce
   });
 
-  it('presents an unknown analyte neutrally — not assessed, no invented meaning, no range', () => {
+  it('an UNKNOWN analyte still reproduces the report’s own comparison — but invents no meaning', () => {
+    // DECOUPLED (grilling Q1): ceruloplasmin isn't in our table, but the report prints its own
+    // range (5-15) and 15 sits within it. Reproducing that needs no table — it is the report's
+    // own information, faithfully translated. Gating this on recognition threw away ~28 points
+    // of coverage on the US beachhead for no safety gain.
     const { sections } = buildSummary(report, 'en');
-    const hcy = sections.find((s) => s.nameEn === 'ceruloplasmin')!;
-    expect(hcy.tone).toBe('unclassified');
-    expect(hcy.chipEn.toLowerCase()).toContain('not assessed');
-    expect(hcy.plainEn).toBe('');
-    expect(hcy.reportRange).toBe('');
-    expect(hcy.typicalRange).toBe('');
+    const cer = sections.find((s) => s.nameEn === 'ceruloplasmin')!;
+    expect(cer.chipEn).toBe('Within your report’s range'); // reproduced, not invented
+    expect(cer.reportRange).toBe('5-15'); // the report's own range — their info, surfaced
+    expect(cer.tone).toBe('normal'); // neutral: colour never editorialises
+    // But we know nothing about this analyte, so we add nothing of our own:
+    expect(cer.plainEn).toBe(''); // no invented meaning
+    expect(cer.typicalRange).toBe(''); // no curated range to offer as context
   });
 });
 

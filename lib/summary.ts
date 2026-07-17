@@ -113,16 +113,31 @@ export function buildSummary(
     const entry = row.entry;
     const classified = entry !== null && row.action === 'classify';
 
+    // DECOUPLED (grilling Q1): the chip reproduces the report's OWN printed range — pure
+    // arithmetic on the page, no table lookup — so it is NOT gated on whether we recognise the
+    // analyte. Gating it on recognition discarded ~28 points of deliverable coverage (US:
+    // recognition ~47% vs rows-with-a-printed-range ~75%) on rows where we can faithfully
+    // reproduce what the report already says.
+    // The ONE suppressor: R13 means we have positive evidence the VALUE was misread — asserting
+    // a position from a number we believe is wrong is worse than deferring. (Unknown analytes
+    // carry no R13, since bounds are per-analyte: the "no net" cost accepted in Q2.)
+    const misread = row.flags.some((f) => f.id === 'R13-IMPLAUSIBLE-VALUE');
+    const rs: ReportStatus = misread ? 'none' : reportStatus(row);
+    const defer = rs === 'none';
+
     let tone: string;
     let chipEn: string;
     let chipZh: string;
-    if (classified) {
-      const rs = reportStatus(row);
+    if (!defer) {
       tone = REPORT_TONE[rs];
       chipEn = REPORT_STATUS_LABEL[rs].en;
       chipZh = REPORT_STATUS_LABEL[rs].zh;
+    } else if (classified) {
+      tone = REPORT_TONE.none;
+      chipEn = REPORT_STATUS_LABEL.none.en; // "Ask your clinician to interpret"
+      chipZh = REPORT_STATUS_LABEL.none.zh;
     } else {
-      tone = row.classification; // 'unclassified' / 'critical' etc. keep the abstain framing
+      tone = row.classification; // abstained/unknown rows keep the neutral abstain framing
       chipEn = ABSTAIN_LABEL[row.classification].en;
       chipZh = ABSTAIN_LABEL[row.classification].zh;
     }
@@ -140,8 +155,10 @@ export function buildSummary(
       flags: row.flags
         .filter((f) => SURFACING_FLAGS.has(f.id))
         .map((f) => ({ severity: f.severity, messageEn: f.messageEn, messageZh: f.messageZh })),
-      // Ranges only on classified rows — abstained/unknown rows stay neutral (value + flags only).
-      reportRange: classified ? (row.extracted.printedRange ?? '') : '',
+      // The report's OWN range is the report's information — it surfaces whenever we reproduced
+      // a comparison from it, known analyte or not (decoupled). Our curated range + the plain
+      // education below DO need the table, so they stay gated on recognition.
+      reportRange: !defer ? (row.extracted.printedRange ?? '') : '',
       typicalRange: classified ? formatRefRange(entry!, report.sex, report.age) : '',
       source: classified ? (entry!.source ?? '') : '',
     };
