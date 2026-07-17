@@ -21,7 +21,10 @@ describe('SummaryView', () => {
     expect(screen.getByText('空腹血糖')).toBeInTheDocument(); // ZH always present too
     expect(screen.getByText('7.8')).toBeInTheDocument();
     expect(screen.getAllByText(/High/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/confirm this with your clinician/i).length).toBeGreaterThan(0);
+    // B1: the surfaced flag routes ("confirm the value we read") — it must NOT assert a verdict
+    // ("your value is outside the usual range" / "critical range"), which now stays internal.
+    expect(screen.getAllByText(/confirm the value we read/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/outside the usual range|critical range|seek medical/i)).toBeNull();
   });
 
   it('prints the reference range on the card (the grounding made visible)', () => {

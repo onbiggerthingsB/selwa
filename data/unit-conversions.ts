@@ -31,6 +31,13 @@ export const UNIT_CONVERSIONS: UnitConversion[] = [
   { analyteKey: 'hemoglobin', conventionalUnit: 'g/dL', siUnit: 'g/L', factorConvToSI: 10, factorSIToConv: 0.1, source: 'Hb g/dL → g/L (×10); mass conc, exact, magnitude-separable' },
   { analyteKey: 'mchc', conventionalUnit: 'g/dL', siUnit: 'g/L', factorConvToSI: 10, factorSIToConv: 0.1, source: 'MCHC g/dL → g/L (×10); mass conc, exact, magnitude-separable' },
   { analyteKey: 'phosphate', conventionalUnit: 'mg/dL', siUnit: 'mmol/L', factorConvToSI: 0.3229, factorSIToConv: 3.097, source: 'IFCC (phosphorus MW 30.97); mg/dL is explicit (not the mEq/L trap)' },
+  // Troponin I ng/mL → ng/L (x1000, exact decimal scale). DEFERRED in the US-unit bite because
+  // troponin bands are ASSAY-SPECIFIC and a fixed band could drive a wrong verdict — but under
+  // B1 our band drives NO user-visible verdict (the chip reproduces the report's printed range;
+  // our classification only feeds the guards). So the assay-variability objection no longer
+  // applies, and the conversion is what actually restores R6 mandatory-confirm on a US troponin
+  // — without it the English alias is cosmetic, because the row abstains at R2 first.
+  { analyteKey: 'troponin_i', conventionalUnit: 'ng/mL', siUnit: 'ng/L', factorConvToSI: 1000, factorSIToConv: 0.001, source: 'Decimal-scale unit change (1 ng/mL = 1000 ng/L); exact' },
   // NOTE: urea/BUN and calcium are DELIBERATELY EXCLUDED (abstain-traps: urea-vs-BUN ×2.14
   // ambiguity, calcium mg/dL vs mEq/L). Absence from this list ⇒ convertValue() returns null
   // ⇒ the caller abstains (R2-UNIT-MISMATCH) rather than risk a wrong conversion.
