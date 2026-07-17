@@ -12,11 +12,23 @@ import type { RealReport } from './sample';
 
 const pct = (n: number) => (Number.isNaN(n) ? 'N/A' : `${(n * 100).toFixed(1)}%`);
 
+// B1 HEADLINE — what the user actually sees. (The old headline scored our INTERNAL
+// classification, which under B1 nobody reads; it was blind to the chip-frame bug.)
 function line(label: string, s: RealCorpusSummary): void {
   console.log(
-    `${label.padEnd(9)} rows ${String(s.items).padStart(4)} · recog ${pct(s.recognized / s.items).padStart(6)} · ` +
-      `abstain ${pct(s.abstainRate).padStart(6)} · confirm ${pct(s.confirmRate).padStart(6)} · ` +
-      `agree ${pct(s.agreement).padStart(6)} · CONFIDENT ${pct(s.confidentAgreement).padStart(6)} (n=${s.confidentScored}) · wrong ${s.confidentlyWrong.length}`,
+    `${label.padEnd(9)} rows ${String(s.items).padStart(4)} · ` +
+      `CHIP ${pct(s.chipCoverage).padStart(6)} (${s.chipReproduced} reproduced / ${s.chipDeferred} defer) · ` +
+      `R6 ${pct(s.r6Coverage).padStart(6)} (${s.highStakesConfirmed}/${s.highStakesRows} high-stakes confirmed)`,
+  );
+}
+
+// Internal guard-health — demoted: validates the guards' INPUTS, no longer the safety gate.
+// The real gates are tests: b1VerdictLeakage (no verdict surfaces) + chipFidelity (chip matches
+// the report's own frame).
+function internalLine(label: string, s: RealCorpusSummary): void {
+  console.log(
+    `${label.padEnd(9)} recog ${pct(s.recognized / s.items).padStart(6)} · abstain ${pct(s.abstainRate).padStart(6)} · ` +
+      `confirm ${pct(s.confirmRate).padStart(6)} · agree ${pct(s.confidentAgreement).padStart(6)} (n=${s.confidentScored}, wrong ${s.confidentlyWrong.length})`,
   );
 }
 
@@ -27,6 +39,8 @@ function report(title: string, corpus: RealReport[]): RealCorpusSummary {
   line('combined', all);
   line('  train', scoreRealCorpus(train));
   line('  heldout', scoreRealCorpus(heldout));
+  console.log('  — internal guard-health (not the gate) —');
+  internalLine('combined', all);
   const reasons = Object.entries(all.abstainByReason).sort((a, b) => b[1] - a[1]);
   console.log('  abstain: ' + reasons.map(([k, v]) => `${v} ${k.replace(/^R\d+-|-VALUE$/g, '').toLowerCase()}`).join(' · '));
   return all;

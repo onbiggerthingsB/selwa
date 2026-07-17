@@ -134,6 +134,40 @@ ranges as *"typical adult ranges vary by lab,"* not an applied verdict; avoid "a
 "concerning," "you should," risk scores, urgency/triage. App-store copy + onboarding must match
 (intended use is inferred from *all* claims).
 
+## ACCEPTED RISK — silence on a rare, range-less critical value
+
+**Decided 2026-07-16 (grilling session). Owner: the product owner. First item for clinical +
+legal review — an agent should not absorb this call.**
+
+To be genuinely B1, the app **no longer tells a patient their value is critical**. R3's message
+(*"This value is in a critical range that can be serious. Please seek medical advice promptly"*)
+and R4's (*"your value is outside the usual range"*) are our own patient-specific determinations
+plus an explicit triage signal — precisely what the non-device lane forbids. They are now
+**internal only**: they still drive `needsConfirm` and the confirm-burden metrics; they are not
+spoken. Enforced by `validation/b1VerdictLeakage.test.ts`.
+
+**What we accept:** a patient photographs a report with, say, K⁺ 6.8 and **no printed range**,
+and we say *"Ask your clinician to interpret"* rather than *"seek medical care"*. They might wait.
+
+**Why we judged the cost acceptable — and where that reasoning is weak:**
+- **Measured:** across 465 real rows (MedRepBench + MIMIC-IV demo) our table called **1** value
+  critical, and that row's report **printed a range** — so B1's reproduction (*"Above your
+  report's range"*) already surfaced it. Rows that were critical **and** range-less: **0**.
+- **But that is weak evidence, not proof.** With criticals ≈0.2% and range-less rows ≈26%, the
+  *expected* count in 465 rows is ≈0.2 — observing zero is what you would see even if the case is
+  real. This shows **rare**, not **never**.
+- **The net exists outside us:** ~75% of real rows print a range (so the position is reproduced),
+  labs print their own H/L flags, and for a genuine critical the lab is required to notify the
+  ordering clinician — the patient's doctor knows before they open the app. *(This CLIA
+  callback expectation is asserted from general knowledge and should be verified by counsel.)*
+- **What still fires:** the row is still routed to **R6 confirm** ("confirm the value we read"),
+  still says *ask your clinician*, and the global banner still says *always confirm anything
+  important*. Routing without a verdict.
+
+**The trigger to revisit:** if this trade ever feels unacceptable, that is not a reason to keep
+the message *and* claim non-device — half-B1 buys zero protection while carrying B2's liability.
+It is evidence that **B1 is the wrong lane** and B2 (510(k)/De Novo + QMS) should be priced.
+
 ## Caveats
 Regulatory **orientation, not legal advice.** FDA CDS + General Wellness guidances were **revised
 Jan 2026** (fast-moving, deregulatory-framed, untested on consumer tools) — pin to the live fda.gov

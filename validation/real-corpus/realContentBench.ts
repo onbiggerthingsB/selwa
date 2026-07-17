@@ -1,14 +1,26 @@
 // Grounding-on-real-content scorer (Prove-the-Number, Half A). Feeds externally-authored
 // real report rows (validation/real-corpus/sample.ts) straight through the SHIPPED
-// deterministic pipeline (groundExtraction → classify → guard) — image-free, no API — and
-// reads off the three product-defining numbers on real data:
-//   • abstain-rate   — fraction of rows we WITHHOLD (show source only, no interpretation)
-//   • confirm-rate   — of the rows we DO interpret, fraction routed to "confirm the values"
-//   • agreement      — of interpreted+scorable rows, fraction whose normal/abnormal call
-//                      matches the report's OWN abnormal flag
-// This is the first measurement of the guard on content it was NOT tuned against.
+// deterministic pipeline (groundExtraction → classify → guard) — image-free, no API.
+//
+// RE-POINTED FOR B1 (grilling Q7). Under B1 our low/normal/high classification is INTERNAL: it
+// drives the guards, and the user never sees it. So the old headline gate — "confidently-wrong",
+// i.e. our classification vs the report's flag — scored a signal nobody reads, and was blind to
+// the bug that actually shipped (the chip compared a CONVERTED value against the report's RAW
+// printed range, making every unit-converted row wrong in both directions). The metrics that
+// describe what the user actually risks:
+//   • chipCoverage — fraction of rows where the chip reproduces the report's own comparison
+//                    (the delivered value; ceiling = rows that print a range)
+//   • r6Coverage   — of rows we know to be high-stakes, fraction reaching the confirm gate.
+//                    An analyte we cannot NAME (a US "Troponin I") scores 0 here — which is
+//                    exactly the gap this number exists to scream about.
+//   • defer rate   — chipDeferred: where we honestly assert nothing.
+// Two invariants are enforced as tests, not numbers: validation/b1VerdictLeakage.test.ts (no
+// verdict may surface) and validation/chipFidelity.test.ts (the chip must match the report).
+// confident-agreement is KEPT but DEMOTED to internal guard-health — it still validates the
+// guards' inputs; it is no longer the safety gate.
 
 import { groundExtraction } from '@/lib/grounding';
+import { buildSummary } from '@/lib/summary';
 import { confirmBurden, type ConfirmRow } from '@/validation/confirmBurden';
 import type { RealReport } from './sample';
 
@@ -25,6 +37,15 @@ export interface ClassifiedDetail {
 export interface RealCorpusSummary {
   reports: number;
   items: number;
+  // --- B1 metrics: what the USER actually sees (the old confident-agreement scored our
+  // INTERNAL classification, which under B1 never reaches them — it could not see the chip-frame
+  // bug that made every unit-converted row wrong). These score the visible output instead.
+  chipReproduced: number; // chip states the report's own comparison — the delivered value
+  chipDeferred: number; // "ask your clinician" / "not assessed" — we assert nothing
+  chipCoverage: number; // reproduced / items  (ceiling = rows that print a range)
+  highStakesRows: number; // rows whose analyte we know to be high-stakes
+  highStakesConfirmed: number; // ...of those, routed to the confirm gate (R6)
+  r6Coverage: number; // confirmed / highStakes — a Troponin we cannot NAME scores 0 here
   recognized: number; // analyte mapped to our reference table (entry !== null)
   classified: number; // action !== 'abstain' — an interpretation was shown
   abstained: number; // withheld → source only
@@ -53,6 +74,10 @@ function ourAbnormal(classification: string): boolean | null {
 
 export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
   const confirmRows: ConfirmRow[] = [];
+  let chipReproduced = 0;
+  let chipDeferred = 0;
+  let highStakesRows = 0;
+  let highStakesConfirmed = 0;
   const abstainByReason: Record<string, number> = {};
   const classifiedDetail: ClassifiedDetail[] = [];
   let items = 0;
@@ -81,6 +106,15 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
       );
       const row = report.rows[0];
       if (row.entry) recognized += 1;
+
+      // B1: score the VISIBLE chip, and whether high-stakes rows reach the confirm gate.
+      const chip = buildSummary(report, 'en').sections[0].chipEn;
+      if (/your report’s range/.test(chip)) chipReproduced += 1;
+      else chipDeferred += 1;
+      if (row.entry?.highStakes) {
+        highStakesRows += 1;
+        if (row.needsConfirm) highStakesConfirmed += 1;
+      }
 
       if (row.action === 'abstain') {
         abstained += 1;
@@ -117,6 +151,12 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
   return {
     reports: reports.length,
     items,
+    chipReproduced,
+    chipDeferred,
+    chipCoverage: items === 0 ? NaN : chipReproduced / items,
+    highStakesRows,
+    highStakesConfirmed,
+    r6Coverage: highStakesRows === 0 ? NaN : highStakesConfirmed / highStakesRows,
     recognized,
     classified,
     abstained,
