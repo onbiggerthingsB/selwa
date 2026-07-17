@@ -21,6 +21,10 @@
   --sev-high: #b07a2e;         --sev-high-tint: #f6eedf;
   --sev-critical: #b5523c;     --sev-critical-tint: #f6e7e0;
   --sev-unclassified: #7e7669; --sev-unclassified-tint: #f0ece3;
+  /* B1: rows whose chip merely REPRODUCES the report's own range carry no valence. Using
+     --sev-normal here was a real bug: it is semantic GREEN, so an above-range troponin rendered
+     as "good". Neutral gray states position without our judgment. */
+  --sev-report: #7e7669;       --sev-report-tint: #f0ece3;
 
   /* type */
   --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
@@ -481,6 +485,7 @@ a {
 .row.status-high { --sev: var(--sev-high); --sev-tint: var(--sev-high-tint); }
 .row.status-critical { --sev: var(--sev-critical); --sev-tint: var(--sev-critical-tint); }
 .row.status-unclassified { --sev: var(--sev-unclassified); --sev-tint: var(--sev-unclassified-tint); }
+.row.status-report { --sev: var(--sev-report); --sev-tint: var(--sev-report-tint); }
 
 /* abnormal cards earn the eye with a whisper of tint; in-range/normal stay cream */
 .row.status-low,

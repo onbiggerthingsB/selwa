@@ -9,7 +9,10 @@
 // bump CONSENT_VERSION to force re-consent.
 
 const KEY = 'ht:transfer-consent';
-export const CONSENT_VERSION = 1;
+// v2: the v1 disclosure covered only the IMAGE. Typed doctor's notes are also sent to Anthropic
+// (for translation, not just OCR) — an undisclosed transfer is an FTC §5 deception risk, so the
+// version bump deliberately invalidates every v1 opt-in and re-asks.
+export const CONSENT_VERSION = 2;
 
 export interface ConsentRecord {
   version: number;

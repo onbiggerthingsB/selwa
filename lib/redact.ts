@@ -51,28 +51,39 @@ export function toPixelRects(rects: Rect[], width: number, height: number): Rect
   return rects.map((r) => ({ x: r.x * width, y: r.y * height, w: r.w * width, h: r.h * height }));
 }
 
+/** Discriminated so the caller CANNOT accidentally treat a failure as a redacted image. */
+export type RedactResult = { ok: true; blob: Blob } | { ok: false; reason: 'no-canvas' | 'decode-failed' | 'encode-failed' };
+
 /**
  * Burn opaque black boxes into the image and return a NEW blob. The redacted pixels are
- * destroyed (not an overlay), so what is sent cannot be un-redacted. Returns the source
- * unchanged when there is nothing to redact or the canvas is unavailable — the caller's
- * consent gate still governs the transfer either way.
+ * DESTROYED (not an overlay), so what is sent cannot be un-redacted.
+ *
+ * FAILS CLOSED. This used to `return src` on any failure — "never block the user on a redaction
+ * failure" — which was exactly backwards: the caller then treated the ORIGINAL as redacted,
+ * cleared the boxes, and could transmit it, while the consent screen promised "only the covered
+ * version leaves your phone". A redaction primitive must never hand back the bytes it was asked
+ * to destroy. If boxes were requested and we cannot burn them in, that is an ERROR — the caller
+ * must keep the user on the redaction screen, not send the original.
+ *
+ * Passing the source through is correct ONLY when nothing meaningful was asked to be covered.
  */
-export async function applyRedactions(src: Blob, rects: Rect[]): Promise<Blob> {
+export async function applyRedactions(src: Blob, rects: Rect[]): Promise<RedactResult> {
   const boxes = rects.filter(isMeaningful);
-  if (boxes.length === 0) return src;
+  if (boxes.length === 0) return { ok: true, blob: src }; // nothing requested — src is untouched by design
   try {
     const bitmap = await createImageBitmap(src);
     const canvas = document.createElement('canvas');
     canvas.width = bitmap.width;
     canvas.height = bitmap.height;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return src;
+    if (!ctx) return { ok: false, reason: 'no-canvas' };
     ctx.drawImage(bitmap, 0, 0);
     ctx.fillStyle = '#000';
     for (const r of toPixelRects(boxes, bitmap.width, bitmap.height)) ctx.fillRect(r.x, r.y, r.w, r.h);
     const out = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', 0.92));
-    return out ?? src;
+    if (!out) return { ok: false, reason: 'encode-failed' };
+    return { ok: true, blob: out };
   } catch {
-    return src; // never block the user on a redaction failure
+    return { ok: false, reason: 'decode-failed' };
   }
 }

@@ -88,7 +88,10 @@ function reportStatus(row: GroundedRow): ReportStatus {
 // inventing one for the decoupled long tail is impossible. So every report-relative status maps
 // to the untinted tone; the text carries the meaning. Cost, accepted: no at-a-glance triage —
 // which B1 routes to the clinician anyway.
-const REPORT_TONE: Record<ReportStatus, string> = { below: 'normal', within: 'normal', above: 'normal', none: 'unclassified' };
+// 'report' is a NEUTRAL gray with no valence. Mapping these to 'normal' was a bug: --sev-normal
+// is semantic GREEN, so an above-range troponin rendered as "good" — trading a false alarm for a
+// false reassurance, which is strictly worse.
+const REPORT_TONE: Record<ReportStatus, string> = { below: 'report', within: 'report', above: 'report', none: 'unclassified' };
 
 function valueText(row: GroundedRow): string {
   const v = row.extracted.value ?? '—';

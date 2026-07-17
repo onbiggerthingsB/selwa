@@ -55,6 +55,7 @@ export function CaptureCard() {
   // from a stale closure would silently drop the box.
   const dragRef = useRef<{ ax: number; ay: number; bx: number; by: number } | null>(null);
   const [drag, setDrag] = useState<{ ax: number; ay: number; bx: number; by: number } | null>(null);
+  const [redactError, setRedactError] = useState<string | null>(null);
 
   function dragPoint(e: React.PointerEvent) {
     const box = redactBoxRef.current?.getBoundingClientRect();
@@ -87,10 +88,17 @@ export function CaptureCard() {
   }
   // Burn the boxes into the PIXELS on-device, then continue with the redacted image only —
   // the un-redacted original is dropped here and never reaches the network.
+  // FAILS CLOSED: if the burn-in fails we keep the user here with the boxes intact rather than
+  // silently proceeding with the ORIGINAL image (which the consent screen promises never leaves).
   async function applyRedactionsAndBack() {
     if (!file) return;
-    const out = await applyRedactions(file, rects);
-    const redacted = new File([out], 'lab.jpg', { type: 'image/jpeg' });
+    setRedactError(null);
+    const res = await applyRedactions(file, rects);
+    if (!res.ok) {
+      setRedactError(res.reason);
+      return; // stay on the redact screen; boxes preserved; original NOT sent
+    }
+    const redacted = new File([res.blob], 'lab.jpg', { type: 'image/jpeg' });
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(redacted);
     setPreviewUrl(URL.createObjectURL(redacted));
@@ -301,6 +309,12 @@ export function CaptureCard() {
               );
             })()}
           </div>
+          {redactError && (
+            <p className="extracting-note" role="alert" style={{ color: 'var(--sev-critical)' }}>
+              We couldn’t cover the details on this device, so we haven’t sent anything. Please retake the photo.
+              <span className="zh" lang="zh">我们无法在本机遮盖这些内容，因此没有发送任何内容。请重新拍照。</span>
+            </p>
+          )}
           <div className="preview-actions">
             <button className="btn btn-primary btn-block" onClick={applyRedactionsAndBack}>
               {rects.length > 0 ? `Cover ${rects.length} area${rects.length > 1 ? 's' : ''} · 确认遮盖` : 'Done · 完成'}
@@ -325,12 +339,12 @@ export function CaptureCard() {
           </div>
           <ul className="quality-tips">
             <li>
-              To turn your photo into text, the image — including any name, values, or hospital shown on it — is sent to Anthropic (a US company) for text recognition only.
-              <span className="zh" lang="zh">为了把照片转换成文字，我们会将图片（包括其中的姓名、数值或医院信息）发送给美国公司 Anthropic，仅用于文字识别。</span>
+              Two things are sent to Anthropic (a US company): your photo — including any name, values, or hospital shown on it — so its text can be read; and anything you typed under “What the doctor told you”, so it can be translated.
+              <span className="zh" lang="zh">有两项内容会发送给美国公司 Anthropic：您的照片（包括其中的姓名、数值或医院信息），用于识别其中的文字；以及您在“医生说了什么”中输入的内容，用于翻译。</span>
             </li>
             <li>
-              The meaning of your results is worked out on this device. Your photo is not saved on our servers, not used to train AI models, and never used for advertising.
-              <span className="zh" lang="zh">结果的含义在本设备上计算。您的照片不会保存在我们的服务器上，不用于训练 AI 模型，也绝不用于广告。</span>
+              The meaning of your results is worked out on this device. We don’t save either on our servers, and neither is ever used for advertising. Anthropic does not use them to train its models, though it may hold them briefly (up to 30 days) for safety checks.
+              <span className="zh" lang="zh">结果的含义在本设备上计算。两者都不会保存在我们的服务器上，也绝不用于广告。Anthropic 不会用它们训练模型，但可能为安全检查短暂保留（最多 30 天）。</span>
             </li>
           </ul>
           <button className="btn btn-primary btn-block" onClick={() => { grantConsent(); submit(); }}>
@@ -380,7 +394,7 @@ export function CaptureCard() {
             <div className="skel-card" />
             <div className="skel-card" />
           </div>
-          <p className="extracting-note">This takes a few seconds. We’re matching each value to its reference range.</p>
+          <p className="extracting-note">This takes a few seconds. We’re reading the values and ranges printed on your report.</p>
         </div>
       )}
 

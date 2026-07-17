@@ -31,7 +31,7 @@ describe('buildSummary', () => {
     // TONE IS NEUTRAL even though the value is out of range: colour would assert OUR judgment
     // that this is bad — wrong for HDL/HBsAb/eGFR where out-of-range is good. The chip text
     // carries the (reproduced) position; the tint does not editorialise it.
-    expect(glu.tone).toBe('normal');
+    expect(glu.tone).toBe('report'); // neutral gray — never the semantic green 'normal'
     expect(glu.plainEn).toMatch(/blood sugar/i);
     expect(glu.plainZh).toMatch(/血糖/);
     expect(glu.reportRange).toBe('3.9-6.1'); // the report's own range, verbatim
@@ -50,7 +50,7 @@ describe('buildSummary', () => {
     );
     const s = buildSummary(r, 'en').sections[0];
     expect(s.chipEn).toMatch(/within your report/i);
-    expect(s.tone).toBe('normal');
+    expect(s.tone).toBe('report'); // neutral gray, NOT semantic green
   });
 
   it('a classified value with NO printed range asserts no verdict — defers to the clinician', () => {
@@ -72,7 +72,7 @@ describe('buildSummary', () => {
     const cer = sections.find((s) => s.nameEn === 'ceruloplasmin')!;
     expect(cer.chipEn).toBe('Within your report’s range'); // reproduced, not invented
     expect(cer.reportRange).toBe('5-15'); // the report's own range — their info, surfaced
-    expect(cer.tone).toBe('normal'); // neutral: colour never editorialises
+    expect(cer.tone).toBe('report'); // neutral gray: colour never editorialises
     // But we know nothing about this analyte, so we add nothing of our own:
     expect(cer.plainEn).toBe(''); // no invented meaning
     expect(cer.typicalRange).toBe(''); // no curated range to offer as context

@@ -1,5 +1,36 @@
+// @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
-import { rectFromDrag, isMeaningful, toPixelRects } from './redact';
+import { rectFromDrag, isMeaningful, toPixelRects, applyRedactions } from './redact';
+
+// FAIL-CLOSED (Codex blocker #3). applyRedactions used to `return src` on ANY failure —
+// canvas unavailable, decode error, encode error. The caller then renamed that blob 'lab.jpg',
+// cleared the boxes, and could SEND IT: the un-redacted original leaving the device while the
+// consent screen promised "only the covered version leaves your phone". A redaction primitive
+// must never hand back the bytes it was asked to destroy.
+describe('redact — fails CLOSED, never returns the un-redacted original', () => {
+  const box = [{ x: 0.1, y: 0.1, w: 0.5, h: 0.2 }];
+  const src = new Blob(['not-a-real-image'], { type: 'image/jpeg' });
+
+  it('returns an ERROR (not the source) when redaction cannot be performed', async () => {
+    // jsdom has no canvas backend → the real failure path.
+    const res = await applyRedactions(src, box);
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.reason).toBeTruthy();
+    // the crucial property: no path yields the original bytes while boxes were requested
+    expect((res as { blob?: Blob }).blob).toBeUndefined();
+  });
+
+  it('when NOTHING was asked to be covered, passing the source through is correct', async () => {
+    const res = await applyRedactions(src, []);
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.blob).toBe(src);
+  });
+
+  it('an accidental tap is not a redaction request — source passes through', async () => {
+    const res = await applyRedactions(src, [{ x: 0.5, y: 0.5, w: 0.001, h: 0.001 }]);
+    expect(res.ok).toBe(true);
+  });
+});
 
 // Rects are floats, so compare field-wise with tolerance.
 const expectRect = (r: { x: number; y: number; w: number; h: number }, x: number, y: number, w: number, h: number) => {
