@@ -124,6 +124,60 @@ export function statusAgainstPrinted(v: number | null, pr: PrintedRange | null):
 }
 
 /**
+ * R16 — can this printed range be a reference range for this analyte, in the unit we assumed?
+ *
+ * We never learn the printed range's unit; grounding assumes it matches the VALUE's unit. Real
+ * reports break that (a conventional-unit value against an SI range, and vice versa), and the
+ * result was a chip computed from two different units — see lib/printedRangeUnit.test.ts.
+ *
+ * We do not try to GUESS the true unit: two candidate units can both yield superficially sane
+ * numbers, and guessing is the silent inference this codebase refuses everywhere else (R2 abstains
+ * on unit mismatch rather than convert ambiguously). Instead we FALSIFY: a real reference range
+ * for an analyte must overlap that analyte's absolute plausibility band. If — read in the assumed
+ * unit — it cannot, the assumption is disproved and the caller must stop asserting a position.
+ *
+ * OVERLAP, not containment: legitimate printed ranges routinely run past a bound (troponin "0-0.04"
+ * starts below absoluteLow, dipstick ranges start at 0). Requiring containment would fire on
+ * ordinary reports. A null absolute bound means "no meaningful limit on that side" (±Infinity).
+ * Returns true when we cannot judge (no entry bounds, or an unparsed range) — fail OPEN, because
+ * this rule only ever REMOVES a chip, and an over-eager version would silently gut coverage.
+ */
+export function printedRangePlausible(
+  pr: PrintedRange | null,
+  entry: ReferenceEntry,
+  sex: Sex = 'unknown',
+  age?: number,
+): boolean {
+  if (pr === null) return true;
+
+  // TEST 1 — disjoint from the absolute plausibility band. Catches gross mismatches.
+  const absLow = entry.absoluteLow ?? -Infinity;
+  const absHigh = entry.absoluteHigh ?? Infinity;
+  if (!(absLow === -Infinity && absHigh === Infinity)) {
+    const pLow = pr.low ?? -Infinity;
+    const pHigh = pr.high ?? Infinity;
+    if (pLow > absHigh || pHigh < absLow) return false; // no unit makes this this analyte's range
+  }
+
+  // TEST 2 — scale mismatch against our REFERENCE band. Absolute bounds are deliberately far wider
+  // than any real range (they exist to catch OCR misreads), so they alone miss the common cases:
+  // glucose 95 mg/dL vs a printed SI range, creatinine 1.0 mg/dL vs a printed µmol/L range. A wrong
+  // unit is a MULTIPLICATIVE shift — it moves every bound by the same factor — so we require EVERY
+  // comparable bound to be off by more than the tolerance before calling it suspect. Real
+  // lab-to-lab variation is well under 2×; a factor of 10 cannot be a legitimate difference in the
+  // same unit, and demanding all bounds agree on the shift keeps this from firing on one odd bound.
+  const SCALE_TOLERANCE = 10;
+  const { low, high } = resolveBounds(entry, sex, age);
+  const pairs: [number, number][] = [];
+  // Zero bounds are skipped: ratios against 0 are undefined, and printed ranges legitimately start
+  // at 0 ("0-0.04" troponin, "0-21" bilirubin, dipsticks).
+  if (low !== null && low !== 0 && pr.low !== null && pr.low !== 0) pairs.push([low, pr.low]);
+  if (high !== null && high !== 0 && pr.high !== null && pr.high !== 0) pairs.push([high, pr.high]);
+  if (pairs.length === 0) return true; // nothing comparable ⇒ cannot falsify ⇒ fail OPEN
+  return !pairs.every(([ours, theirs]) => Math.max(ours / theirs, theirs / ours) > SCALE_TOLERANCE);
+}
+
+/**
  * Parse a report's printed reference-range string into numeric bounds (in the
  * range's own units — the caller unit-normalizes). Handles two-sided ranges
  * ("3.9-6.1", "3.9~6.1", "3.9–6.1"), one-sided upper ("<5.2", "≤ 90", "＜5.2"),

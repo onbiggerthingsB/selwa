@@ -97,6 +97,8 @@ const FORCING_ROWS: [string, string, string | null, string | null][] = [
   ['钾', '40', 'mmol/L', null], // R13 implausible
   ['HCT', '39', '%', '35-48'], // R2b unit-converted
   ['血红蛋白', '130', 'g/L', null], // R12 population-sensitive
+  ['Total cholesterol', '150', 'mg/dL', '3.0-5.2'], // R16 printed-range unit mismatch (surfaced)
+  ['Creatinine', '1.0', 'mg/dL', '59-104'], // R16 on a high-stakes analyte
 ];
 
 describe('B1 gate — no user-visible verdict about the patient’s own value', () => {

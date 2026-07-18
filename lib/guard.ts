@@ -6,7 +6,14 @@ import type {
   ReferenceEntry,
   Sex,
 } from '@/lib/types';
-import { unitMatches, resolveBounds, parsePrintedRange, statusAgainstPrinted, type PrintedRange } from '@/lib/reference';
+import {
+  unitMatches,
+  resolveBounds,
+  parsePrintedRange,
+  statusAgainstPrinted,
+  printedRangePlausible,
+  type PrintedRange,
+} from '@/lib/reference';
 import { classifyAgainstBounds } from '@/lib/classify';
 
 const CONFIRM_CLINICIAN_EN = 'Confirm this with your clinician.';
@@ -160,7 +167,31 @@ export function evaluateRow(
   // only (assay/lab reference ranges legitimately vary). Surfaced by the real-content
   // measurement: HCT 49.9% (our sex-unknown union band vs a narrower printed range).
   const printed = normalizedPrintedRange ?? parsePrintedRange(extracted.printedRange);
-  if (printed) {
+
+  // R16 — the printed range cannot be this analyte's range in the unit we assumed (grounding
+  // assumes the range shares the VALUE's unit; real reports mix them). The assumption is
+  // DISPROVED, so every downstream use of this range is void: R11 must not draw a conclusion
+  // from it, and the summary must not build a chip from it (it suppresses on this flag, as it
+  // does for R13). Confirm, because the user should check what their report actually prints.
+  const printedUsable = printed !== null && printedRangePlausible(printed, entry, sex, age);
+  if (printed && !printedUsable) {
+    needsConfirm = true;
+    flags.push(
+      flag(
+        'R16-PRINTED-RANGE-UNIT-SUSPECT',
+        'caution',
+        'The reference range on your report doesn’t appear to use the same units as the value, so we can’t compare them. Please check the range against your report. ' +
+          CONFIRM_CLINICIAN_EN,
+        '您报告上的参考范围似乎与数值使用的单位不同，因此我们无法进行比较。请核对报告上的范围。' + CONFIRM_CLINICIAN_ZH,
+      ),
+    );
+  }
+
+  // R11 is SKIPPED when R16 disproved the range: comparing our band against a range whose unit we
+  // got wrong produces a meaningless agree/disagree verdict (it was the double-conversion that
+  // made TC 250 mg/dL vs a printed SI range look consistent, leaving needsConfirm=false).
+  // R12 below still applies — it is about OUR band, not the report's.
+  if (printed && printedUsable) {
     const { low, high } = resolveBounds(entry, sex, age);
     // The PRINTED side must honour bound strictness ("<5.2" excludes 5.2), so it goes through the
     // same shared helper the chip uses. classifyAgainstBounds() takes bare numbers and would

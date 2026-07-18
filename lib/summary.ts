@@ -70,7 +70,15 @@ const ABSTAIN_LABEL: Record<Classification, { en: string; zh: string }> = {
 // R11/R12/R2b which reveal we judged the value against OUR range) stays INTERNAL: it still
 // drives needsConfirm and still feeds the confirm-burden metrics — it just isn't spoken.
 // The guard computes; the summary decides what is speakable.
-const SURFACING_FLAGS = new Set(['R6-HIGH-STAKES-MANDATORY-CONFIRM', 'R13-IMPLAUSIBLE-VALUE']);
+//   R16 — "the range doesn't appear to use the same units as the value; check your report"
+//         (about the REPORT'S OWN content + our ability to read it — not a verdict on the value.
+//         It must be speakable: R16 suppresses the chip, and a bare "Ask your clinician to
+//         interpret" with no reason is worse than useless when we know exactly why we deferred.)
+const SURFACING_FLAGS = new Set([
+  'R6-HIGH-STAKES-MANDATORY-CONFIRM',
+  'R13-IMPLAUSIBLE-VALUE',
+  'R16-PRINTED-RANGE-UNIT-SUSPECT',
+]);
 
 // Reproduce the report's OWN determination: where does the value sit in the range PRINTED on
 // the report? Uses the raw value + raw printed range (report's own units) — pure arithmetic on
@@ -129,11 +137,19 @@ export function buildSummary(
     // analyte. Gating it on recognition discarded ~28 points of deliverable coverage (US:
     // recognition ~47% vs rows-with-a-printed-range ~75%) on rows where we can faithfully
     // reproduce what the report already says.
-    // The ONE suppressor: R13 means we have positive evidence the VALUE was misread — asserting
-    // a position from a number we believe is wrong is worse than deferring. (Unknown analytes
-    // carry no R13, since bounds are per-analyte: the "no net" cost accepted in Q2.)
-    const misread = row.flags.some((f) => f.id === 'R13-IMPLAUSIBLE-VALUE');
-    const rs: ReportStatus = misread ? 'none' : reportStatus(row);
+    // The suppressors are the two cases where we have POSITIVE EVIDENCE that one side of the
+    // comparison is unusable — asserting a position from an input we believe is wrong is worse
+    // than deferring:
+    //   R13 — the VALUE was misread.
+    //   R16 — the printed RANGE cannot be in the unit we assumed (Codex #5), so raw-value-vs-raw-
+    //         range is comparing two different units. This produced inverted chips on real
+    //         mixed-unit reports ("Below your report's range" for a value genuinely above it).
+    // Both are per-analyte table lookups, so an UNRECOGNISED analyte carries neither: the "no net"
+    // cost accepted in Q2 applies to R16 too — we cannot detect a unit mismatch we can't scale.
+    const unusable = row.flags.some(
+      (f) => f.id === 'R13-IMPLAUSIBLE-VALUE' || f.id === 'R16-PRINTED-RANGE-UNIT-SUSPECT',
+    );
+    const rs: ReportStatus = unusable ? 'none' : reportStatus(row);
     const defer = rs === 'none';
 
     let tone: string;
