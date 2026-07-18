@@ -25,6 +25,11 @@ describe('SummaryView', () => {
     // ("your value is outside the usual range" / "critical range"), which now stays internal.
     expect(screen.getAllByText(/confirm the value we read/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/outside the usual range|critical range|seek medical/i)).toBeNull();
+    // B1 blocker #2: the CARD education text is the direction-neutral definition, and the fuller
+    // directional description ("can indicate prediabetes or diabetes") must NOT render beneath the
+    // chip. This is the exact composition Codex flagged (directional clause under a status chip).
+    expect(screen.getByText(/Blood sugar level after fasting/i)).toBeInTheDocument();
+    expect(screen.queryByText(/prediabetes or diabetes/i)).toBeNull();
   });
 
   it('prints the reference range on the card (the grounding made visible)', () => {
@@ -45,7 +50,9 @@ describe('SummaryView', () => {
 
   it('emphasizes Mandarin when lang=zh but still shows English', () => {
     render(<SummaryView report={report} lang="zh" />);
-    expect(screen.getAllByText(/偏高/).length).toBeGreaterThan(0); // zh "high" label
+    // B1: the ZH "high" signal is the report-relative status chip, not a directional verdict in the
+    // education text (the card now shows the direction-neutral definition "空腹时的血糖水平").
+    expect(screen.getAllByText(/高于报告所列范围/).length).toBeGreaterThan(0); // zh "above report's range" chip
     expect(screen.getByText('Fasting plasma glucose')).toBeInTheDocument(); // EN still present
   });
 });

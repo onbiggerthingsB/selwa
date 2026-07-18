@@ -13,8 +13,21 @@
 //   • r6Coverage   — of rows we RECOGNISE as high-stakes, fraction reaching the confirm gate.
 //                    NOTE: an analyte we cannot NAME drops out of numerator AND denominator, so
 //                    this does NOT detect the recognition gap (an earlier comment here claimed
-//                    it did — it was wrong). Needs independent gold labels to fix.
+//                    it did — it was wrong). KEPT ONLY as the self-graded contrast; read
+//                    r6CoverageGold instead.
 //   • defer rate   — chipDeferred: where we honestly assert nothing.
+//
+// CODEX #7 — THE SELF-GRADING IS NOW FIXED, and the fix changed the story. Metrics whose
+// denominator is chosen by the system under test cannot see that system's blind spots. Scored
+// against INDEPENDENT labels (./gold-labels.ts) instead of our own table:
+//     R6 coverage, self-graded : 80.0%  (56/70)    ← what we believed
+//     R6 coverage, gold labels : 27.4%  (58/212)   ← what is true on the beachhead corpus
+// The denominator tripled because 142 high-stakes rows were previously INVISIBLE: we cannot name
+// Lactate, Free (ionized) Calcium, the blood gases, INR(PT), Troponin T, Anion Gap, Urea Nitrogen,
+// or the whole-blood electrolyte variants, so no guard could fire and the metric simply dropped
+// them. goldHighStakesUnrecognized prints that work list every run.
+// The chip, by contrast, holds up against an independent label: 0 rows contradict the report's own
+// flag on either corpus (chipWrong), and abstaining can no longer inflate that number.
 // Two invariants are enforced as tests, not numbers: validation/b1VerdictLeakage.test.ts (no
 // verdict may surface) and validation/chipFidelity.test.ts (the chip must match the report).
 // confident-agreement is KEPT but DEMOTED to internal guard-health — it still validates the
@@ -23,6 +36,7 @@
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary } from '@/lib/summary';
 import { confirmBurden, type ConfirmRow } from '@/validation/confirmBurden';
+import { goldFor } from './gold-labels';
 import type { RealReport } from './sample';
 
 export interface ClassifiedDetail {
@@ -44,6 +58,30 @@ export interface RealCorpusSummary {
   chipReproduced: number; // chip states the report's own comparison — the delivered value
   chipDeferred: number; // "ask your clinician" / "not assessed" — we assert nothing
   chipCoverage: number; // reproduced / items  (ceiling = rows that print a range)
+  // --- CHIP CORRECTNESS vs an INDEPENDENT label (Codex #7) ---
+  // Scored against `is_abnormal` — the REPORT'S OWN abnormal flag (MIMIC's `flag` column / the
+  // Chinese report's own marking). Externally authored: it does not come from our reference table,
+  // our aliases, or our bands, so unlike confidentAgreement it cannot be gamed by curating our own
+  // data. And it grades the DELIVERED output: the chip claims to reproduce the report's own
+  // comparison, and this flag IS the report's own comparison.
+  //
+  // ANTI-GAMING, the whole point: the denominator is every row where the report gave us everything
+  // needed to answer (a value, a printed range, and its own flag). Deferring such a row moves it
+  // from chipCorrect to chipAbstained and LOWERS chipAccuracy — abstention is no longer free.
+  // The old confidentAgreement divided by rows WE chose to answer, so abstaining harder scored
+  // better; that is exactly the gameability #7 is about.
+  chipScorable: number; // value + printed range + report flag all present
+  chipCorrect: number; // asserted a position consistent with the report's own flag
+  chipWrong: number; // asserted a position CONTRADICTING it — must stay 0
+  // NOT every deferral here is a defect — read the list before "fixing" it. On MedRepBench all 13
+  // are R1-unknown-analyte, and they are HPV subtypes, HIV/syphilis/hepatitis serology, and
+  // qualitative Positive/Negative results. Reproducing "Above your report's range" for an HPV
+  // high-risk subtype is a sensitive disclosure the product may deliberately decline, so part of
+  // this 11.7-point gap is a PRODUCT DECISION, not missing coverage. The metric is still right to
+  // count them (otherwise abstention is free); the judgement about which to close is ours.
+  chipAbstained: number; // had everything needed, still deferred
+  chipAccuracy: number; // chipCorrect / chipScorable  ← NOT / (scorable - abstained)
+  chipWrongDetail: string[];
   highStakesRows: number; // rows whose analyte we know to be high-stakes
   highStakesConfirmed: number; // ...of those, routed to the confirm gate (R6)
   // confirmed / highStakes, over rows we RECOGNISE as high-stakes.
@@ -54,6 +92,22 @@ export interface RealCorpusSummary {
   // label for high-stakes status per row; until then this number cannot detect the recognition
   // gap it was introduced to expose.
   r6Coverage: number;
+  // --- R6 COVERAGE vs INDEPENDENT GOLD LABELS (Codex #7) — the honest version ---
+  // Denominator = rows an INDEPENDENT label calls high-stakes (validation/real-corpus/gold-labels.ts,
+  // exact-match on the printed name, never via our alias index). An analyte we cannot NAME now stays
+  // in the denominator and scores as a MISS instead of vanishing — so this number can finally see
+  // the recognition gap that r6Coverage above is structurally blind to.
+  goldHighStakesRows: number;
+  goldHighStakesConfirmed: number;
+  r6CoverageGold: number;
+  // The actionable residue: gold says high-stakes, we never recognised the analyte, so no guard
+  // could fire on it. These are unprotected rows, listed by name so the gap is a work list.
+  goldHighStakesUnrecognized: string[];
+  // Abstentions split by whether abstaining was CORRECT. Declining to interpret a ventilator
+  // setting or an opaque specimen code is right, not a coverage failure; the old flat abstain-rate
+  // conflated the two and made the app look worse than it is.
+  goldNonAnalyteRows: number;
+  goldAnalyteRows: number;
   recognized: number; // analyte mapped to our reference table (entry !== null)
   classified: number; // action !== 'abstain' — an interpretation was shown
   abstained: number; // withheld → source only
@@ -84,6 +138,16 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
   const confirmRows: ConfirmRow[] = [];
   let chipReproduced = 0;
   let chipDeferred = 0;
+  let chipScorable = 0;
+  let chipCorrect = 0;
+  let chipWrong = 0;
+  let chipAbstained = 0;
+  const chipWrongDetail: string[] = [];
+  let goldHighStakesRows = 0;
+  let goldHighStakesConfirmed = 0;
+  let goldNonAnalyteRows = 0;
+  let goldAnalyteRows = 0;
+  const goldHighStakesUnrecognized: string[] = [];
   let highStakesRows = 0;
   let highStakesConfirmed = 0;
   const abstainByReason: Record<string, number> = {};
@@ -117,11 +181,45 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
 
       // B1: score the VISIBLE chip, and whether high-stakes rows reach the confirm gate.
       const chip = buildSummary(report, 'en').sections[0].chipEn;
-      if (/your report’s range/.test(chip)) chipReproduced += 1;
+      const asserted = /your report’s range/.test(chip);
+      if (asserted) chipReproduced += 1;
       else chipDeferred += 1;
+
+      // Chip correctness against the report's OWN flag (independent label — see interface).
+      // Scorable = the report gave us everything needed: a value, a printed range, and its verdict.
+      const flagScorable = it.is_abnormal === '0' || it.is_abnormal === '1';
+      if (flagScorable && it.item_value.trim() !== '' && it.item_range.trim() !== '') {
+        chipScorable += 1;
+        if (!asserted) {
+          chipAbstained += 1; // had what it needed and still said nothing — counted, not excused
+        } else {
+          const weSayOut = !/Within your report’s range/.test(chip);
+          const theySayOut = it.is_abnormal === '1';
+          if (weSayOut === theySayOut) chipCorrect += 1;
+          else {
+            chipWrong += 1;
+            chipWrongDetail.push(
+              `${it.item_name.trim()} ${it.item_value}${it.item_unit} (range ${it.item_range}) → "${chip}" but report flagged ${theySayOut ? 'ABNORMAL' : 'normal'}`,
+            );
+          }
+        }
+      }
       if (row.entry?.highStakes) {
         highStakesRows += 1;
         if (row.needsConfirm) highStakesConfirmed += 1;
+      }
+
+      // Independent-label R6 coverage. Unlike the block above, an analyte we failed to NAME still
+      // counts here — that is the whole point: it scores as a miss instead of disappearing.
+      const gold = goldFor(it.item_name);
+      if (gold) {
+        if (gold.kind === 'non-analyte') goldNonAnalyteRows += 1;
+        else goldAnalyteRows += 1;
+        if (gold.kind === 'analyte' && gold.highStakes) {
+          goldHighStakesRows += 1;
+          if (row.needsConfirm) goldHighStakesConfirmed += 1;
+          if (row.entry === null) goldHighStakesUnrecognized.push(it.item_name.trim());
+        }
       }
 
       if (row.action === 'abstain') {
@@ -162,9 +260,21 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
     chipReproduced,
     chipDeferred,
     chipCoverage: items === 0 ? NaN : chipReproduced / items,
+    chipScorable,
+    chipCorrect,
+    chipWrong,
+    chipAbstained,
+    chipAccuracy: chipScorable === 0 ? NaN : chipCorrect / chipScorable,
+    chipWrongDetail,
     highStakesRows,
     highStakesConfirmed,
     r6Coverage: highStakesRows === 0 ? NaN : highStakesConfirmed / highStakesRows,
+    goldHighStakesRows,
+    goldHighStakesConfirmed,
+    r6CoverageGold: goldHighStakesRows === 0 ? NaN : goldHighStakesConfirmed / goldHighStakesRows,
+    goldHighStakesUnrecognized: [...new Set(goldHighStakesUnrecognized)],
+    goldNonAnalyteRows,
+    goldAnalyteRows,
     recognized,
     classified,
     abstained,

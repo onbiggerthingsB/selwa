@@ -51,6 +51,9 @@ describe('reference table integrity', () => {
       expect(e.allowedUnits).toContain(e.unit);
       expect(e.plainEn.length).toBeGreaterThan(0);
       expect(e.plainZh.length).toBeGreaterThan(0);
+      // B1 card definition (Codex blocker #2): every entry carries a direction-neutral definition.
+      expect(e.definitionEn.length).toBeGreaterThan(0);
+      expect(e.definitionZh.length).toBeGreaterThan(0);
       expect(e.source.length).toBeGreaterThan(0);
       // at least one bound exists
       expect(e.refLow !== null || e.refHigh !== null).toBe(true);

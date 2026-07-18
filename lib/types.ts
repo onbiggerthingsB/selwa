@@ -25,6 +25,14 @@ export interface ReferenceEntry {
   highStakes: boolean; // any abnormal value always flagged for clinician
   populationSensitive: boolean; // range depends on sex/age/fasting/pregnancy
   ageBands?: AgeBand[];
+  // B1 (Codex blocker #2): the CARD renders `definitionEn/definitionZh` — a DIRECTION-NEUTRAL
+  // definition of what the test IS (no "high means X", no thresholds, no triage), so it cannot
+  // compose with the report-relative chip into a patient-specific verdict. `plainEn/plainZh` is
+  // the FULLER description (carries directional/reference nuance) and is reserved for a separate
+  // glossary one tap away from the patient's number — never rendered beneath the chip. See
+  // lib/summary.ts and validation/b1VerdictLeakage.test.ts.
+  definitionEn: string;
+  definitionZh: string;
   plainEn: string;
   plainZh: string;
   source: string;
