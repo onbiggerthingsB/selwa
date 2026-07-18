@@ -14,6 +14,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 10, absoluteHigh: 300,
     plainEn: 'The oxygen-carrying protein in red blood cells; low values indicate anemia.',
     plainZh: '红细胞里携带氧气的蛋白，偏低提示贫血。',
+    definitionEn: 'The oxygen-carrying protein in red blood cells.',
+    definitionZh: '红细胞里携带氧气的蛋白。',
     source: 'WS/T 405-2012; Han Chinese multicenter CBC study (PMC4358890)',
   },
   {
@@ -24,6 +26,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 2500,
     plainEn: 'Immune-system cells that fight infection; high or low values can signal infection or other conditions.',
     plainZh: '免疫细胞，用来对抗感染；过高或过低可能提示感染或其他问题。',
+    definitionEn: 'Immune-system cells that fight infection.',
+    definitionZh: '免疫细胞，用来对抗感染。',
     source: 'WS/T 405-2012; Han Chinese multicenter CBC study (PMC4358890)',
   },
   {
@@ -35,6 +39,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.3, absoluteHigh: 12,
     plainEn: 'The number of red blood cells, which carry oxygen around the body.',
     plainZh: '红细胞的数量，负责把氧气运送到全身。',
+    definitionEn: 'The number of red blood cells, which carry oxygen around the body.',
+    definitionZh: '红细胞的数量，负责把氧气运送到全身。',
     source: 'WS/T 405-2012; Han Chinese multicenter CBC study (PMC4358890)',
   },
   {
@@ -45,6 +51,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 5000,
     plainEn: 'Cell fragments that help blood clot; very low counts raise bleeding risk.',
     plainZh: '帮助血液凝固的细胞碎片，过低会增加出血风险。',
+    definitionEn: 'Cell fragments that help blood clot.',
+    definitionZh: '帮助血液凝固的细胞碎片。',
     source: 'WS/T 405-2012; Han Chinese multicenter CBC study (PMC4358890)',
   },
   {
@@ -56,6 +64,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.03, absoluteHigh: 0.85,
     plainEn: 'The proportion of blood volume made up of red blood cells.',
     plainZh: '红细胞在血液中所占的体积比例。',
+    definitionEn: 'The proportion of blood volume made up of red blood cells.',
+    definitionZh: '红细胞在血液中所占的体积比例。',
     source: 'WS/T 405-2012; Han Chinese multicenter CBC study (PMC4358890)',
   },
   {
@@ -66,6 +76,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.3, absoluteHigh: 160,
     plainEn: 'Blood sugar level after fasting; high values can indicate prediabetes or diabetes.',
     plainZh: '空腹时的血糖水平，偏高可能提示糖尿病前期或糖尿病。',
+    definitionEn: 'Blood sugar level after fasting.',
+    definitionZh: '空腹时的血糖水平。',
     source: 'WHO/ADA criteria (normal <6.1, diabetes ≥7.0); Tietz reference interval',
   },
   {
@@ -76,6 +88,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 2, absoluteHigh: 25,
     plainEn: 'Average blood sugar over the past 2–3 months; used to screen for and monitor diabetes.',
     plainZh: '反映过去2-3个月的平均血糖，用于筛查和监测糖尿病。',
+    definitionEn: 'Average blood sugar over the past 2–3 months.',
+    definitionZh: '反映过去2-3个月的平均血糖。',
     source: 'ADA/WHO thresholds (diabetes ≥6.5%); NGSP-aligned reporting',
   },
   {
@@ -86,6 +100,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.3, absoluteHigh: 50,
     plainEn: 'Total amount of cholesterol in the blood; high values raise heart-disease risk.',
     plainZh: '血液中胆固醇的总量，偏高会增加心血管疾病风险。',
+    definitionEn: 'Total amount of cholesterol in the blood.',
+    definitionZh: '血液中胆固醇的总量。',
     source: '2016 Chinese guidelines for dyslipidemia in adults (PMC5803534)',
   },
   {
@@ -96,6 +112,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.1, absoluteHigh: 30,
     plainEn: 'The "bad" cholesterol that builds up in arteries; targets are individualized by heart-disease risk.',
     plainZh: '会在血管壁堆积的"坏"胆固醇，目标值因个人心血管风险而异。',
+    definitionEn: 'The "bad" cholesterol that builds up in arteries.',
+    definitionZh: '会在血管壁堆积的"坏"胆固醇。',
     source: '2016 Chinese guidelines for dyslipidemia in adults (PMC5803534)',
   },
   {
@@ -106,6 +124,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 10,
     plainEn: 'The "good" cholesterol that helps clear cholesterol from arteries; higher is protective.',
     plainZh: '帮助清除血管胆固醇的"好"胆固醇，越高越有保护作用。',
+    definitionEn: 'The "good" cholesterol that helps clear cholesterol from arteries.',
+    definitionZh: '帮助清除血管胆固醇的"好"胆固醇。',
     source: '2016 Chinese guidelines for dyslipidemia in adults (PMC5803534)',
   },
   {
@@ -116,6 +136,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.1, absoluteHigh: 300,
     plainEn: 'A type of fat in the blood; high levels raise heart-disease and pancreatitis risk.',
     plainZh: '血液中的一种脂肪，偏高会增加心血管疾病和胰腺炎风险。',
+    definitionEn: 'A type of fat in the blood.',
+    definitionZh: '血液中的一种脂肪。',
     source: '2016 Chinese guidelines for dyslipidemia in adults (PMC5803534)',
   },
   {
@@ -127,6 +149,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 10, absoluteHigh: 7000,
     plainEn: 'A waste product filtered by the kidneys; high values can indicate reduced kidney function.',
     plainZh: '由肾脏过滤的代谢废物，偏高可能提示肾功能下降。',
+    definitionEn: 'A waste product filtered by the kidneys.',
+    definitionZh: '由肾脏过滤的代谢废物。',
     source: 'Tietz Clinical Guide to Laboratory Tests (enzymatic method)',
   },
   {
@@ -137,6 +161,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.5, absoluteHigh: 150,
     plainEn: 'A nitrogen waste product handled by the kidneys; reflects kidney function and hydration.',
     plainZh: '由肾脏处理的含氮废物，可反映肾功能和身体水分状态。',
+    definitionEn: 'A nitrogen waste product handled by the kidneys; reflects kidney function and hydration.',
+    definitionZh: '由肾脏处理的含氮废物，可反映肾功能和身体水分状态。',
     source: 'Tietz Textbook of Clinical Chemistry (serum urea)',
   },
   {
@@ -147,6 +173,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 200,
     plainEn: 'An estimate of how well the kidneys filter blood; lower values indicate reduced kidney function.',
     plainZh: '估算肾脏过滤血液的能力，数值越低表示肾功能越差。',
+    definitionEn: 'An estimate of how well the kidneys filter blood.',
+    definitionZh: '估算肾脏过滤血液的能力。',
     source: 'KDIGO CKD staging; CKD-EPI 2021 (normal ≥90)',
   },
   {
@@ -157,6 +185,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 80, absoluteHigh: 230,
     plainEn: 'A key electrolyte that controls fluid balance; abnormal levels affect nerves and the heart.',
     plainZh: '调节体液平衡的重要电解质，异常会影响神经和心脏。',
+    definitionEn: 'A key electrolyte that controls fluid balance.',
+    definitionZh: '一种调节体液平衡的重要电解质。',
     source: 'Tietz Textbook of Clinical Chemistry',
   },
   {
@@ -167,6 +197,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 1, absoluteHigh: 15,
     plainEn: 'An electrolyte critical for heart rhythm and muscle function; abnormal levels can be dangerous.',
     plainZh: '对心律和肌肉功能至关重要的电解质，异常可能很危险。',
+    definitionEn: 'An electrolyte critical for heart rhythm and muscle function.',
+    definitionZh: '一种对心律和肌肉功能至关重要的电解质。',
     source: 'Tietz Textbook of Clinical Chemistry',
   },
   {
@@ -177,6 +209,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 60, absoluteHigh: 170,
     plainEn: 'An electrolyte that works with sodium to maintain fluid and acid–base balance.',
     plainZh: '与钠协同维持体液和酸碱平衡的电解质。',
+    definitionEn: 'An electrolyte that works with sodium to maintain fluid and acid–base balance.',
+    definitionZh: '与钠协同维持体液和酸碱平衡的电解质。',
     source: 'Tietz Textbook of Clinical Chemistry',
   },
   {
@@ -188,6 +222,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 50000,
     plainEn: 'A liver enzyme; elevated levels can indicate liver inflammation or damage.',
     plainZh: '一种肝脏酶，升高可能提示肝脏炎症或损伤。',
+    definitionEn: 'An enzyme found in the liver.',
+    definitionZh: '肝脏中的一种酶。',
     source: 'First China multicenter liver function study (PMC3772807)',
   },
   {
@@ -199,6 +235,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 50000,
     plainEn: 'An enzyme found in the liver and muscle; elevated levels can indicate liver or muscle injury.',
     plainZh: '存在于肝脏和肌肉的酶，升高可能提示肝脏或肌肉损伤。',
+    definitionEn: 'An enzyme found in the liver and muscle.',
+    definitionZh: '一种存在于肝脏和肌肉中的酶。',
     source: 'First China multicenter liver function study (PMC3772807)',
   },
   {
@@ -210,6 +248,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 15000,
     plainEn: 'A liver enzyme sensitive to bile-duct problems and alcohol; elevated levels prompt further liver evaluation.',
     plainZh: '对胆道问题和饮酒敏感的肝脏酶，升高时需进一步检查肝脏。',
+    definitionEn: 'A liver enzyme.',
+    definitionZh: '一种肝脏酶。',
     source: 'First China multicenter liver function study (PMC3772807)',
   },
   {
@@ -221,6 +261,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 1500,
     plainEn: 'A yellow breakdown product of red blood cells processed by the liver; high levels cause jaundice.',
     plainZh: '红细胞分解后由肝脏处理的黄色物质，偏高会引起黄疸。',
+    definitionEn: 'A yellow breakdown product of red blood cells processed by the liver.',
+    definitionZh: '红细胞分解后由肝脏处理的黄色物质。',
     source: 'First China multicenter liver function study (PMC3772807)',
   },
   {
@@ -231,6 +273,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 5, absoluteHigh: 70,
     plainEn: 'The main protein made by the liver; low levels can reflect liver disease, malnutrition, or kidney loss.',
     plainZh: '肝脏合成的主要蛋白，偏低可能与肝病、营养不良或肾脏丢失有关。',
+    definitionEn: 'The main protein made by the liver.',
+    definitionZh: '肝脏合成的主要蛋白。',
     source: 'First China multicenter liver function study (PMC3772807)',
   },
   {
@@ -241,6 +285,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 20, absoluteHigh: 200,
     plainEn: 'The total of albumin and other proteins in the blood, reflecting nutrition, liver, and immune status.',
     plainZh: '血液中白蛋白和其他蛋白的总和，反映营养及肝脏免疫状态。',
+    definitionEn: 'The total of albumin and other proteins in the blood, reflecting nutrition, liver, and immune status.',
+    definitionZh: '血液中白蛋白和其他蛋白的总和，反映营养及肝脏免疫状态。',
     source: 'Tietz Clinical Guide to Laboratory Tests',
   },
   {
@@ -252,6 +298,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 10, absoluteHigh: 5000,
     plainEn: 'A waste product from purine breakdown; high levels can cause gout and are linked to kidney stones.',
     plainZh: '嘌呤代谢产生的废物，偏高可引起痛风，并与肾结石相关。',
+    definitionEn: 'A waste product from purine breakdown.',
+    definitionZh: '嘌呤代谢产生的废物。',
     source: 'China hyperuricemia diagnostic criteria (M>420, F>360)',
   },
   {
@@ -262,6 +310,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.001, absoluteHigh: 2000,
     plainEn: 'The pituitary hormone that regulates the thyroid; high suggests an underactive thyroid, low an overactive one.',
     plainZh: '调节甲状腺的垂体激素，偏高提示甲状腺功能减退，偏低提示亢进。',
+    definitionEn: 'The pituitary hormone that regulates the thyroid.',
+    definitionZh: '调节甲状腺的垂体激素。',
     source: 'Standard assay reference intervals (assay- and age-dependent)',
   },
   {
@@ -272,6 +322,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.3, absoluteHigh: 300,
     plainEn: 'The active thyroid hormone available to tissues; abnormal levels indicate thyroid dysfunction.',
     plainZh: '组织可利用的活性甲状腺激素，异常提示甲状腺功能异常。',
+    definitionEn: 'The active thyroid hormone available to tissues.',
+    definitionZh: '组织可利用的活性甲状腺激素。',
     source: 'Standard assay reference intervals (highly assay-dependent)',
   },
   {
@@ -282,6 +334,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 100,
     plainEn: 'The share of white cells that are neutrophils (main bacteria-fighting cells); high often suggests bacterial infection.',
     plainZh: '中性粒细胞在白细胞中的比例，是抗细菌的主力，偏高常提示细菌感染。',
+    definitionEn: 'The share of white cells that are neutrophils (main bacteria-fighting cells).',
+    definitionZh: '中性粒细胞在白细胞中的比例，是抗细菌的主力。',
     source: 'WS/T 405-2012 differential ranges',
   },
   {
@@ -292,6 +346,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 100,
     plainEn: 'The share of white cells that are lymphocytes (which fight viruses); changes can accompany viral infections.',
     plainZh: '淋巴细胞在白细胞中的比例，主要对抗病毒，变化常见于病毒感染。',
+    definitionEn: 'The share of white cells that are lymphocytes, which fight viruses.',
+    definitionZh: '淋巴细胞在白细胞中的比例，主要对抗病毒。',
     source: 'WS/T 405-2012 differential ranges',
   },
   {
@@ -302,6 +358,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 40, absoluteHigh: 200,
     plainEn: 'The average size of red blood cells; helps classify the type of anemia (small, normal, or large cells).',
     plainZh: '红细胞的平均大小，有助于判断贫血类型（小细胞、正常或大细胞）。',
+    definitionEn: 'The average size of red blood cells.',
+    definitionZh: '红细胞的平均大小。',
     source: 'WS/T 405-2012',
   },
 
@@ -317,6 +375,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 10, absoluteHigh: 65,
     plainEn: 'This is the average amount of hemoglobin (the oxygen-carrying protein) inside a single red blood cell; it helps describe the type of anemia if one is present.',
     plainZh: '这是单个红细胞中血红蛋白（携带氧气的蛋白质）的平均含量，有助于判断贫血的类型。',
+    definitionEn: 'This is the average amount of hemoglobin (the oxygen-carrying protein) inside a single red blood cell.',
+    definitionZh: '这是单个红细胞中血红蛋白（携带氧气的蛋白质）的平均含量。',
     source: 'WS/T 405-2012 (中华人民共和国卫生行业标准, 血细胞分析参考区间); Tietz consensus 27-33 pg',
   },
   {
@@ -328,6 +388,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 200, absoluteHigh: 450,
     plainEn: 'This is the concentration of hemoglobin packed into the red blood cells; a high value can point to certain rarer red-cell conditions, while a low value often goes with iron-deficiency anemia.',
     plainZh: '这是红细胞内血红蛋白的浓度；偏高可能提示某些较少见的红细胞疾病，偏低常见于缺铁性贫血。',
+    definitionEn: 'This is the concentration of hemoglobin packed into the red blood cells.',
+    definitionZh: '这是红细胞内血红蛋白的浓度。',
     source: 'WS/T 405-2012 (血细胞分析参考区间); Tietz conventional 320-360 g/L (32-36 g/dL)',
   },
   {
@@ -339,6 +401,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 5, absoluteHigh: 45,
     plainEn: 'This measures how much red blood cells vary in size; a higher value (more variation) can be an early sign of certain anemias such as iron deficiency.',
     plainZh: '这衡量红细胞大小的差异程度；数值偏高（差异较大）可能是缺铁等某些贫血的早期信号。',
+    definitionEn: 'This measures how much red blood cells vary in size.',
+    definitionZh: '这衡量红细胞大小的差异程度。',
     source: 'Tietz / analyzer-consensus (RDW not fixed in WS/T 405-2012; analyzer-dependent — defer to printed lab range)',
   },
   {
@@ -350,6 +414,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 100,
     plainEn: 'This is the share of white blood cells that are monocytes, a cell type involved in fighting infection and clearing debris; it is interpreted alongside the rest of the white-cell count.',
     plainZh: '这是白细胞中单核细胞所占的比例，单核细胞参与抗感染和清除体内废物，需结合整体白细胞情况一起判断。',
+    definitionEn: 'This is the share of white blood cells that are monocytes, a cell type involved in fighting infection and clearing debris; it is interpreted alongside the rest of the white-cell count.',
+    definitionZh: '这是白细胞中单核细胞所占的比例，单核细胞参与抗感染和清除体内废物，需结合整体白细胞情况一起判断。',
     source: 'WS/T 405-2012 (血细胞分析参考区间)',
   },
   {
@@ -361,6 +427,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 100,
     plainEn: 'This is the share of white blood cells that are eosinophils, which often rise with allergies or parasitic infections; it is read together with the absolute count.',
     plainZh: '这是白细胞中嗜酸性粒细胞所占的比例，过敏或寄生虫感染时常升高，需结合绝对值一起判断。',
+    definitionEn: 'This is the share of white blood cells that are eosinophils; it is read together with the absolute count.',
+    definitionZh: '这是白细胞中嗜酸性粒细胞所占的比例，需结合绝对值一起判断。',
     source: 'WS/T 405-2012 (血细胞分析参考区间)',
   },
   {
@@ -372,6 +440,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 100,
     plainEn: 'This is the small share of white blood cells that are basophils, a cell type involved in allergic and inflammatory responses; normal values are very low.',
     plainZh: '这是白细胞中嗜碱性粒细胞所占的很小比例，这类细胞参与过敏和炎症反应，正常值很低。',
+    definitionEn: 'This is the small share of white blood cells that are basophils, a cell type involved in allergic and inflammatory responses.',
+    definitionZh: '这是白细胞中嗜碱性粒细胞所占的很小比例，这类细胞参与过敏和炎症反应。',
     source: 'WS/T 405-2012 (血细胞分析参考区间)',
   },
   {
@@ -383,6 +453,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 2000,
     plainEn: 'This is the actual number of neutrophils, the main infection-fighting white cells; a very low count leaves the body vulnerable to serious infection and needs prompt medical attention.',
     plainZh: '这是中性粒细胞（主要的抗感染白细胞）的实际数量；数值过低会让身体容易发生严重感染，需要及时就医。',
+    definitionEn: 'This is the actual number of neutrophils, the main infection-fighting white cells.',
+    definitionZh: '这是中性粒细胞（主要的抗感染白细胞）的实际数量。',
     source: 'WS/T 405-2012 (血细胞分析参考区间); critical <0.5 ×10^9/L per severe-neutropenia consensus (ANC<500/µL)',
   },
   {
@@ -394,6 +466,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 2000,
     plainEn: 'This is the actual number of lymphocytes, white cells central to the immune system; it is interpreted alongside the rest of the blood count.',
     plainZh: '这是淋巴细胞（免疫系统的核心白细胞）的实际数量，需结合整体血常规一起判断。',
+    definitionEn: 'This is the actual number of lymphocytes, white cells central to the immune system; it is interpreted alongside the rest of the blood count.',
+    definitionZh: '这是淋巴细胞（免疫系统的核心白细胞）的实际数量，需结合整体血常规一起判断。',
     source: 'WS/T 405-2012 (血细胞分析参考区间)',
   },
   {
@@ -405,6 +479,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 3, absoluteHigh: 30,
     plainEn: 'This is the average size of platelets, the cells that help blood clot; it is usually interpreted together with the platelet count rather than on its own.',
     plainZh: '这是血小板（帮助血液凝固的细胞）的平均大小，通常需要结合血小板计数一起判断，而不是单独看。',
+    definitionEn: 'This is the average size of platelets, the cells that help blood clot.',
+    definitionZh: '这是血小板（帮助血液凝固的细胞）的平均大小。',
     source: 'Tietz / analyzer-consensus (MPV not fixed in WS/T 405-2012; analyzer-dependent — defer to printed lab range)',
   },
   {
@@ -416,6 +492,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 1, absoluteHigh: 6,
     plainEn: 'Calcium in your blood is kept in a tight range and matters for nerves, muscles, and bones.',
     plainZh: '血液中的钙维持在很窄的范围内,对神经、肌肉和骨骼都很重要。',
+    definitionEn: 'Calcium in your blood matters for nerves, muscles, and bones.',
+    definitionZh: '血液中的钙对神经、肌肉和骨骼都很重要。',
     source: 'Tietz / Medscape eMedicine Serum Calcium reference range (2.20-2.55 mmol/L)',
   },
   {
@@ -427,6 +505,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.1, absoluteHigh: 12,
     plainEn: 'Magnesium helps your muscles, nerves, and heart rhythm work normally.',
     plainZh: '镁有助于维持肌肉、神经和心律的正常功能。',
+    definitionEn: 'Magnesium helps your muscles, nerves, and heart rhythm work normally.',
+    definitionZh: '镁有助于维持肌肉、神经和心律的正常功能。',
     source: 'Tietz / Medscape eMedicine Serum Magnesium reference range (0.65-1.05 mmol/L)',
   },
   {
@@ -442,6 +522,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     ],
     plainEn: 'Phosphate works together with calcium to build bone and supply cell energy.',
     plainZh: '磷与钙共同作用,参与骨骼构建和细胞能量供应。',
+    definitionEn: 'Phosphate works together with calcium to build bone and supply cell energy.',
+    definitionZh: '磷与钙共同作用,参与骨骼构建和细胞能量供应。',
     source: 'Tietz / Medscape eMedicine Phosphate reference range (adult 0.81-1.45 mmol/L; children higher)',
   },
   {
@@ -453,6 +535,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 1, absoluteHigh: 70,
     plainEn: 'This reflects the acid-base balance of your blood; very low or high values can signal a metabolic problem.',
     plainZh: '它反映血液的酸碱平衡,数值过低或过高可能提示代谢方面的问题。',
+    definitionEn: 'This reflects the acid-base balance of your blood.',
+    definitionZh: '它反映血液的酸碱平衡。',
     source: 'Medscape/Testing.com Bicarbonate (total CO2) reference range (22-29 mmol/L)',
   },
   {
@@ -464,6 +548,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.3, absoluteHigh: 160,
     plainEn: 'A blood sugar taken any time of day; a random value of 11.1 or above (with symptoms) points toward diabetes.',
     plainZh: '任意时间测得的血糖;随机值达到11.1及以上(伴有症状)提示糖尿病。',
+    definitionEn: 'A blood sugar taken any time of day.',
+    definitionZh: '任意时间测得的血糖。',
     source: 'WHO/ADA diagnostic criteria — random plasma glucose ≥11.1 mmol/L diagnostic for diabetes',
   },
   {
@@ -475,6 +561,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 30,
     plainEn: 'C-peptide shows how much insulin your own pancreas is making.',
     plainZh: 'C肽反映你自身胰腺分泌胰岛素的量。',
+    definitionEn: 'C-peptide shows how much insulin your own pancreas is making.',
+    definitionZh: 'C肽反映你自身胰腺分泌胰岛素的量。',
     source: 'Medscape eMedicine / ARUP C-peptide fasting reference range (~0.37-1.47 nmol/L; lab-variable)',
   },
   {
@@ -486,6 +574,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 50000,
     plainEn: 'The amount of insulin in your blood after fasting, used to assess how your body handles blood sugar.',
     plainZh: '空腹时血液中的胰岛素量,用于评估身体处理血糖的能力。',
+    definitionEn: 'The amount of insulin in your blood after fasting, used to assess how your body handles blood sugar.',
+    definitionZh: '空腹时血液中的胰岛素量，用于评估身体处理血糖的能力。',
     source: 'Tietz / Medscape fasting insulin reference range (~2.6-24.9 µIU/mL); SI ×6.0 to pmol/L',
   },
   {
@@ -497,6 +587,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 30000,
     plainEn: 'An enzyme mainly from the pancreas and salivary glands; high levels can indicate pancreas inflammation.',
     plainZh: '主要来自胰腺和唾液腺的酶;水平升高可能提示胰腺炎症。',
+    definitionEn: 'An enzyme mainly from the pancreas and salivary glands.',
+    definitionZh: '一种主要来自胰腺和唾液腺的酶。',
     source: 'Tietz / Medscape eMedicine Amylase reference range (~35-135 U/L, method-dependent)',
   },
   {
@@ -508,6 +600,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 50000,
     plainEn: 'A pancreas enzyme that digests fats; a marked rise is a fairly specific sign of acute pancreatitis.',
     plainZh: '一种消化脂肪的胰腺酶;明显升高是急性胰腺炎较特异的指标。',
+    definitionEn: 'A pancreas enzyme that digests fats.',
+    definitionZh: '一种消化脂肪的胰腺酶。',
     source: 'Tietz / Medscape eMedicine Lipase reference range (~13-60 U/L, method-dependent)',
   },
   {
@@ -523,6 +617,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     ],
     plainEn: 'An enzyme found mainly in liver and bone; it can rise with bile-duct blockage, bone growth or bone conditions, and is normally much higher in children.',
     plainZh: '主要存在于肝脏和骨骼中的一种酶，胆道阻塞、骨骼生长或骨骼问题时可升高，儿童的正常值本来就明显偏高。',
+    definitionEn: 'An enzyme found mainly in liver and bone.',
+    definitionZh: '主要存在于肝脏和骨骼中的一种酶。',
     source: 'Tietz Clinical Guide to Laboratory Tests (adult M/F); pediatric age bands from population studies (Mayo Pediatric Catalog; PMC9659844)',
   },
   {
@@ -534,6 +630,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 1200,
     plainEn: 'The processed form of bilirubin that the liver has prepared for excretion; a rise often points to a problem draining bile, such as a blocked bile duct.',
     plainZh: '经肝脏处理、准备排出的胆红素；升高常提示胆汁排出受阻，例如胆管阻塞。',
+    definitionEn: 'The processed form of bilirubin that the liver has prepared for excretion.',
+    definitionZh: '经肝脏处理、准备排出的胆红素。',
     source: 'Tietz / Medscape bilirubin reference range (direct 0-0.3 mg/dL ≈ 0-5 µmol/L; many labs to ~6.8 µmol/L)',
   },
   {
@@ -545,6 +643,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 1200,
     plainEn: 'The form of bilirubin before the liver processes it; an isolated rise is often harmless (such as Gilbert\'s syndrome) or reflects red-blood-cell breakdown.',
     plainZh: '肝脏处理之前的胆红素；单独升高常无大碍（如吉尔伯特综合征），也可能反映红细胞分解增多。',
+    definitionEn: 'The form of bilirubin before the liver processes it.',
+    definitionZh: '肝脏处理之前的胆红素。',
     source: 'Tietz / Medscape (indirect ≈ 0.2-0.8 mg/dL ≈ 3-15 µmol/L; calculated as total minus direct)',
   },
   {
@@ -556,6 +656,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 1000,
     plainEn: 'Acids made by the liver and recycled from bile; higher fasting levels can be a sensitive sign of liver or bile-flow problems, and are specifically watched in pregnancy.',
     plainZh: '由肝脏生成、随胆汁循环的酸类；空腹值升高是肝脏或胆汁排泄问题的敏感信号，妊娠期尤其需要关注。',
+    definitionEn: 'Acids made by the liver and recycled from bile.',
+    definitionZh: '这是由肝脏生成、随胆汁循环的一类酸。',
     source: 'Fasting reference 0-10 µmol/L (some labs to ~14); ICP-in-pregnancy cutoff ~10-19 µmol/L (PMC9543426, PMC6613619)',
   },
   {
@@ -567,6 +669,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 50000,
     plainEn: 'An enzyme present in almost every tissue; it rises when cells are damaged anywhere — heart, muscle, blood cells, liver or tumors — so it is sensitive but not specific to one organ.',
     plainZh: '几乎存在于所有组织中的一种酶；心脏、肌肉、血细胞、肝脏或肿瘤等任何部位的细胞受损时都会升高，因此敏感但不针对某一器官。',
+    definitionEn: 'An enzyme present in almost every tissue.',
+    definitionZh: '几乎存在于所有组织中的一种酶。',
     source: 'Tietz / Mayo (adult ~135-225 U/L method-dependent; common 140-280). Critical-high ~1000 U/L flags massive cell turnover (hemolysis, tumor lysis, infarction)',
   },
   {
@@ -578,6 +682,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.1, absoluteHigh: 45,
     plainEn: 'All the cholesterol carried by particles that can clog arteries (total cholesterol minus the \'good\' HDL); lower is better, and target levels depend on your overall heart-risk.',
     plainZh: '由可能堵塞血管的脂蛋白携带的全部胆固醇（总胆固醇减去“好”的HDL）；越低越好，目标值取决于整体心血管风险。',
+    definitionEn: 'All the cholesterol carried by particles that can clog arteries (total cholesterol minus the \'good\' HDL).',
+    definitionZh: '由可能堵塞血管的脂蛋白携带的全部胆固醇（总胆固醇减去“好”的HDL）。',
     source: '2023 Chinese guideline for lipid management (Frontiers Pharmacol 2023): desirable <4.1 mmol/L; high-risk target <2.6, very-high-risk <2.2 mmol/L',
   },
   {
@@ -589,6 +695,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 5,
     plainEn: 'The main protein in \'good\' HDL cholesterol; higher levels are generally protective for the heart, and women tend to run slightly higher than men.',
     plainZh: '“好”胆固醇HDL中的主要蛋白；水平较高通常对心脏有保护作用，女性往往略高于男性。',
+    definitionEn: 'The main protein in ‘good’ HDL cholesterol.',
+    definitionZh: '“好”胆固醇HDL中的主要蛋白。',
     source: '2023 Chinese guideline for lipid management (Frontiers Pharmacol 2023): normal ~1.20-1.60 g/L, women slightly higher',
   },
   {
@@ -600,6 +708,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 6,
     plainEn: 'A protein found on each artery-clogging cholesterol particle, so it counts how many harmful particles you have; lower is better and goals are stricter at higher heart-risk.',
     plainZh: '存在于每个会堵塞血管的胆固醇颗粒上的一种蛋白，因此可反映有害颗粒的数量；越低越好，心血管风险越高目标越严格。',
+    definitionEn: 'A protein found on each artery-clogging cholesterol particle, so it counts how many harmful particles you have.',
+    definitionZh: '存在于每个会堵塞血管的胆固醇颗粒上的一种蛋白，因此可反映有害颗粒的数量。',
     source: '2023 Chinese guideline for lipid management (Frontiers Pharmacol 2023): normal ~0.80-1.10 g/L; lower targets in high CV risk',
   },
   {
@@ -611,6 +721,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 500,
     plainEn: 'A largely inherited, lifelong cholesterol particle that adds to heart and stroke risk when high; a level at or above the threshold is considered elevated. Note that mg/dL and nmol/L results are not interchangeable.',
     plainZh: '一种主要由遗传决定、终身较稳定的胆固醇颗粒，升高会增加心脏和卒中风险；达到或超过阈值即视为偏高。注意mg/dL与nmol/L的结果不能直接换算。',
+    definitionEn: 'A largely inherited, lifelong cholesterol particle. Note that mg/dL and nmol/L results are not interchangeable.',
+    definitionZh: '一种主要由遗传决定、终身较稳定的胆固醇颗粒。注意mg/dL与nmol/L的结果不能直接换算。',
     source: 'EAS/ACC-AHA: high-risk ≥50 mg/dL ≈ ≥125 nmol/L (≥30 mg/dL intermediate). mg/dL↔nmol/L is assay-dependent and not cleanly convertible — abstain on unit conversion',
   },
   {
@@ -627,6 +739,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     ],
     plainEn: 'A kidney-function marker that, unlike creatinine, is largely unaffected by muscle mass; higher values suggest reduced filtering by the kidneys.',
     plainZh: '一种肾功能指标，与肌酐不同，它基本不受肌肉量影响；数值偏高提示肾脏过滤功能下降。',
+    definitionEn: 'A kidney-function marker that, unlike creatinine, is largely unaffected by muscle mass.',
+    definitionZh: '一种肾功能指标，与肌酐不同，基本不受肌肉量影响。',
     source: 'Adult RIs Galteau et al. (Ann Clin Biochem 2001, PMID 10672373); assay-dependent — defer to printed interval',
   },
   {
@@ -638,6 +752,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 5000,
     plainEn: 'Measures albumin leaking into urine relative to creatinine; raised values are an early sign of kidney damage, often from diabetes or high blood pressure.',
     plainZh: '衡量尿中白蛋白相对于肌酐的比例；数值升高是肾脏损伤的早期信号，常见于糖尿病或高血压。',
+    definitionEn: 'Measures albumin leaking into urine relative to creatinine.',
+    definitionZh: '衡量尿中白蛋白相对于肌酐的比例。',
     source: 'KDIGO 2012/2013 albuminuria categories: A1<3, A2 3-30, A3>30 mg/mmol (=<30/30-300/>300 mg/g)',
   },
   {
@@ -649,6 +765,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.3, absoluteHigh: 70,
     plainEn: 'A small protein cleared by the kidneys; raised serum levels can reflect reduced kidney function and are also monitored in some blood cancers.',
     plainZh: '一种由肾脏清除的小分子蛋白；血清水平升高可反映肾功能下降，也用于某些血液肿瘤的监测。',
+    definitionEn: 'A small protein cleared by the kidneys and measured in blood serum.',
+    definitionZh: '一种由肾脏清除的小分子蛋白，可在血清中检测。',
     source: 'Serum RI ~0.6-2.4 mg/L (LabCorp; emedicine.medscape 2086864); assay-dependent',
   },
   {
@@ -660,6 +778,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.1, absoluteHigh: 30,
     plainEn: 'Measures the total amount of the thyroid hormone T3 in blood; helps assess an overactive or underactive thyroid alongside TSH and T4.',
     plainZh: '测量血中甲状腺激素T3的总量；与TSH和T4一起评估甲状腺功能亢进或减退。',
+    definitionEn: 'Measures the total amount of the thyroid hormone T3 in blood; checked alongside TSH and T4.',
+    definitionZh: '测量血中甲状腺激素T3的总量；与TSH和T4一起检查。',
     source: 'Tietz/clinical adult RI 1.3-3.1 nmol/L (ng/mL ×1.536); method-dependent',
   },
   {
@@ -671,6 +791,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.3, absoluteHigh: 100,
     plainEn: 'Measures the active, unbound form of thyroid hormone T3 in blood; a key test for diagnosing overactive thyroid.',
     plainZh: '测量血中具有活性的游离T3激素；是诊断甲状腺功能亢进的关键指标。',
+    definitionEn: 'Measures the active, unbound form of thyroid hormone T3 in blood.',
+    definitionZh: '测量血中具有活性的游离T3激素。',
     source: 'Clinical adult RI ~3.1-6.8 pmol/L (pg/mL ×1.536); assay-dependent — defer to printed interval',
   },
   {
@@ -682,6 +804,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 1, absoluteHigh: 800,
     plainEn: 'Measures the total amount of the main thyroid hormone T4 in blood; used with TSH to assess thyroid function.',
     plainZh: '测量血中主要甲状腺激素T4的总量；与TSH一起用于评估甲状腺功能。',
+    definitionEn: 'Measures the total amount of the main thyroid hormone T4 in blood; used with TSH to assess thyroid function.',
+    definitionZh: '测量血中主要甲状腺激素T4的总量；与TSH一起用于评估甲状腺功能。',
     source: 'Tietz adult RI ~66-181 nmol/L (µg/dL ×12.87); method-dependent',
   },
   {
@@ -693,6 +817,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 200000,
     plainEn: 'An antibody that targets the thyroid; raised levels point to autoimmune thyroid disease such as Hashimoto\'s thyroiditis.',
     plainZh: '一种攻击甲状腺的抗体；水平升高提示自身免疫性甲状腺疾病，如桥本甲状腺炎。',
+    definitionEn: 'An antibody that targets the thyroid.',
+    definitionZh: '一种攻击甲状腺的抗体。',
     source: 'Positive cutoff assay-dependent (~34-35 IU/mL, LabCorp 34; range up to ~60) — defer to printed cutoff',
   },
   {
@@ -704,6 +830,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 200000,
     plainEn: 'An antibody against a thyroid protein; raised levels suggest autoimmune thyroid disease and can also interfere with thyroglobulin tumor-marker testing.',
     plainZh: '一种针对甲状腺球蛋白的抗体；水平升高提示自身免疫性甲状腺疾病，也可能干扰甲状腺球蛋白肿瘤标志物检测。',
+    definitionEn: 'An antibody against a thyroid protein.',
+    definitionZh: '一种针对甲状腺球蛋白的抗体。',
     source: 'Cutoff varies widely by assay (Roche ~115 IU/mL; others ~40 or <4) — MUST defer to printed cutoff',
   },
   {
@@ -715,6 +843,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 1000,
     plainEn: 'A sensitive marker of low-grade inflammation used to gauge cardiovascular risk: below 1 is low risk, 1-3 average, above 3 higher; values above 10 usually point to an active infection or other inflammation rather than heart risk.',
     plainZh: '反映低度炎症的敏感指标，用于评估心血管风险：低于1为低风险，1-3为中等，高于3为较高；高于10通常提示存在感染或其他炎症，而非心血管风险。',
+    definitionEn: 'A sensitive marker of low-grade inflammation.',
+    definitionZh: '反映低度炎症的敏感指标。',
     source: 'AHA/CDC scientific statement on hs-CRP for CV risk (Circulation 2003): <1 low, 1-3 average, >3 high risk; >10 repeat/seek other cause',
   },
   {
@@ -730,6 +860,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     ],
     plainEn: 'A non-specific measure of inflammation: how fast red cells settle in a tube over one hour. Mildly raised values are common and the upper limit climbs with age; it points to inflammation somewhere rather than naming a cause.',
     plainZh: '反映炎症的非特异性指标，即红细胞在一小时内下沉的速度。轻度升高常见，且上限随年龄增长；它提示体内存在炎症，但不能指明具体原因。',
+    definitionEn: 'A non-specific measure of inflammation: how fast red cells settle in a tube over one hour.',
+    definitionZh: '反映炎症的非特异性指标，即红细胞在一小时内下沉的速度。',
     source: 'Westergren method; Tietz reference intervals (men 0-15, women 0-20 mm/h); age adjustment per Miller et al. BMJ 1983',
   },
   {
@@ -745,6 +877,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     ],
     plainEn: 'A hormone released when the heart is under strain; used to help diagnose or rule out heart failure. Levels naturally rise with age and with reduced kidney function, so thresholds are age-adjusted and interpreted in clinical context.',
     plainZh: '心脏受到压力时释放的一种激素，用于辅助诊断或排除心力衰竭。其水平随年龄增长及肾功能下降而自然升高，因此判断标准需按年龄调整并结合临床情况。',
+    definitionEn: 'A hormone released when the heart is under strain; used to help diagnose or rule out heart failure.',
+    definitionZh: '心脏受到压力时释放的一种激素，用于辅助诊断或排除心力衰竭。',
     source: 'ESC HFA consensus / ICON-RELOADED: chronic HF rule-out <125 ng/L; acute rule-out <300; age-stratified rule-in 450/900/1800 ng/L (ng/L = pg/mL)',
   },
   {
@@ -756,6 +890,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 70000,
     plainEn: 'A hormone released when the heart muscle is stretched or strained; used to help diagnose or rule out heart failure. Below about 100 makes acute heart failure unlikely, while higher values warrant cardiac evaluation.',
     plainZh: '心肌受到牵拉或压力时释放的激素，用于辅助诊断或排除心力衰竭。低于约100时急性心衰可能性较小，数值较高则需进一步心脏评估。',
+    definitionEn: 'A hormone released when the heart muscle is stretched or strained; used to help diagnose or rule out heart failure.',
+    definitionZh: '心肌受到牵拉或压力时释放的激素，用于辅助诊断或排除心力衰竭。',
     source: 'ESC HFA consensus: chronic HF rule-out <35 ng/L; acute HF rule-out <100 ng/L (ng/L = pg/mL)',
   },
   {
@@ -767,6 +903,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 1000000,
     plainEn: 'A protein released into the blood when heart muscle is damaged; the key test for heart attack. Any value above the assay\'s 99th-percentile cutoff is abnormal and, with chest symptoms, needs urgent assessment. Cutoffs are assay-specific and slightly higher in men.',
     plainZh: '心肌受损时释放入血的一种蛋白，是诊断心肌梗死的关键指标。任何超过检测方法第99百分位上限的数值均属异常，若伴有胸部症状须紧急就医。判断标准因检测方法而异，男性略高。',
+    definitionEn: 'A protein released into the blood when heart muscle is damaged; the key test for heart attack.',
+    definitionZh: '心肌受损时释放入血的一种蛋白，是诊断心肌梗死的关键指标。',
     source: 'Healthy Chinese adults hs-cTnI 99th percentile: men 12.5 ng/L, women 9.6 ng/L (Karger Cardiology 2022, PMC9393817); cutoff is assay-specific (ng/L = ng/L; 1 ug/L = 1000 ng/L)',
   },
   {
@@ -778,6 +916,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 2000000,
     plainEn: 'An enzyme found mainly in muscle, including the heart; rises after muscle injury, intense exercise, or certain medications. Values are higher in men and in people with more muscle mass, and a single high reading after exertion is often harmless.',
     plainZh: '主要存在于肌肉（包括心肌）中的酶，肌肉损伤、剧烈运动或某些药物后会升高。男性及肌肉量大者数值偏高，运动后单次升高通常无害。',
+    definitionEn: 'An enzyme found mainly in muscle, including the heart.',
+    definitionZh: '主要存在于肌肉（包括心肌）中的酶。',
     source: 'Tietz reference intervals: men 38-174 U/L, women 26-140 U/L (37C). Higher in Black individuals and high muscle mass',
   },
   {
@@ -789,6 +929,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 50000,
     plainEn: 'The heart-specific fraction of creatine kinase; once used to detect heart-muscle damage but now largely replaced by troponin. Reported either as activity (U/L) or mass (ng/mL), so check which units your report uses.',
     plainZh: '肌酸激酶中心肌特异的部分，过去用于检测心肌损伤，现多被肌钙蛋白取代。可按活性（U/L）或质量（ng/mL）报告，请留意报告所用单位。',
+    definitionEn: 'The heart-specific fraction of creatine kinase, now largely replaced by troponin. Reported either as activity (U/L) or mass (ng/mL), so check which units your report uses.',
+    definitionZh: '肌酸激酶中心肌特异的部分，现多被肌钙蛋白取代。可按活性（U/L）或质量（ng/mL）报告，请留意报告所用单位。',
     source: 'Tietz: CK-MB activity <25 U/L (or <5-6% of total CK); CK-MB mass cutoff ~5 ng/mL. Units (activity vs mass) differ between labs',
   },
   {
@@ -804,6 +946,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     ],
     plainEn: 'An amino acid in blood; elevated levels are linked to cardiovascular risk and often reflect low folate, vitamin B12, or B6. Levels are higher in men and rise with age. Above 15 is generally considered raised.',
     plainZh: '血液中的一种氨基酸，升高与心血管风险相关，常反映叶酸、维生素B12或B6不足。男性及年长者数值偏高。高于15一般视为升高。',
+    definitionEn: 'An amino acid in the blood.',
+    definitionZh: '血液中的一种氨基酸。',
     source: 'Common clinical cutoff: normal <15 umol/L (mild 15-30, moderate 30-100, severe >100). Age/sex-specific RIs per Nature Sci Rep 2020 China cohort (PMC s41598-020-74596-7)',
   },
   {
@@ -815,6 +959,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 4, absoluteHigh: 300,
     plainEn: 'A timed test of how quickly blood clots via one of the clotting pathways; used to assess bleeding risk and to monitor warfarin. The normal range is reagent-dependent, so always read it against your lab\'s stated range.',
     plainZh: '测定血液通过某一凝血途径凝固快慢的计时检查，用于评估出血风险及监测华法林。正常范围因试剂而异，应以本实验室标注的范围为准。',
+    definitionEn: 'A timed test of how quickly blood clots via one of the clotting pathways; used to monitor warfarin.',
+    definitionZh: '测定血液通过某一凝血途径凝固快慢的计时检查，用于监测华法林。',
     source: 'Tietz/Medscape: PT ~11-14.5 s (reagent-dependent). Critical >30 s (lab-defined panic value)',
   },
   {
@@ -826,6 +972,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0.4, absoluteHigh: 50,
     plainEn: 'A standardized version of the prothrombin time that reads the same across labs; about 0.8-1.2 if you are not on blood thinners. For people on warfarin a target of 2-3 is usual, and very high values mean a serious bleeding risk.',
     plainZh: '对凝血酶原时间进行标准化、可在不同实验室间通用的比值；未服抗凝药者约为0.8-1.2。服用华法林者通常目标为2-3，数值过高提示严重出血风险。',
+    definitionEn: 'A standardized version of the prothrombin time that reads the same across labs; it is also used for people taking warfarin.',
+    definitionZh: '对凝血酶原时间进行标准化、可在不同实验室间通用的比值；也用于服用华法林的人群。',
     source: 'WHO/ISI-standardized ratio; normal 0.8-1.2. Warfarin target usually 2.0-3.0. Critical >5.0 (lab panic value, non-anticoagulated >4.0)',
   },
   {
@@ -837,6 +985,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 8, absoluteHigh: 300,
     plainEn: 'A timed test of a different clotting pathway; used to screen for bleeding disorders and to monitor heparin. The normal range depends on the reagent, so compare against your lab\'s range.',
     plainZh: '测定另一条凝血途径凝固时间的检查，用于筛查出血性疾病及监测肝素。正常范围因试剂而异，请对照本实验室范围判断。',
+    definitionEn: 'A timed test of a different clotting pathway; used to monitor heparin. The normal range depends on the reagent.',
+    definitionZh: '测定另一条凝血途径凝固时间的检查，用于监测肝素。正常范围因试剂而异。',
     source: 'Tietz/Medscape: aPTT ~25-37 s (reagent-dependent). Critical >70 s (lab-defined panic value)',
   },
   {
@@ -848,6 +998,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 20,
     plainEn: 'A clotting protein and also an inflammation marker; needed to form clots. Low levels raise bleeding risk (very low is dangerous), while raised levels often reflect inflammation, infection, or pregnancy.',
     plainZh: '一种凝血蛋白，同时也是炎症标志物，是形成血凝块所必需的。偏低会增加出血风险（过低很危险），升高常反映炎症、感染或妊娠。',
+    definitionEn: 'A clotting protein and also an inflammation marker; needed to form clots.',
+    definitionZh: '一种凝血蛋白，同时也是炎症标志物，是形成血凝块所必需的。',
     source: 'Tietz: fibrinogen 2.0-4.0 g/L (200-400 mg/dL). Critical low <1.0 g/L (bleeding risk; lab panic value)',
   },
   {
@@ -866,6 +1018,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     ],
     plainEn: 'A breakdown product of blood clots; mainly used to help rule out clots in the lungs or legs. A normal result makes a clot unlikely, but many harmless conditions (age, infection, surgery, pregnancy) raise it, so a high value is not by itself a diagnosis. Watch the units (FEU vs DDU differ about two-fold).',
     plainZh: '血凝块分解的产物，主要用于辅助排除肺部或下肢血栓。结果正常时血栓可能性较小，但许多无害情况（高龄、感染、手术、妊娠）也会使其升高，故升高本身并不等于确诊。注意单位（FEU与DDU约相差两倍）。',
+    definitionEn: 'A breakdown product of blood clots; mainly used to help rule out clots in the lungs or legs. Watch the units (FEU vs DDU differ about two-fold).',
+    definitionZh: '血凝块分解的产物，主要用于辅助排除肺部或下肢血栓。注意单位（FEU与DDU约相差两倍）。',
     source: 'Conventional rule-out cutoff <0.5 mg/L FEU (=500 ng/mL FEU). Age-adjusted cutoff (age x 10 ng/mL FEU) for >50y per ADJUST-PE. DDU vs FEU units differ ~2x',
   },
   {
@@ -877,6 +1031,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 1000,
     plainEn: 'Serum iron measures iron currently circulating in the blood. It swings a lot with diet and time of day, so it is interpreted alongside ferritin and transferrin saturation rather than on its own.',
     plainZh: '血清铁反映血液中正在循环的铁。它受饮食和采血时间影响波动较大，通常需结合铁蛋白和转铁蛋白饱和度一起判断，不能单看。',
+    definitionEn: 'Serum iron measures iron currently circulating in the blood. It swings a lot with diet and time of day, so it is interpreted alongside ferritin and transferrin saturation rather than on its own.',
+    definitionZh: '血清铁反映血液中正在循环的铁。它受饮食和采血时间影响波动较大，通常需结合铁蛋白和转铁蛋白饱和度一起判断，不能单看。',
     source: 'Medscape Iron Reference Range; Wikipedia Serum iron (NHS labs 5.8-34.5 umol/L); conv ug/dL x0.1791 (Fe MW 55.85)',
   },
   {
@@ -888,6 +1044,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 500000,
     plainEn: 'Ferritin reflects the body\'s stored iron. A low value points to iron deficiency, while a very high value can reflect iron overload or inflammation. Values differ by sex and run lower in menstruating women.',
     plainZh: '铁蛋白反映体内储存的铁。偏低提示缺铁，明显偏高可能反映铁过载或炎症。数值有性别差异，月经期女性通常偏低。',
+    definitionEn: 'Ferritin reflects the body’s stored iron.',
+    definitionZh: '铁蛋白反映体内储存的铁。',
     source: 'Medscape Iron Reference Range (M 24-336, F 11-307 ug/L); ug/L = ng/mL 1:1',
   },
   {
@@ -899,6 +1057,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 5, absoluteHigh: 200,
     plainEn: 'TIBC measures how much iron the blood could carry if fully loaded. It tends to rise when iron stores are low, so it is read together with serum iron and ferritin.',
     plainZh: '总铁结合力反映血液最多能结合多少铁。缺铁时往往升高，需与血清铁和铁蛋白一起解读。',
+    definitionEn: 'TIBC measures how much iron the blood could carry if fully loaded. It is read together with serum iron and ferritin.',
+    definitionZh: '总铁结合力反映血液最多能结合多少铁。需与血清铁和铁蛋白一起解读。',
     source: 'Medscape TIBC (250-370 ug/dL = 45-66 umol/L); same conv as serum iron',
   },
   {
@@ -910,6 +1070,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 200,
     plainEn: 'This is the percentage of iron-carrying capacity that is actually filled with iron (serum iron divided by TIBC). A low value suggests iron deficiency; a high value can prompt screening for iron overload.',
     plainZh: '这是血液实际结合的铁占总结合能力的百分比（血清铁除以总铁结合力）。偏低提示缺铁，偏高可能需要筛查铁过载。',
+    definitionEn: 'This is the percentage of iron-carrying capacity that is actually filled with iron (serum iron divided by TIBC).',
+    definitionZh: '这是血液实际结合的铁占总结合能力的百分比（血清铁除以总铁结合力）。',
     source: 'Medscape Transferrin Saturation (20-50%, F lower bound ~15%); calculated ratio, dimensionless',
   },
   {
@@ -921,6 +1083,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 50000,
     plainEn: 'Vitamin B12 is needed for nerves and blood-cell formation. Low levels can cause anemia and nerve problems that may become permanent if untreated, and are more common in older adults, vegans, and long-term metformin users.',
     plainZh: '维生素B12对神经和血细胞生成很重要。缺乏可导致贫血和神经损害，若不治疗可能不可逆；老年人、严格素食者及长期服用二甲双胍者更易缺乏。',
+    definitionEn: 'Vitamin B12 is needed for nerves and blood-cell formation.',
+    definitionZh: '维生素B12对神经和血细胞生成很重要。',
     source: 'Norwegian/Bagcilar RI studies (150-600 pmol/L; deficiency <148); conv pg/mL x0.7378',
   },
   {
@@ -932,6 +1096,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 250,
     plainEn: 'Folate is a B vitamin needed to make blood cells, and adequate levels are especially important before and during pregnancy. Low levels can cause a type of anemia.',
     plainZh: '叶酸是一种B族维生素，用于生成血细胞，孕前和孕期尤其重要。缺乏可引起一种贫血。',
+    definitionEn: 'Folate is a B vitamin needed to make blood cells.',
+    definitionZh: '叶酸是一种B族维生素，用于生成血细胞。',
     source: 'Norwegian population RI (serum folate 5.2-30.9 nmol/L; deficiency <6.8); conv ng/mL x2.266',
   },
   {
@@ -943,6 +1109,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 0, absoluteHigh: 2500,
     plainEn: 'This is the best single marker of vitamin D status, which supports bone health. Levels below about 50 nmol/L are commonly considered deficient, and values vary with sunlight exposure, season, and skin tone.',
     plainZh: '这是评估维生素D状态的最佳指标，关系到骨骼健康。低于约50 nmol/L通常被视为缺乏；数值随日晒、季节和肤色而变化。',
+    definitionEn: 'This is the best single marker of vitamin D status, which supports bone health. Values vary with sunlight exposure, season, and skin tone.',
+    definitionZh: '这是评估维生素D状态的最佳指标，关系到骨骼健康。数值随日晒、季节和肤色而变化。',
     source: 'Endocrine Society/Medscape (deficiency <50, insufficiency 50-75, sufficient >=75 nmol/L; severe <30); conv ng/mL x2.496',
   },
   {
@@ -954,6 +1122,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: null, absoluteHigh: null,
     plainEn: 'On a urine dipstick, protein is normally negative (reported as \'-\'). A positive result (\'+\', \'++\', \'+++\') means protein was detected and may warrant a follow-up kidney check, though it can also be transient after exercise or fever.',
     plainZh: '尿蛋白试纸结果正常为阴性（即\'-\'）。出现阳性（\'+\'、\'++\'、\'+++\'）表示检出蛋白，可能需要进一步检查肾脏，但运动或发热后也可能一过性出现。',
+    definitionEn: 'This is a urine dipstick test that checks whether protein is present in the urine.',
+    definitionZh: '这是尿蛋白试纸检查，用于检测尿液中是否存在蛋白。',
     source: 'Medscape Urinalysis; AAFP 2005 Urinalysis review (dipstick negative = normal)',
   },
   {
@@ -965,6 +1135,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: null, absoluteHigh: null,
     plainEn: 'On a urine dipstick, glucose is normally negative (reported as \'-\'). A positive result means sugar is spilling into the urine, often when blood glucose is high, and usually prompts checking for diabetes.',
     plainZh: '尿糖试纸结果正常为阴性（即\'-\'）。出现阳性表示尿中有糖，常见于血糖偏高时，通常需要进一步排查糖尿病。',
+    definitionEn: 'A urine dipstick test that checks whether sugar (glucose) is present in the urine.',
+    definitionZh: '尿糖试纸用于检查尿液中是否含有糖（葡萄糖）。',
     source: 'Medscape Urinalysis; AAFP 2005 Urinalysis review (dipstick negative = normal)',
   },
   {
@@ -976,6 +1148,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: null, absoluteHigh: null,
     plainEn: 'On a urine dipstick, ketones are normally negative (reported as \'-\'). A positive result can occur with fasting, low-carb diets, or illness, and in people with diabetes a strongly positive result can be a warning sign needing prompt attention.',
     plainZh: '尿酮体试纸结果正常为阴性（即\'-\'）。空腹、低碳水饮食或患病时可出现阳性；糖尿病患者若强阳性可能是需要及时就医的警示信号。',
+    definitionEn: 'This test uses a dipstick to check for ketones in the urine.',
+    definitionZh: '这项检查用试纸检测尿液中的酮体。',
     source: 'Medscape Urinalysis; AAFP 2005 Urinalysis review (dipstick negative = normal)',
   },
   {
@@ -987,6 +1161,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: 4, absoluteHigh: 9,
     plainEn: 'Urine pH measures how acidic or alkaline the urine is. It normally falls between about 5.0 and 8.0 and shifts with diet, fluids, and time of day, so a single reading is rarely meaningful on its own.',
     plainZh: '尿pH反映尿液的酸碱度，正常大约在5.0到8.0之间，会随饮食、饮水和时间变化，单次结果通常意义有限。',
+    definitionEn: 'Urine pH measures how acidic or alkaline the urine is. It shifts with diet, fluids, and time of day, so a single reading is rarely meaningful on its own.',
+    definitionZh: '尿pH反映尿液的酸碱度，会随饮食、饮水和时间变化，单次结果通常意义有限。',
     source: 'Medscape Urinalysis; LITFL Dipstick (typical 5.5-6.5, range 4.5-8.0)',
   },
   {
@@ -998,6 +1174,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     absoluteLow: null, absoluteHigh: null,
     plainEn: 'Specific gravity reflects how concentrated the urine is, which mainly tracks hydration. Higher values suggest dehydration and lower values suggest dilute urine or high fluid intake.',
     plainZh: '尿比重反映尿液的浓缩程度，主要与体内水分状态有关。数值偏高提示脱水，偏低提示尿液稀释或饮水较多。',
+    definitionEn: 'Specific gravity reflects how concentrated the urine is, which mainly tracks hydration.',
+    definitionZh: '尿比重反映尿液的浓缩程度，主要与体内水分状态有关。',
     source: 'Medscape Urinalysis; AAFP 2005 (1.003-1.030, dimensionless)',
   },
 ];

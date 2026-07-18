@@ -19,8 +19,17 @@ export interface SummarySection {
   tone: string; // CSS/color tone (low|normal|high|unclassified|critical) — see note below
   chipEn: string; // the status chip label
   chipZh: string;
-  plainEn: string; // general education about the test; '' when unclassified / abstained
+  // CARD education text: a DIRECTION-NEUTRAL definition of what the test is (entry.definitionEn/Zh).
+  // It renders directly beneath the report-relative chip, so it must NEVER state what a high/low
+  // value means — that composition is a patient-specific verdict (Codex blocker #2). '' when
+  // unclassified / abstained. Policed by validation/b1VerdictLeakage.test.ts.
+  plainEn: string;
   plainZh: string;
+  // GLOSSARY text: the fuller description (entry.plainEn/Zh) carrying directional/reference nuance.
+  // Reserved for a separate glossary one tap away from the patient's number — NOT rendered beneath
+  // the chip. '' when unclassified / abstained.
+  glossaryEn: string;
+  glossaryZh: string;
   flags: SummaryFlag[];
   reportRange: string; // the range PRINTED ON THE REPORT (verbatim), '' when none
   typicalRange: string; // our curated range, shown as GENERAL context (varies by lab), '' when no entry
@@ -152,8 +161,12 @@ export function buildSummary(
       tone,
       chipEn,
       chipZh,
-      plainEn: classified ? entry!.plainEn : '',
-      plainZh: classified ? entry!.plainZh : '',
+      // CARD: the direction-neutral definition (never the directional plainEn — that is glossary-only).
+      plainEn: classified ? entry!.definitionEn : '',
+      plainZh: classified ? entry!.definitionZh : '',
+      // GLOSSARY: the fuller description, surfaced separately (not beneath the chip).
+      glossaryEn: classified ? entry!.plainEn : '',
+      glossaryZh: classified ? entry!.plainZh : '',
       flags: row.flags
         .filter((f) => SURFACING_FLAGS.has(f.id))
         .map((f) => ({ severity: f.severity, messageEn: f.messageEn, messageZh: f.messageZh })),

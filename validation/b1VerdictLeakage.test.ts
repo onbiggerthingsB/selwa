@@ -12,14 +12,25 @@
 // "your value is outside the usual range"). A prose rule cannot hold that line; this gate can.
 // If a future change reintroduces a verdict into user-visible text, this fails.
 //
-// NOTE: `typicalRange` (our curated range shown as GENERAL context) and `plainEn/plainZh`
-// (general education about the test) are deliberately NOT policed — FDA's own "not a device"
-// examples permit reference material and translations of medical terms. The line is APPLYING
-// our range to THIS patient's number, which is what the strings below would betray.
+// NOTE: `typicalRange` (our curated range shown as GENERAL context) and the GLOSSARY text
+// (SummarySection.glossaryEn/Zh, sourced from entry.plainEn/Zh) are deliberately NOT policed —
+// FDA's own "not a device" examples permit reference material and translations of medical terms,
+// and the glossary lives one tap away from the patient's number, never beneath the chip.
+//
+// WHAT CHANGED (Codex blocker #2): the app used to render the fuller plainEn/plainZh — which say
+// what a HIGH/LOW value MEANS ("high values can indicate diabetes", troponin's "any value above
+// the 99th-percentile cutoff is abnormal and... needs urgent assessment") — DIRECTLY BENEATH the
+// report-relative chip. Under a chip that already says "Above your report's range", that clause
+// composes into a patient-specific verdict: the FDA bright line. The fix splits the field. The
+// CARD now renders a DIRECTION-NEUTRAL definition (entry.definitionEn/Zh, → SummarySection.plainEn/Zh)
+// and this gate POLICES it — with BANNED plus CARD_BANNED (directional-implication / threshold /
+// triage patterns). The fuller text moved to the un-policed glossary. So the line held is still
+// "don't apply our range to THIS number", now enforced on the education text too, not just chips.
 
 import { describe, it, expect } from 'vitest';
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary, type SummarySection } from '@/lib/summary';
+import { REFERENCE_LABS } from '@/data/reference-labs';
 import { MIMIC_US_SAMPLE } from './real-corpus/us-sample';
 import { MEDREPBENCH_SAMPLE } from './real-corpus/sample';
 
@@ -36,6 +47,25 @@ const BANNED: { re: RegExp; why: string }[] = [
   { re: /及时就医|尽快就医/, why: 'ZH: triage/urgency signal' },
   { re: /我们的参考范围/, why: 'ZH: reveals we judged with our range' },
   { re: /较宽的范围/, why: 'ZH: reveals we judged with our range' },
+];
+
+// CARD education text (the direction-neutral definition) has a WIDER failure surface than chips
+// and flags: a leaked definition doesn't say "critical range", it says "high values can indicate
+// diabetes". These patterns catch that shape — a direction word bound to an implication, a
+// threshold verdict, or a triage cue — in EN and ZH. Validated to trip 0/89 shipped definitions
+// while catching 37/89 EN + 25/89 ZH of the ORIGINAL directional strings (the fuller plainEn/Zh),
+// so re-pointing the card back at plainEn, or re-adding a directional clause to a definition,
+// fails this gate. Applied ONLY to card education text — never to chips (fixed, allow-listed
+// below) nor the glossary (permitted reference material).
+const CARD_BANNED: { re: RegExp; why: string }[] = [
+  { re: /\b(high|higher|elevated|raised|low|lower|reduced|abnormal|positive)\b[^.;]{0,40}\b(indicate|indicates|suggest|suggests|mean|means|signal|signals|sign of|point to|points to|warrant|warrants|warn|warns|risk)\b/i, why: 'directional implication' },
+  { re: /\bcan (indicate|signal|mean|suggest|point)\b/i, why: 'implication verb' },
+  { re: /\b(above|below)\b[^.;]{0,20}\b(is|are|means?|indicates?|abnormal)\b/i, why: 'threshold verdict' },
+  { re: /\bneeds? (urgent|prompt|immediate)\b/i, why: 'triage' },
+  { re: /\bseek\b|\battention\b/i, why: 'triage' },
+  { re: /升高[^。；]{0,20}(提示|表明|意味|说明|风险)|偏[高低][^。；]{0,20}(提示|表明|意味|说明|风险)/, why: 'ZH directional implication' },
+  { re: /(过低|过高|异常)[^。；]{0,12}(危险|风险|就医|紧急)/, why: 'ZH triage/verdict' },
+  { re: /(须|需)(紧急|尽快|及时)(就医|处理)/, why: 'ZH triage' },
 ];
 
 // The ONLY chips the user may see: the report's own position, a deferral, or "not assessed".
@@ -109,5 +139,44 @@ describe('B1 gate — no user-visible verdict about the patient’s own value', 
     }
     // ABSTAIN_LABEL maps low→"Low"/high→"High": a verdict chip if ever reachable.
     expect(bad, `verdict chips:\n${bad.join('\n')}`).toEqual([]);
+  });
+
+  // EXHAUSTIVE: the card renders entry.definitionEn/Zh verbatim, so policing the source field
+  // covers every one of the 89 — not only the analytes that happen to appear in the corpora.
+  it('every reference definition (the card education text) leaks no verdict/triage — all 89', () => {
+    const violations: string[] = [];
+    const CARD_RULES = [...BANNED, ...CARD_BANNED];
+    for (const e of REFERENCE_LABS) {
+      for (const [lang, text] of [['EN', e.definitionEn], ['ZH', e.definitionZh]] as const) {
+        for (const b of CARD_RULES) {
+          if (b.re.test(text)) violations.push(`${e.key} ${lang} → "${text.slice(0, 70)}" [${b.why}]`);
+        }
+      }
+    }
+    expect(violations, `card definition leakage:\n${violations.join('\n')}`).toEqual([]);
+  });
+
+  // WIRING: the card education text (SummarySection.plainEn/Zh) must be the DEFINITION, not the
+  // fuller directional plainEn/Zh. If a future change re-points summary.ts back at entry.plainEn,
+  // the rendered card text stops matching entry.definitionEn and this fails — before the directional
+  // string can reach a patient beneath the chip.
+  it('the rendered card text is the direction-neutral definition, not the fuller description', () => {
+    const mismatches: string[] = [];
+    // Recognised, in-range values so the row classifies and the card education text is emitted.
+    const CASES: [string, string, string, string][] = [
+      ['Troponin I', '5', 'ng/L', 'troponin_i'],
+      ['空腹血糖', '5.0', 'mmol/L', 'fasting_glucose'],
+      ['血红蛋白', '140', 'g/L', 'hemoglobin'],
+      ['Potassium', '4.2', 'mmol/L', 'potassium'],
+    ];
+    for (const [name, value, unit, key] of CASES) {
+      const entry = REFERENCE_LABS.find((e) => e.key === key)!;
+      const [s] = sectionsFor(name, value, unit, null);
+      if (s.plainEn !== entry.definitionEn) mismatches.push(`${key}: card EN "${s.plainEn.slice(0, 50)}" ≠ definitionEn`);
+      if (s.plainZh !== entry.definitionZh) mismatches.push(`${key}: card ZH "${s.plainZh.slice(0, 30)}" ≠ definitionZh`);
+      // and the fuller description must NOT be the card text
+      if (s.plainEn === entry.plainEn && entry.plainEn !== entry.definitionEn) mismatches.push(`${key}: card is rendering the fuller plainEn`);
+    }
+    expect(mismatches, `card wiring:\n${mismatches.join('\n')}`).toEqual([]);
   });
 });
