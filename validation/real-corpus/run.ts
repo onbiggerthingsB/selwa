@@ -22,6 +22,15 @@ function line(label: string, s: RealCorpusSummary): void {
   );
 }
 
+// CHIP CORRECTNESS vs the report's OWN flag (independent of our table — Codex #7). Accuracy is
+// over every row the report gave us enough to answer, so deferring lowers it rather than hiding.
+function goldLine(label: string, s: RealCorpusSummary): void {
+  console.log(
+    `${label.padEnd(9)} chip-vs-report ${pct(s.chipAccuracy).padStart(6)} ` +
+      `(${s.chipCorrect} correct / ${s.chipWrong} WRONG / ${s.chipAbstained} deferred of ${s.chipScorable} answerable)`,
+  );
+}
+
 // Internal guard-health — demoted: validates the guards' INPUTS, no longer the safety gate.
 // The real gates are tests: b1VerdictLeakage (no verdict surfaces) + chipFidelity (chip matches
 // the report's own frame).
@@ -39,6 +48,27 @@ function report(title: string, corpus: RealReport[]): RealCorpusSummary {
   line('combined', all);
   line('  train', scoreRealCorpus(train));
   line('  heldout', scoreRealCorpus(heldout));
+  console.log('  — INDEPENDENT gold labels (Codex #7 — denominators we do not choose) —');
+  goldLine('combined', all);
+  goldLine('  heldout', scoreRealCorpus(heldout));
+  console.log(
+    `combined  R6-gold      ${pct(all.r6CoverageGold).padStart(6)} ` +
+      `(${all.goldHighStakesConfirmed}/${all.goldHighStakesRows} gold-high-stakes rows confirmed) ` +
+      `vs self-graded R6 ${pct(all.r6Coverage)} (${all.highStakesConfirmed}/${all.highStakesRows})`,
+  );
+  console.log(
+    `combined  scope        ${all.goldAnalyteRows} analyte rows / ${all.goldNonAnalyteRows} non-analyte rows ` +
+      `(declining the latter is CORRECT, not a coverage miss)`,
+  );
+  if (all.goldHighStakesUnrecognized.length) {
+    console.log(`  ⚠ gold-high-stakes analytes we do NOT recognise (unprotected — work list):`);
+    console.log('      ' + all.goldHighStakesUnrecognized.join(' · '));
+  }
+  if (all.chipWrongDetail.length) {
+    console.log('  ⚠ chip contradicts the report’s own flag:');
+    for (const d of [...new Set(all.chipWrongDetail)].slice(0, 12)) console.log(`      ${d}`);
+    if (new Set(all.chipWrongDetail).size > 12) console.log(`      … ${new Set(all.chipWrongDetail).size - 12} more`);
+  }
   console.log('  — internal guard-health (not the gate) —');
   internalLine('combined', all);
   const reasons = Object.entries(all.abstainByReason).sort((a, b) => b[1] - a[1]);
