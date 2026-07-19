@@ -21,7 +21,7 @@ type Phase = 'idle' | 'preview' | 'redact' | 'consent' | 'quality' | 'extracting
 async function blobQuality(blob: Blob): Promise<QualityVerdict | null> {
   try {
     const bitmap = await createImageBitmap(blob);
-    const maxDim = 400; // enough for blur/contrast/coverage; fast on low-end phones
+    const maxDim = 400; // enough for the blur + ink checks; fast on low-end phones
     const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
     const w = Math.max(3, Math.round(bitmap.width * scale));
     const h = Math.max(3, Math.round(bitmap.height * scale));

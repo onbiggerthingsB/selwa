@@ -1,13 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  toGray,
-  laplacianVariance,
-  contrastStdDev,
-  inkCoverage,
-  assessQuality,
-  escalateConfirm,
-  type GrayImage,
-} from './imageQuality';
+import { toGray, laplacianVariance, inkCoverage, assessQuality, escalateConfirm, type GrayImage } from './imageQuality';
 import { groundExtraction } from './grounding';
 
 function uniform(w: number, h: number, v: number): GrayImage {
@@ -38,11 +30,6 @@ describe('imageQuality', () => {
   it('laplacianVariance ~0 for a uniform (blank/blurry) image, large for a sharp pattern', () => {
     expect(laplacianVariance(uniform(20, 20, 128))).toBeLessThan(1);
     expect(laplacianVariance(midtoneCheckerboard(20, 20))).toBeGreaterThan(1000);
-  });
-
-  it('contrastStdDev is 0 for uniform, high for a checkerboard', () => {
-    expect(contrastStdDev(uniform(10, 10, 128))).toBeCloseTo(0, 5);
-    expect(contrastStdDev(midtoneCheckerboard(10, 10))).toBeGreaterThan(30);
   });
 
   // THE REGRESSION THIS FILE USED TO LOCK IN. The old midtoneCoverage counted pixels in
@@ -83,7 +70,7 @@ describe('imageQuality', () => {
     const v = assessQuality(uniform(20, 20, 128));
     expect(v.ok).toBe(false);
     expect(v.reasons).toContain('blurry');
-    expect(v.reasons).toContain('low-contrast');
+    expect(v.reasons).toContain('no-text-found'); // no pixel is dark enough to count as ink either
   });
 
   it('assessQuality passes a sharp, contrasty image with ink on it', () => {
@@ -105,6 +92,31 @@ describe('imageQuality', () => {
     const v = assessQuality({ data: d, width: w, height: h });
     expect(v.reasons, `a crisp report must not be refused (ink=${v.ink})`).toHaveLength(0);
     expect(v.ok).toBe(true);
+  });
+
+  // A SECOND, DISTINCT false positive found while investigating the first: a `contrastStdDev`
+  // check (global stddev of the WHOLE frame) used to sit alongside inkCoverage, and it broke on
+  // realistic text density even after the coverage fix above shipped. The "good report" pattern
+  // this file already used (line ~99) has ~11% of pixels as ink — far denser than real printed
+  // text, so it never exercised the bug. A canvas-rendered phone-photo simulation (gradient
+  // lighting, grey ink, mild blur, JPEG re-compression) measured ink at 0.6-0.8% of the frame —
+  // and at that realistic density, contrastStdDev computed ~14, below the threshold of 18, and
+  // the photo was refused as "washed out" though it was a normal, legible document. This test
+  // pins that same realistic sparsity (text confined to a thin band, most of the frame pure
+  // paper) and requires a PASS, so a global-variance-style check cannot silently return.
+  it('assessQuality passes REALISTIC sparse text density (thin text band in a large frame)', () => {
+    const w = 300, h = 400; // most of the frame is paper; only a few rows carry text
+    const d = new Array(w * h).fill(246);
+    for (let y = 20; y < 36; y++) {
+      // one printed line: alternating ink/paper within the row only, like real glyph strokes
+      for (let x = 0; x < w; x++) if (x % 3 === 0) d[y * w + x] = 20;
+    }
+    const img = { data: d, width: w, height: h };
+    const totalPx = w * h;
+    const inkPx = d.filter((v) => v < 100).length;
+    expect(inkPx / totalPx, 'sanity: this must actually be sparse, not dense').toBeLessThan(0.02);
+    const v = assessQuality(img);
+    expect(v.reasons, `a sparse-but-legible document must not be refused (blur=${v.blur}, ink=${v.ink})`).toHaveLength(0);
   });
 
   it('assessQuality still refuses a frame with no document in it', () => {

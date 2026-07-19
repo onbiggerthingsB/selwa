@@ -51,12 +51,6 @@ export function laplacianVariance(img: GrayImage): number {
   return variance(vals);
 }
 
-/** Global contrast (stddev of intensities); very low → washed out / glare / blank. */
-export function contrastStdDev(img: GrayImage): number {
-  const a = Array.from(img.data as ArrayLike<number>, (v) => v as number);
-  return Math.sqrt(variance(a));
-}
-
 // How dark a pixel must be, RELATIVE to this frame's own paper level, to count as ink.
 // Relative rather than absolute so the check survives dim light (paper at 120) and bright
 // light (paper at 250) alike — an absolute cutoff mis-reads one end or the other.
@@ -105,19 +99,17 @@ export function inkCoverage(img: GrayImage): number {
   return ink / n;
 }
 
-export type QualityReason = 'blurry' | 'low-contrast' | 'no-text-found';
+export type QualityReason = 'blurry' | 'no-text-found';
 
 export interface QualityVerdict {
   ok: boolean;
   blur: number;
-  contrast: number;
   ink: number;
   reasons: QualityReason[];
 }
 
 export interface QualityThresholds {
   blur: number;
-  contrast: number;
   ink: number;
 }
 
@@ -125,19 +117,32 @@ export interface QualityThresholds {
 // `ink` is deliberately LOW. Its job is to catch "there is no document in this frame at all"
 // (blank wall, finger over the lens, report out of shot), which scores exactly 0; it is not
 // meant to judge how much text a report has, since a short report is legitimately sparse.
-// Blur and contrast do the work of catching a degraded-but-present document, and they are
-// unchanged — the user-reported false positive came only from the coverage check.
-export const QUALITY_THRESHOLDS: QualityThresholds = { blur: 100, contrast: 18, ink: 0.005 };
+//
+// THERE IS NO SEPARATE CONTRAST THRESHOLD, DELIBERATELY. A `low-contrast` check (global stddev
+// of the whole frame) used to sit alongside this one, and it was a second, independent source of
+// false rejections on real photos: any document with normal margins and line spacing — i.e.
+// every real document — has text occupying a small minority of pixels, so full-frame variance is
+// dominated by the paper and reads "washed out" regardless of how legible the text is. A phone
+// photo with mild gradient lighting, grey (not pure-black) ink, slight blur, and JPEG compression
+// scored contrast 14.1 against a threshold of 18 — REJECTED — despite being a normal photo.
+//
+// It is also mathematically redundant with `ink`, not just wrong: inkCoverage only counts a pixel
+// once it is at least (1 - INK_RATIO) = 40% darker than the frame's own paper level. So whenever
+// ink coverage passes at all, the qualifying pixels are, by construction, at least 0.4×paper below
+// paper — a large paper-vs-ink gap is GUARANTEED. There is no real "ink is present but too close
+// to paper to read" state left for a contrast check to catch that ink coverage does not already
+// rule out. Verified: on a blank frame, a glare-washed frame, a flat-grey frame, and a frame with
+// genuinely faint/washed-out ink, ink coverage independently and correctly returns 0 in every
+// case (`no-text-found`), so removing contrast loses no actual protection.
+export const QUALITY_THRESHOLDS: QualityThresholds = { blur: 100, ink: 0.005 };
 
 export function assessQuality(img: GrayImage, t: QualityThresholds = QUALITY_THRESHOLDS): QualityVerdict {
   const blur = laplacianVariance(img);
-  const contrast = contrastStdDev(img);
   const ink = inkCoverage(img);
   const reasons: QualityReason[] = [];
   if (blur < t.blur) reasons.push('blurry');
-  if (contrast < t.contrast) reasons.push('low-contrast');
   if (ink < t.ink) reasons.push('no-text-found');
-  return { ok: reasons.length === 0, blur, contrast, ink, reasons };
+  return { ok: reasons.length === 0, blur, ink, reasons };
 }
 
 /** Specific, actionable retake guidance per failed check (EN + ZH). */
@@ -145,10 +150,6 @@ export const RETAKE_GUIDANCE: Record<QualityReason, { en: string; zh: string }> 
   blurry: {
     en: 'The photo looks blurry — hold the phone steady and tap the report to focus.',
     zh: '照片有点模糊——请拿稳手机，点击报告对焦。',
-  },
-  'low-contrast': {
-    en: 'The photo looks washed out — reduce glare and use even, bright light.',
-    zh: '照片对比度过低——请减少反光，使用均匀明亮的光线。',
   },
   // Reworded with the metric: the old copy ("move closer so the report fills the frame") was
   // advice for a framing problem, but the check now fires only when NO printed text is found
