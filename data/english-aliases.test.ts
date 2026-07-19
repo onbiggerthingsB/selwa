@@ -24,9 +24,18 @@ describe('US English aliases — verified Blood-only names now resolve', () => {
     expect(row.flags.some((f) => f.id === 'R6-HIGH-STAKES-MANDATORY-CONFIRM')).toBe(true);
   });
 
-  it('CBC + serum calcium English names resolve', () => {
-    expect(findEntry('White Blood Cells')?.key).toBe('wbc_count'); // MIMIC: Blood only
-    expect(findEntry('Red Blood Cells')?.key).toBe('rbc_count'); // MIMIC: Blood only
+  it('CBC names resolve for blood and legacy unknown context, never for known urine', () => {
+    expect(findEntry('White Blood Cells')?.key).toBe('wbc_count');
+    expect(findEntry('White Blood Cells', 'blood')?.key).toBe('wbc_count');
+    expect(findEntry('White Blood Cells', 'urine')).toBeNull();
+    expect(findEntry('WBC', 'urine')).toBeNull();
+    expect(findEntry('Red Blood Cells')?.key).toBe('rbc_count');
+    expect(findEntry('Red Blood Cells', 'blood')?.key).toBe('rbc_count');
+    expect(findEntry('Red Blood Cells', 'urine')).toBeNull();
+    expect(findEntry('RBC', 'urine')).toBeNull();
+  });
+
+  it('serum calcium English names still resolve', () => {
     expect(findEntry('Calcium')?.key).toBe('calcium_total'); // MIMIC qualifies urine as "24 hr Calcium"
     expect(findEntry('Calcium, Total')?.key).toBe('calcium_total');
   });

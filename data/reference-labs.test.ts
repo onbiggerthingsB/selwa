@@ -61,6 +61,7 @@ describe('reference table integrity', () => {
       expect(e.key).toMatch(/^[a-z0-9_]+$/);
       expect(keys.has(e.key)).toBe(false);
       keys.add(e.key);
+      expect(e.specimen).toBe(e.key.startsWith('urine_') ? 'urine' : 'blood');
       expect(e.unit.length).toBeGreaterThan(0);
       expect(e.allowedUnits).toContain(e.unit);
       expect(e.plainEn.length).toBeGreaterThan(0);

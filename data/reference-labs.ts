@@ -7,6 +7,7 @@ import type { ReferenceEntry } from '@/lib/types';
 export const REFERENCE_LABS: ReferenceEntry[] = [
   {
     key: 'hemoglobin', nameEn: 'Hemoglobin', nameZh: '血红蛋白',
+    specimen: 'blood',
     aliases: ['HGB', 'Hb', '血色素', '血红蛋白'],
     unit: 'g/L', allowedUnits: ['g/L'],
     refLow: { male: 130, female: 115 }, refHigh: { male: 175, female: 150 },
@@ -20,6 +21,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'wbc_count', nameEn: 'White blood cell count', nameZh: '白细胞计数',
+    specimen: 'blood',
     aliases: ['WBC', 'White Blood Cells', 'White Blood Cell Count', '白细胞', '白血球', '白细胞计数'],
     unit: '10^9/L', allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L'],
     refLow: 3.5, refHigh: 9.5, criticalLow: 2.0, criticalHigh: 30, highStakes: false, populationSensitive: false,
@@ -32,6 +34,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'rbc_count', nameEn: 'Red blood cell count', nameZh: '红细胞计数',
+    specimen: 'blood',
     aliases: ['RBC', 'Red Blood Cells', 'Red Blood Cell Count', '红细胞', '红细胞计数'],
     unit: '10^12/L', allowedUnits: ['10^12/L', '10*12/L', 'x10^12/L', '×10^12/L', 'T/L'],
     refLow: { male: 4.3, female: 3.8 }, refHigh: { male: 5.8, female: 5.1 },
@@ -45,6 +48,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'platelet_count', nameEn: 'Platelet count', nameZh: '血小板计数',
+    specimen: 'blood',
     aliases: ['PLT', '血小板', '血小板计数'],
     unit: '10^9/L', allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L', 'K/uL', '10^3/uL'],
     refLow: 125, refHigh: 350, criticalLow: 20, criticalHigh: 1000, highStakes: false, populationSensitive: false,
@@ -57,6 +61,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'hematocrit', nameEn: 'Hematocrit', nameZh: '红细胞压积',
+    specimen: 'blood',
     aliases: ['HCT', 'Hct', '血细胞比容', '红细胞压积'],
     unit: 'L/L', allowedUnits: ['L/L'],
     refLow: { male: 0.40, female: 0.35 }, refHigh: { male: 0.51, female: 0.46 },
@@ -70,6 +75,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'fasting_glucose', nameEn: 'Fasting plasma glucose', nameZh: '空腹血糖',
+    specimen: 'blood',
     aliases: ['GLU', 'FPG', '血糖', '葡萄糖', '空腹血糖'],
     unit: 'mmol/L', allowedUnits: ['mmol/L'],
     refLow: 3.9, refHigh: 6.1, criticalLow: 2.8, criticalHigh: 22.2, highStakes: true, populationSensitive: true,
@@ -82,6 +88,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'hba1c', nameEn: 'Glycated hemoglobin (HbA1c)', nameZh: '糖化血红蛋白',
+    specimen: 'blood',
     aliases: ['HbA1c', 'GHb', '糖化血红蛋白'],
     unit: '%', allowedUnits: ['%'],
     refLow: 4.0, refHigh: 5.7, criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
@@ -94,6 +101,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'total_cholesterol', nameEn: 'Total cholesterol', nameZh: '总胆固醇',
+    specimen: 'blood',
     aliases: ['TC', 'CHOL', '胆固醇', '总胆固醇', 'Cholesterol, Total'],
     unit: 'mmol/L', allowedUnits: ['mmol/L'],
     refLow: null, refHigh: 5.2, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -106,6 +114,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'ldl_cholesterol', nameEn: 'LDL cholesterol', nameZh: '低密度脂蛋白胆固醇',
+    specimen: 'blood',
     aliases: ['LDL-C', 'LDL', '低密度脂蛋白', '低密度脂蛋白胆固醇', 'Cholesterol, LDL, Calculated'],
     unit: 'mmol/L', allowedUnits: ['mmol/L'],
     refLow: null, refHigh: 3.4, criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
@@ -118,6 +127,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'hdl_cholesterol', nameEn: 'HDL cholesterol', nameZh: '高密度脂蛋白胆固醇',
+    specimen: 'blood',
     aliases: ['HDL-C', 'HDL', '高密度脂蛋白', '高密度脂蛋白胆固醇', 'Cholesterol, HDL'],
     unit: 'mmol/L', allowedUnits: ['mmol/L'],
     refLow: 1.0, refHigh: null, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -130,6 +140,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'triglycerides', nameEn: 'Triglycerides', nameZh: '甘油三酯',
+    specimen: 'blood',
     aliases: ['TG', 'TRIG', '三酰甘油', '甘油三酯'],
     unit: 'mmol/L', allowedUnits: ['mmol/L'],
     refLow: null, refHigh: 1.7, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -142,6 +153,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'creatinine', nameEn: 'Creatinine', nameZh: '肌酐',
+    specimen: 'blood',
     aliases: ['CREA', 'Cr', '血肌酐', 'Scr', '肌酐'],
     unit: 'umol/L', allowedUnits: ['umol/L', 'µmol/L', 'μmol/L'],
     refLow: { male: 59, female: 45 }, refHigh: { male: 104, female: 84 },
@@ -155,6 +167,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'urea', nameEn: 'Urea', nameZh: '尿素',
+    specimen: 'blood',
     // 'BUN' REMOVED: blood urea nitrogen is a different quantity from urea (mass of nitrogen vs
     // molar urea, ~2.14x), and it now has its own mg/dL entry. Keeping it here mapped a US
     // 'BUN 47 mg/dL' row onto this mmol/L band, where only R2's unit-mismatch abstain
@@ -172,6 +185,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'egfr', nameEn: 'Estimated glomerular filtration rate', nameZh: '估算肾小球滤过率',
+    specimen: 'blood',
     aliases: ['eGFR', '肾小球滤过率', '估算肾小球滤过率'],
     unit: 'mL/min/1.73m2', allowedUnits: ['mL/min/1.73m2', 'mL/min/1.73m²', 'ml/min/1.73m2'],
     refLow: 90, refHigh: null, criticalLow: 15, criticalHigh: null, highStakes: true, populationSensitive: false,
@@ -184,6 +198,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'sodium', nameEn: 'Sodium', nameZh: '钠',
+    specimen: 'blood',
     aliases: ['Na', 'Na+', '血钠', '钠'],
     unit: 'mmol/L', allowedUnits: ['mmol/L', 'mEq/L'],
     refLow: 137, refHigh: 145, criticalLow: 120, criticalHigh: 160, highStakes: true, populationSensitive: false,
@@ -196,6 +211,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'potassium', nameEn: 'Potassium', nameZh: '钾',
+    specimen: 'blood',
     aliases: ['K', 'K+', '血钾', '钾'],
     unit: 'mmol/L', allowedUnits: ['mmol/L', 'mEq/L'],
     refLow: 3.5, refHigh: 5.3, criticalLow: 2.5, criticalHigh: 6.5, highStakes: true, populationSensitive: false,
@@ -208,6 +224,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'chloride', nameEn: 'Chloride', nameZh: '氯',
+    specimen: 'blood',
     aliases: ['Cl', 'Cl-', '血氯', '氯化物', '氯'],
     unit: 'mmol/L', allowedUnits: ['mmol/L', 'mEq/L'],
     refLow: 96, refHigh: 106, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -220,6 +237,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'alt', nameEn: 'Alanine aminotransferase (ALT)', nameZh: '丙氨酸氨基转移酶',
+    specimen: 'blood',
     aliases: ['ALT', 'GPT', '谷丙转氨酶', '丙氨酸氨基转移酶'],
     unit: 'U/L', allowedUnits: ['U/L', 'IU/L'],
     refLow: { male: 9, female: 7 }, refHigh: { male: 50, female: 40 },
@@ -233,6 +251,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'ast', nameEn: 'Aspartate aminotransferase (AST)', nameZh: '天冬氨酸氨基转移酶',
+    specimen: 'blood',
     aliases: ['AST', 'GOT', '谷草转氨酶', '天冬氨酸氨基转移酶'],
     unit: 'U/L', allowedUnits: ['U/L', 'IU/L'],
     refLow: { male: 15, female: 13 }, refHigh: { male: 40, female: 35 },
@@ -246,6 +265,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'ggt', nameEn: 'Gamma-glutamyl transferase (GGT)', nameZh: '谷氨酰转移酶',
+    specimen: 'blood',
     aliases: ['GGT', '谷氨酰转肽酶', '谷氨酰转移酶'],
     unit: 'U/L', allowedUnits: ['U/L', 'IU/L'],
     refLow: { male: 10, female: 7 }, refHigh: { male: 58, female: 43 },
@@ -259,6 +279,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'total_bilirubin', nameEn: 'Total bilirubin', nameZh: '总胆红素',
+    specimen: 'blood',
     aliases: ['TBIL', 'T-BIL', '胆红素', '总胆红素'],
     unit: 'umol/L', allowedUnits: ['umol/L', 'µmol/L', 'μmol/L'],
     refLow: { male: 5.9, female: 5.0 }, refHigh: { male: 30.4, female: 23.8 },
@@ -272,6 +293,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'albumin', nameEn: 'Albumin', nameZh: '白蛋白',
+    specimen: 'blood',
     aliases: ['ALB', '血清白蛋白', '白蛋白'],
     unit: 'g/L', allowedUnits: ['g/L'],
     refLow: 40, refHigh: 55, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -284,6 +306,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'total_protein', nameEn: 'Total protein', nameZh: '总蛋白',
+    specimen: 'blood',
     aliases: ['TP', '血清总蛋白', '总蛋白'],
     unit: 'g/L', allowedUnits: ['g/L'],
     refLow: 65, refHigh: 85, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -296,6 +319,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'uric_acid', nameEn: 'Uric acid', nameZh: '尿酸',
+    specimen: 'blood',
     aliases: ['UA', '血尿酸', 'SUA', '尿酸'],
     unit: 'umol/L', allowedUnits: ['umol/L', 'µmol/L', 'μmol/L'],
     refLow: { male: 150, female: 100 }, refHigh: { male: 420, female: 360 },
@@ -309,6 +333,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'tsh', nameEn: 'Thyroid-stimulating hormone (TSH)', nameZh: '促甲状腺激素',
+    specimen: 'blood',
     aliases: ['TSH', '促甲状腺素', '促甲状腺激素'],
     unit: 'mIU/L', allowedUnits: ['mIU/L', 'uIU/mL', 'µIU/mL', 'μIU/mL'],
     refLow: 0.4, refHigh: 4.0, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: true,
@@ -321,6 +346,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'free_t4', nameEn: 'Free thyroxine (FT4)', nameZh: '游离甲状腺素',
+    specimen: 'blood',
     aliases: ['FT4', '游离T4', '游离甲状腺素'],
     unit: 'pmol/L', allowedUnits: ['pmol/L'],
     refLow: 9.0, refHigh: 25.0, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: true,
@@ -333,6 +359,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'neutrophil_pct', nameEn: 'Neutrophil percentage', nameZh: '中性粒细胞百分比',
+    specimen: 'blood',
     aliases: ['NEUT%', 'NE%', '中性粒细胞比率', '中性粒细胞百分比', '中性细胞比率'],
     unit: '%', allowedUnits: ['%'],
     refLow: 40, refHigh: 75, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -345,6 +372,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'lymphocyte_pct', nameEn: 'Lymphocyte percentage', nameZh: '淋巴细胞百分比',
+    specimen: 'blood',
     aliases: ['LYMPH%', 'LY%', '淋巴细胞比率', '淋巴细胞百分比'],
     unit: '%', allowedUnits: ['%'],
     refLow: 20, refHigh: 50, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -357,6 +385,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'mcv', nameEn: 'Mean corpuscular volume (MCV)', nameZh: '平均红细胞体积',
+    specimen: 'blood',
     aliases: ['MCV', '红细胞平均体积', '平均红细胞体积'],
     unit: 'fL', allowedUnits: ['fL'],
     refLow: 82, refHigh: 100, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -373,6 +402,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   // canonical SI unit (cross-scale conversions are handled in M2, not here).
   {
     key: 'mch', nameEn: 'Mean Corpuscular Hemoglobin (MCH)', nameZh: '平均血红蛋白量',
+    specimen: 'blood',
     aliases: ["MCH", "平均血红蛋白量", "平均红细胞血红蛋白含量", "红细胞平均血红蛋白量", "均血红蛋白里"],
     unit: "pg", allowedUnits: ["pg"],
     refLow: 27, refHigh: 34,
@@ -386,6 +416,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'mchc', nameEn: 'Mean Corpuscular Hemoglobin Concentration (MCHC)', nameZh: '平均血红蛋白浓度',
+    specimen: 'blood',
     aliases: ["MCHC", "平均血红蛋白浓度", "平均红细胞血红蛋白浓度", "红细胞平均血红蛋白浓度"],
     unit: "g/L", allowedUnits: ["g/L"],
     refLow: 316, refHigh: 354,
@@ -399,6 +430,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'rdw_cv', nameEn: 'Red Cell Distribution Width (RDW-CV)', nameZh: '红细胞体积分布宽度',
+    specimen: 'blood',
     aliases: ["RDW", "RDW-CV", "红细胞体积分布宽度", "红细胞分布宽度变异系数"],
     unit: "%", allowedUnits: ["%"],
     refLow: 11.5, refHigh: 14.5,
@@ -412,6 +444,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'monocyte_pct', nameEn: 'Monocyte Percentage', nameZh: '单核细胞百分数',
+    specimen: 'blood',
     aliases: ["MONO%", "MONO", "单核细胞百分数", "单核细胞比率", "单核细胞百分比"],
     unit: "%", allowedUnits: ["%"],
     refLow: 3, refHigh: 10,
@@ -425,6 +458,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'eosinophil_pct', nameEn: 'Eosinophil Percentage', nameZh: '嗜酸性粒细胞百分数',
+    specimen: 'blood',
     aliases: ["EOS%", "EOS", "嗜酸性粒细胞百分数", "嗜酸性粒细胞比率", "嗜酸细胞百分比", "嗜酸性粒细胞百分比"],
     unit: "%", allowedUnits: ["%"],
     refLow: 0.4, refHigh: 8,
@@ -438,6 +472,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'basophil_pct', nameEn: 'Basophil Percentage', nameZh: '嗜碱性粒细胞百分数',
+    specimen: 'blood',
     aliases: ["BASO%", "BASO", "嗜碱性粒细胞百分数", "嗜碱性粒细胞比率", "嗜碱细胞百分比"],
     unit: "%", allowedUnits: ["%"],
     refLow: 0, refHigh: 1,
@@ -451,6 +486,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'neutrophil_abs', nameEn: 'Absolute Neutrophil Count', nameZh: '中性粒细胞绝对值',
+    specimen: 'blood',
     aliases: ["NEUT#", "ANC", "中性粒细胞绝对值", "中性粒细胞计数", "中性粒细胞绝对数", "中性粒细胞数"],
     unit: "10^9/L", allowedUnits: ["10^9/L", "10*9/L", "/nL", "K/uL", "10^3/uL"],
     refLow: 1.8, refHigh: 6.3,
@@ -464,6 +500,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'lymphocyte_abs', nameEn: 'Absolute Lymphocyte Count', nameZh: '淋巴细胞绝对值',
+    specimen: 'blood',
     aliases: ["LYMPH#", "ALC", "淋巴细胞绝对值", "淋巴细胞计数", "淋巴细胞绝对数"],
     unit: "10^9/L", allowedUnits: ["10^9/L", "10*9/L", "/nL", "K/uL", "10^3/uL"],
     refLow: 1.1, refHigh: 3.2,
@@ -477,6 +514,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'mpv', nameEn: 'Mean Platelet Volume (MPV)', nameZh: '平均血小板体积',
+    specimen: 'blood',
     aliases: ["MPV", "平均血小板体积", "血小板平均体积"],
     unit: "fL", allowedUnits: ["fL"],
     refLow: 7.4, refHigh: 12.5,
@@ -490,6 +528,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'calcium_total', nameEn: 'Calcium (total)', nameZh: '血钙(总钙)',
+    specimen: 'blood',
     aliases: ["Ca", "Ca2+", "Calcium", "Total Calcium", "总钙", "血清钙", "钙"],
     unit: "mmol/L", allowedUnits: ["mmol/L"],
     refLow: 2.20, refHigh: 2.55,
@@ -503,6 +542,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'magnesium', nameEn: 'Magnesium', nameZh: '血镁',
+    specimen: 'blood',
     aliases: ["Mg", "Mg2+", "镁", "血清镁"],
     unit: "mmol/L", allowedUnits: ["mmol/L"],
     refLow: 0.65, refHigh: 1.05,
@@ -516,6 +556,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'phosphate', nameEn: 'Phosphate (inorganic phosphorus)', nameZh: '血磷(无机磷)',
+    specimen: 'blood',
     aliases: ["PO4", "P", "Phosphorus", "无机磷", "血清磷", "磷"],
     unit: "mmol/L", allowedUnits: ["mmol/L"],
     refLow: 0.81, refHigh: 1.45,
@@ -533,6 +574,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'bicarbonate', nameEn: 'Bicarbonate (total CO2)', nameZh: '碳酸氢盐(二氧化碳结合力)',
+    specimen: 'blood',
     aliases: ["HCO3", "HCO3-", "CO2", "CO2-CP", "TCO2", "二氧化碳结合力", "碳酸氢根"],
     unit: "mmol/L", allowedUnits: ["mmol/L", "mEq/L"],
     refLow: 22, refHigh: 29,
@@ -546,6 +588,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'random_glucose', nameEn: 'Random (non-fasting) glucose', nameZh: '随机血糖',
+    specimen: 'blood',
     aliases: ["Random blood glucose", "RBG", "随机血糖", "随机葡萄糖"],
     unit: "mmol/L", allowedUnits: ["mmol/L"],
     refLow: null, refHigh: 11.1,
@@ -559,6 +602,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'c_peptide', nameEn: 'C-peptide (fasting)', nameZh: 'C肽(空腹)',
+    specimen: 'blood',
     aliases: ["C-peptide", "CP", "C肽", "连接肽", "空腹C肽"],
     unit: "nmol/L", allowedUnits: ["nmol/L"],
     refLow: 0.37, refHigh: 1.47,
@@ -572,6 +616,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'fasting_insulin', nameEn: 'Fasting insulin', nameZh: '空腹胰岛素',
+    specimen: 'blood',
     aliases: ["Insulin", "INS", "FINS", "胰岛素", "空腹胰岛素"],
     unit: "mIU/L", allowedUnits: ["mIU/L"],
     refLow: 2.6, refHigh: 24.9,
@@ -585,6 +630,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'amylase', nameEn: 'Amylase', nameZh: '淀粉酶',
+    specimen: 'blood',
     aliases: ["AMY", "AMS", "淀粉酶", "血清淀粉酶"],
     unit: "U/L", allowedUnits: ["U/L", "IU/L"],
     refLow: 35, refHigh: 135,
@@ -598,6 +644,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'lipase', nameEn: 'Lipase', nameZh: '脂肪酶',
+    specimen: 'blood',
     aliases: ["LIP", "LPS", "脂肪酶", "血清脂肪酶"],
     unit: "U/L", allowedUnits: ["U/L", "IU/L"],
     refLow: 13, refHigh: 60,
@@ -611,6 +658,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'alkaline_phosphatase', nameEn: 'Alkaline Phosphatase', nameZh: '碱性磷酸酶',
+    specimen: 'blood',
     aliases: ["ALP", "ALKP", "ALP酶", "碱性磷酸酶", "AKP"],
     unit: "U/L", allowedUnits: ["U/L", "IU/L"],
     refLow: { male: 40, female: 35 }, refHigh: { male: 130, female: 105 },
@@ -628,6 +676,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'direct_bilirubin', nameEn: 'Direct (Conjugated) Bilirubin', nameZh: '直接胆红素',
+    specimen: 'blood',
     aliases: ["DBIL", "D-Bil", "conjugated bilirubin", "直接胆红素", "结合胆红素"],
     unit: "umol/L", allowedUnits: ["umol/L", "µmol/L"],
     refLow: 0, refHigh: 6.8,
@@ -641,6 +690,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'indirect_bilirubin', nameEn: 'Indirect (Unconjugated) Bilirubin', nameZh: '间接胆红素',
+    specimen: 'blood',
     aliases: ["IBIL", "I-Bil", "unconjugated bilirubin", "间接胆红素", "非结合胆红素"],
     unit: "umol/L", allowedUnits: ["umol/L", "µmol/L"],
     refLow: 0, refHigh: 15,
@@ -654,6 +704,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'total_bile_acids', nameEn: 'Total Bile Acids', nameZh: '总胆汁酸',
+    specimen: 'blood',
     aliases: ["TBA", "total serum bile acids", "TSBA", "总胆汁酸", "胆汁酸"],
     unit: "umol/L", allowedUnits: ["umol/L", "µmol/L"],
     refLow: 0, refHigh: 10,
@@ -667,6 +718,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'ldh', nameEn: 'Lactate Dehydrogenase', nameZh: '乳酸脱氢酶',
+    specimen: 'blood',
     aliases: ["LDH", "LD", "乳酸脱氢酶", "LDH酶"],
     unit: "U/L", allowedUnits: ["U/L", "IU/L"],
     refLow: 135, refHigh: 225,
@@ -680,6 +732,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'non_hdl_cholesterol', nameEn: 'Non-HDL Cholesterol', nameZh: '非高密度脂蛋白胆固醇',
+    specimen: 'blood',
     aliases: ["non-HDL-C", "非HDL胆固醇", "非高密度脂蛋白胆固醇", "non-HDL"],
     unit: "mmol/L", allowedUnits: ["mmol/L"],
     refLow: null, refHigh: 4.1,
@@ -693,6 +746,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'apolipoprotein_a1', nameEn: 'Apolipoprotein A1', nameZh: '载脂蛋白A1',
+    specimen: 'blood',
     aliases: ["ApoA1", "Apo A-I", "载脂蛋白A1", "载脂蛋白A-I"],
     unit: "g/L", allowedUnits: ["g/L"],
     refLow: 1.20, refHigh: 1.60,
@@ -706,6 +760,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'apolipoprotein_b', nameEn: 'Apolipoprotein B', nameZh: '载脂蛋白B',
+    specimen: 'blood',
     aliases: ["ApoB", "Apo B-100", "载脂蛋白B", "载脂蛋白B100"],
     unit: "g/L", allowedUnits: ["g/L"],
     refLow: 0.80, refHigh: 1.10,
@@ -719,6 +774,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'lipoprotein_a', nameEn: 'Lipoprotein(a)', nameZh: '脂蛋白(a)',
+    specimen: 'blood',
     aliases: ["Lp(a)", "Lpa", "LP(a)", "脂蛋白a", "脂蛋白(a)"],
     unit: "mg/dL", allowedUnits: ["mg/dL"],
     refLow: null, refHigh: 50,
@@ -732,6 +788,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'cystatin_c', nameEn: 'Cystatin C', nameZh: '胱抑素C',
+    specimen: 'blood',
     aliases: ["Cys-C", "CysC", "Cystatin C", "胱抑素C", "半胱氨酸蛋白酶抑制剂C"],
     unit: "mg/L", allowedUnits: ["mg/L", "mg/l"],
     refLow: 0.51, refHigh: 0.98,
@@ -750,6 +807,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'urine_albumin_creatinine_ratio', nameEn: 'Urine Albumin-to-Creatinine Ratio', nameZh: '尿白蛋白/肌酐比值',
+    specimen: 'urine',
     aliases: ["ACR", "UACR", "uACR", "Alb/Cr", "尿微量白蛋白/肌酐比值", "尿白蛋白肌酐比", "ACR比值"],
     unit: "mg/mmol", allowedUnits: ["mg/mmol"],
     refLow: null, refHigh: 3,
@@ -763,6 +821,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'beta2_microglobulin', nameEn: 'Beta-2 Microglobulin', nameZh: 'β2-微球蛋白',
+    specimen: 'blood',
     aliases: ["B2M", "β2-MG", "β2M", "beta-2 microglobulin", "β2-微球蛋白", "贝塔2微球蛋白", "β2微球蛋白"],
     unit: "mg/L", allowedUnits: ["mg/L", "mg/l"],
     refLow: 0.8, refHigh: 2.4,
@@ -776,6 +835,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'total_t3', nameEn: 'Total Triiodothyronine (Total T3)', nameZh: '总三碘甲状腺原氨酸',
+    specimen: 'blood',
     aliases: ["TT3", "Total T3", "T3", "总T3", "总三碘甲状腺原氨酸", "三碘甲腺原氨酸"],
     unit: "nmol/L", allowedUnits: ["nmol/L"],
     refLow: 1.3, refHigh: 3.1,
@@ -789,6 +849,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'free_t3', nameEn: 'Free Triiodothyronine (Free T3)', nameZh: '游离三碘甲状腺原氨酸',
+    specimen: 'blood',
     aliases: ["FT3", "Free T3", "游离T3", "游离三碘甲状腺原氨酸", "FT3游离"],
     unit: "pmol/L", allowedUnits: ["pmol/L"],
     refLow: 3.1, refHigh: 6.8,
@@ -802,6 +863,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'total_t4', nameEn: 'Total Thyroxine (Total T4)', nameZh: '总甲状腺素',
+    specimen: 'blood',
     aliases: ["TT4", "Total T4", "T4", "总T4", "总甲状腺素", "甲状腺素"],
     unit: "nmol/L", allowedUnits: ["nmol/L"],
     refLow: 66, refHigh: 181,
@@ -815,6 +877,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'tpo_antibody', nameEn: 'Thyroid Peroxidase Antibody', nameZh: '抗甲状腺过氧化物酶抗体',
+    specimen: 'blood',
     aliases: ["TPOAb", "TPO-Ab", "anti-TPO", "TPO antibody", "抗甲状腺过氧化物酶抗体", "抗TPO抗体", "TPO抗体"],
     unit: "IU/mL", allowedUnits: ["IU/mL", "kIU/L", "U/mL"],
     refLow: null, refHigh: 34,
@@ -828,6 +891,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'thyroglobulin_antibody', nameEn: 'Thyroglobulin Antibody', nameZh: '抗甲状腺球蛋白抗体',
+    specimen: 'blood',
     aliases: ["TgAb", "TG-Ab", "anti-Tg", "anti-thyroglobulin", "Thyroglobulin antibody", "抗甲状腺球蛋白抗体", "抗Tg抗体", "TG抗体"],
     unit: "IU/mL", allowedUnits: ["IU/mL", "kIU/L", "U/mL"],
     refLow: null, refHigh: 115,
@@ -841,6 +905,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'hs_crp', nameEn: 'High-sensitivity C-reactive protein', nameZh: '超敏C反应蛋白',
+    specimen: 'blood',
     aliases: ["hs-CRP", "hsCRP", "高敏C反应蛋白", "超敏C反应蛋白", "hsCRP", "超敏C-反应蛋白"],
     unit: "mg/L", allowedUnits: ["mg/L"],
     refLow: null, refHigh: 3.0,
@@ -854,6 +919,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'esr', nameEn: 'Erythrocyte sedimentation rate', nameZh: '红细胞沉降率',
+    specimen: 'blood',
     aliases: ["ESR", "血沉", "红细胞沉降率", "魏氏法", "Westergren"],
     unit: "mm/h", allowedUnits: ["mm/h", "mm/hr", "mm/1h"],
     refLow: null, refHigh: { male: 15, female: 20 },
@@ -871,6 +937,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'nt_probnp', nameEn: 'N-terminal pro-B-type natriuretic peptide', nameZh: 'N末端B型利钠肽前体',
+    specimen: 'blood',
     aliases: ["NT-proBNP", "NT-pro-BNP", "氨基末端脑钠肽前体", "N末端脑钠肽前体", "N端前脑钠肽"],
     unit: "ng/L", allowedUnits: ["ng/L", "pg/mL"],
     refLow: null, refHigh: 125,
@@ -888,6 +955,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'bnp', nameEn: 'B-type natriuretic peptide', nameZh: 'B型利钠肽',
+    specimen: 'blood',
     aliases: ["BNP", "脑钠肽", "B型脑钠肽", "B型利钠肽", "B型钠尿肽"],
     unit: "ng/L", allowedUnits: ["ng/L", "pg/mL"],
     refLow: null, refHigh: 35,
@@ -901,6 +969,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'troponin_i', nameEn: 'Cardiac troponin I', nameZh: '心肌肌钙蛋白I',
+    specimen: 'blood',
     aliases: ["cTnI", "hs-cTnI", "TnI", "Troponin I", "Troponin-I", "肌钙蛋白I", "心肌肌钙蛋白I", "高敏肌钙蛋白I"],
     unit: "ng/L", allowedUnits: ["ng/L"],
     refLow: null, refHigh: { male: 12.5, female: 9.6 },
@@ -914,6 +983,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'creatine_kinase', nameEn: 'Creatine kinase (total)', nameZh: '肌酸激酶',
+    specimen: 'blood',
     aliases: ["CK", "CPK", "肌酸激酶", "肌酸磷酸激酶", "CK-total"],
     unit: "U/L", allowedUnits: ["U/L", "IU/L"],
     refLow: { male: 38, female: 26 }, refHigh: { male: 174, female: 140 },
@@ -927,6 +997,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'ck_mb', nameEn: 'Creatine kinase-MB', nameZh: '肌酸激酶同工酶',
+    specimen: 'blood',
     aliases: ["CK-MB", "CKMB", "肌酸激酶同工酶", "肌酸激酶MB", "CK-MB mass"],
     unit: "U/L", allowedUnits: ["U/L", "IU/L"],
     refLow: null, refHigh: 25,
@@ -940,6 +1011,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'homocysteine', nameEn: 'Homocysteine (total)', nameZh: '同型半胱氨酸',
+    specimen: 'blood',
     aliases: ["Hcy", "tHcy", "同型半胱氨酸", "高半胱氨酸", "血浆同型半胱氨酸"],
     unit: "umol/L", allowedUnits: ["umol/L"],
     refLow: null, refHigh: 15,
@@ -957,6 +1029,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'prothrombin_time', nameEn: 'Prothrombin time', nameZh: '凝血酶原时间',
+    specimen: 'blood',
     aliases: ["PT", "凝血酶原时间", "PT(s)", "血浆凝血酶原时间", "凝血酶原时间(PT)"],
     unit: "s", allowedUnits: ["s", "sec", "秒"],
     refLow: 11, refHigh: 14.5,
@@ -970,6 +1043,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'inr', nameEn: 'International normalized ratio', nameZh: '国际标准化比值',
+    specimen: 'blood',
     aliases: ["INR", "国际标准化比值", "PT-INR", "PT(INR)", "INR(PT)", "PT国际标准比值(INR)"],
     unit: "ratio", allowedUnits: ["ratio"],
     refLow: 0.8, refHigh: 1.2,
@@ -983,6 +1057,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'aptt', nameEn: 'Activated partial thromboplastin time', nameZh: '活化部分凝血活酶时间',
+    specimen: 'blood',
     aliases: ["APTT", "aPTT", "PTT", "活化部分凝血活酶时间", "部分凝血活酶时间", "活化部分凝血活酶(APTT)"],
     unit: "s", allowedUnits: ["s", "sec", "秒"],
     refLow: 25, refHigh: 37,
@@ -996,6 +1071,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'fibrinogen', nameEn: 'Fibrinogen', nameZh: '纤维蛋白原',
+    specimen: 'blood',
     aliases: ["FIB", "Fbg", "纤维蛋白原", "凝血因子I", "FIB-C", "纤维蛋白原(FIB)"],
     unit: "g/L", allowedUnits: ["g/L"],
     refLow: 2.0, refHigh: 4.0,
@@ -1009,6 +1085,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'd_dimer', nameEn: 'D-dimer', nameZh: 'D-二聚体',
+    specimen: 'blood',
     aliases: ["D-dimer", "DD", "D-二聚体", "D二聚体", "DDi"],
     // H1.5: bare "mg/L" removed — FEU and DDU bases differ ~2× (see plainEn), so an
     // unqualified unit is basis-ambiguous and must abstain (R2), not be read as FEU.
@@ -1029,6 +1106,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'serum_iron', nameEn: 'Serum Iron', nameZh: '血清铁',
+    specimen: 'blood',
     aliases: ["Fe", "SI", "血清铁", "铁"],
     unit: "umol/L", allowedUnits: ["umol/L", "µmol/L"],
     refLow: { male: 11, female: 7 }, refHigh: { male: 32, female: 28 },
@@ -1042,6 +1120,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'ferritin', nameEn: 'Ferritin', nameZh: '铁蛋白',
+    specimen: 'blood',
     aliases: ["FER", "Ferritin", "血清铁蛋白", "铁蛋白"],
     unit: "ug/L", allowedUnits: ["ug/L", "µg/L", "ng/mL", "mcg/L"],
     refLow: { male: 24, female: 11 }, refHigh: { male: 336, female: 307 },
@@ -1055,6 +1134,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'tibc', nameEn: 'Total Iron-Binding Capacity', nameZh: '总铁结合力',
+    specimen: 'blood',
     aliases: ["TIBC", "总铁结合力", "血清总铁结合力"],
     unit: "umol/L", allowedUnits: ["umol/L", "µmol/L"],
     refLow: 45, refHigh: 66,
@@ -1068,6 +1148,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'transferrin_saturation', nameEn: 'Transferrin Saturation', nameZh: '转铁蛋白饱和度',
+    specimen: 'blood',
     aliases: ["TSAT", "TS", "Tf Sat", "转铁蛋白饱和度", "铁饱和度"],
     unit: "%", allowedUnits: ["%"],
     refLow: { male: 20, female: 15 }, refHigh: 50,
@@ -1081,6 +1162,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'vitamin_b12', nameEn: 'Vitamin B12', nameZh: '维生素B12',
+    specimen: 'blood',
     aliases: ["B12", "Cobalamin", "VitB12", "维生素B12", "钴胺素"],
     unit: "pmol/L", allowedUnits: ["pmol/L"],
     refLow: 150, refHigh: 600,
@@ -1094,6 +1176,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'folate_serum', nameEn: 'Folate (Serum)', nameZh: '叶酸',
+    specimen: 'blood',
     aliases: ["Folate", "Folic acid", "Vitamin B9", "血清叶酸", "叶酸"],
     unit: "nmol/L", allowedUnits: ["nmol/L"],
     refLow: 5.2, refHigh: 30.9,
@@ -1107,6 +1190,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'vitamin_d_25oh', nameEn: '25-Hydroxyvitamin D', nameZh: '25-羟基维生素D',
+    specimen: 'blood',
     aliases: ["25-OH Vitamin D", "25(OH)D", "Vitamin D", "维生素D", "25-羟维生素D", "总25羟维生素D"],
     unit: "nmol/L", allowedUnits: ["nmol/L"],
     refLow: 50, refHigh: 250,
@@ -1120,6 +1204,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'urine_protein', nameEn: 'Urine Protein (Dipstick)', nameZh: '尿蛋白',
+    specimen: 'urine',
     aliases: ["Urine PRO", "Urinary protein", "尿蛋白", "尿蛋白质", "PRO"],
     specimenAliases: { urine: ["Protein", "PRO", "蛋白质"] },
     unit: "qualitative", allowedUnits: ["qualitative", "negative/+/++/+++"],
@@ -1134,6 +1219,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'urine_glucose', nameEn: 'Urine Glucose (Dipstick)', nameZh: '尿糖',
+    specimen: 'urine',
     aliases: ["Urine GLU", "Urinary glucose", "Glycosuria", "尿糖"],
     specimenAliases: { urine: ["Glucose", "GLU", "尿糖"] },
     unit: "qualitative", allowedUnits: ["qualitative", "negative/+/++/+++"],
@@ -1148,6 +1234,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'urine_ketones', nameEn: 'Urine Ketones (Dipstick)', nameZh: '尿酮体',
+    specimen: 'urine',
     aliases: ["Urine KET", "Ketones", "Ketonuria", "尿酮体", "酮体", "KET"],
     specimenAliases: { urine: ["Ketone", "Ketones", "KET"] },
     unit: "qualitative", allowedUnits: ["qualitative", "negative/+/++/+++"],
@@ -1162,6 +1249,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'urine_ph', nameEn: 'Urine pH', nameZh: '尿酸碱度',
+    specimen: 'urine',
     aliases: ["Urine pH", "尿酸碱度", "尿pH值", "酸碱度"],
     specimenAliases: { urine: ["pH", "PH"] },
     unit: "pH", allowedUnits: ["pH"],
@@ -1177,6 +1265,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'urine_specific_gravity', nameEn: 'Urine Specific Gravity', nameZh: '尿比重',
+    specimen: 'urine',
     aliases: ["USG", "SG", "Specific gravity", "比重"],
     specimenAliases: { urine: ["Specific Gravity", "SG", "比重"] },
     unit: "SG", allowedUnits: ["SG"], // dimensionless; canonical token 'SG' (empty unit would break integrity contract)
@@ -1209,6 +1298,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   //          a leading '-', so its entire negative half silently parses to null.
   {
     key: 'calcium_ionized', nameEn: 'Ionized calcium (free calcium)', nameZh: '游离钙(离子钙)',
+    specimen: 'blood',
     aliases: ['Free Calcium', 'Ionized Calcium', 'Ionised Calcium', 'Calcium, Ionized', 'Calcium, Ionised', 'Calcium Ionized', 'iCa', 'iCa2+', 'Ca2+ (ionized)', '游离钙', '离子钙', '血清游离钙'],
     unit: 'mmol/L', allowedUnits: ['mmol/L'],
     refLow: 1.1, refHigh: 1.35,
@@ -1228,6 +1318,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     // specimen-unambiguous spellings are aliased here ('BUN' = Blood Urea Nitrogen by name).
     // data/english-aliases.test.ts locks 'Urea Nitrogen' as unrecognised.
     key: 'bun', nameEn: 'Blood urea nitrogen (BUN)', nameZh: '血尿素氮',
+    specimen: 'blood',
     aliases: ['BUN', 'Blood Urea Nitrogen', 'Serum Urea Nitrogen'],
     unit: 'mg/dL', allowedUnits: ['mg/dL'],
     refLow: 6, refHigh: 20,
@@ -1241,6 +1332,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'lactate', nameEn: 'Lactate', nameZh: '乳酸',
+    specimen: 'blood',
     aliases: ['Lactate', 'Lactic Acid', 'Blood Lactate', 'Plasma Lactate', 'Serum Lactate', 'LAC', '乳酸', '血乳酸', '动脉血乳酸'],
     unit: 'mmol/L', allowedUnits: ['mmol/L', 'mEq/L'],
     refLow: 0.5, refHigh: 2.2,
@@ -1254,6 +1346,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'pco2', nameEn: 'pCO2 (partial pressure of carbon dioxide, blood gas)', nameZh: '二氧化碳分压（血气分析）',
+    specimen: 'blood',
     aliases: ['pCO2', 'PaCO2', 'CO2 partial pressure', 'Carbon dioxide partial pressure', '二氧化碳分压', '动脉血二氧化碳分压', '血气二氧化碳分压'],
     unit: 'mm Hg', allowedUnits: ['mm Hg', 'mmHg'],
     refLow: 35, refHigh: 45,
@@ -1267,6 +1360,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'troponin_t', nameEn: 'Cardiac troponin T', nameZh: '心肌肌钙蛋白T',
+    specimen: 'blood',
     aliases: ['Troponin T', 'Troponin-T', 'cTnT', 'TnT', 'hs-cTnT', 'hs-TnT', 'hs cTnT', '肌钙蛋白T', '心肌肌钙蛋白T', '高敏肌钙蛋白T', '超敏肌钙蛋白T'],
     unit: 'ng/L', allowedUnits: ['ng/L', 'pg/mL'],
     refLow: null, refHigh: 10,
@@ -1280,6 +1374,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'thrombin_time', nameEn: 'Thrombin time (TT)', nameZh: '凝血酶时间',
+    specimen: 'blood',
     aliases: ['TT', '凝血酶时间(TT)', '凝血酶时间', 'Thrombin Time', 'TT(s)', '血浆凝血酶时间'],
     unit: 's', allowedUnits: ['s', 'sec', '秒'],
     refLow: 10, refHigh: 21,
@@ -1293,6 +1388,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'myoglobin', nameEn: 'Myoglobin', nameZh: '肌红蛋白',
+    specimen: 'blood',
     aliases: ['Myoglobin', 'MYO', 'Myo', 'Serum myoglobin', 'Myoglobin, Serum', '肌红蛋白', '血清肌红蛋白', '肌红蛋白测定', '肌红蛋白(MYO)', '肌红蛋白(Mb)'],
     unit: 'ng/mL', allowedUnits: ['ng/mL', 'ug/L', 'µg/L', 'mcg/L'],
     refLow: null, refHigh: 72,
@@ -1306,6 +1402,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'ckmb_mass', nameEn: 'Creatine kinase-MB, mass', nameZh: '肌酸激酶同工酶(质量法)',
+    specimen: 'blood',
     aliases: ['肌酸激酶同工酶质量', '肌酸激酶同功酶质量', '肌酸激酶同工酶质量法', 'CK-MB质量', 'CKMB mass'],
     unit: 'ng/mL', allowedUnits: ['ng/mL', 'ug/L', 'mcg/L'],
     refLow: null, refHigh: 5,

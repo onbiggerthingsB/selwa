@@ -28,6 +28,20 @@ export interface ReferenceMatch {
   matchedVia: ReferenceMatchVia;
 }
 
+function specimenSafeMatch(
+  entry: ReferenceEntry | null,
+  matchedVia: Exclude<ReferenceMatchVia, 'unmatched'>,
+  specimen: SpecimenContext | null,
+): ReferenceMatch {
+  if (
+    entry === null ||
+    ((specimen === 'urine' || specimen === 'blood') && entry.specimen !== specimen)
+  ) {
+    return { entry: null, matchedVia: 'unmatched' };
+  }
+  return { entry, matchedVia };
+}
+
 const SCOPED_INDEX: Map<string, ReferenceEntry> = (() => {
   const m = new Map<string, ReferenceEntry>();
   for (const e of REFERENCE_LABS) {
@@ -66,23 +80,17 @@ export function findEntryMatch(
     // refine a declared scoped alias. This prevents blood "GLU", "Ketones",
     // "SG", etc. from silently inheriting a urine or fasting-blood frame.
     if (SCOPED_ALIAS_NAMES.has(normalized)) {
-      return {
-        entry: scoped,
-        matchedVia: scoped ? 'specimen-scoped' : 'unmatched',
-      };
+      return specimenSafeMatch(scoped, 'specimen-scoped', specimen);
     }
   }
 
-  if (unscoped) return { entry: unscoped, matchedVia: 'exact' };
+  if (unscoped) return specimenSafeMatch(unscoped, 'exact', specimen);
   if (specimen !== 'urine' && specimen !== 'blood') {
     return { entry: null, matchedVia: 'unmatched' };
   }
 
   const scoped = SCOPED_INDEX.get(`${specimen}\0${normalized}`) ?? null;
-  return {
-    entry: scoped,
-    matchedVia: scoped ? 'specimen-scoped' : 'unmatched',
-  };
+  return specimenSafeMatch(scoped, 'specimen-scoped', specimen);
 }
 
 export function findEntry(

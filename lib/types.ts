@@ -7,6 +7,7 @@ export interface ReferenceEntry {
   nameEn: string;
   nameZh: string;
   aliases: string[]; // EN abbreviations + ZH names/synonyms, matched case-insensitively
+  specimen: 'blood' | 'urine'; // required: known context must never cross specimen frames
   /**
    * Aliases that are safe only when the report explicitly identifies the row's
    * specimen. These are indexed separately from the unscoped aliases above.

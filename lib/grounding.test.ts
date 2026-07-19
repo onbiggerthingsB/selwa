@@ -120,6 +120,31 @@ describe('groundExtraction', () => {
 });
 
 describe('specimen-scoped grounding', () => {
+  it('rejects a known urine RBC row before blood units or bands can be considered', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'RBC',
+            value: '0-2',
+            unit: null,
+            printedRange: '0-2',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry).toBeNull();
+    expect(row.matchedVia).toBe('unmatched');
+    expect(row.action).toBe('abstain');
+    expect(row.classification).toBe('unclassified');
+    expect(row.flags.map((f) => f.id)).toContain('R1-UNKNOWN-ANALYTE');
+    expect(row.flags.map((f) => f.id)).not.toContain('R2-UNIT-MISMATCH');
+  });
+
   it('uses printed urine context to resolve a bare pH row', () => {
     const row = groundExtraction(
       {
