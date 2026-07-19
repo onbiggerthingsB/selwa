@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toGray, laplacianVariance, inkCoverage, assessQuality, escalateConfirm, type GrayImage } from './imageQuality';
+import { toGray, laplacianVariance, inkCoverage, assessQuality, escalateConfirm, QUALITY_THRESHOLDS, type GrayImage } from './imageQuality';
 import { groundExtraction } from './grounding';
 
 function uniform(w: number, h: number, v: number): GrayImage {
@@ -117,6 +117,38 @@ describe('imageQuality', () => {
     expect(inkPx / totalPx, 'sanity: this must actually be sparse, not dense').toBeLessThan(0.02);
     const v = assessQuality(img);
     expect(v.reasons, `a sparse-but-legible document must not be refused (blur=${v.blur}, ink=${v.ink})`).toHaveLength(0);
+  });
+
+  // THE THIRD FALSE POSITIVE, and the one that survived two prior fixes. Real body text on an
+  // A4 report is ~9-11px; after the 400px analysis downscale a stroke is ~3px and antialiasing
+  // averages it toward the paper. Under the old INK_RATIO 0.6 those pixels fell just short of
+  // the cutoff, so ink coverage collapsed to ~0.001-0.002 on a SHARP, perfectly readable page
+  // and it was refused as "no printed text". This fixture reproduces that geometry: thin
+  // strokes whose downscaled value sits between 0.6*paper and 0.75*paper — invisible to the
+  // old cutoff, counted by the new one.
+  it('assessQuality passes text whose strokes are ANTIALIASED toward paper (downscale case)', () => {
+    const w = 300, h = 400;
+    const paper = 245;
+    const d = new Array(w * h).fill(paper);
+    // Value 160 sits above 0.6*245 (=147) but below 0.75*245 (=184): the exact band that a
+    // downscaled, antialiased text stroke lands in. Under INK_RATIO 0.6 this is NOT ink.
+    for (let y = 30; y < 46; y++) for (let x = 0; x < w; x++) if (x % 3 === 0) d[y * w + x] = 160;
+    const v = assessQuality({ data: d, width: w, height: h });
+    expect(v.ink, 'antialiased strokes must register as ink').toBeGreaterThan(QUALITY_THRESHOLDS.ink);
+    expect(v.reasons).not.toContain('no-text-found');
+  });
+
+  it('the ink threshold still separates cleanly — negatives measure exactly zero', () => {
+    // The basis for setting the threshold low: with no document present, nothing can be 25%
+    // darker than the frame's own paper level, so these are 0 by construction, not by tuning.
+    for (const [label, img] of [
+      ['blank white', uniform(30, 30, 250)],
+      ['flat grey', uniform(30, 30, 128)],
+      ['dark/underexposed', uniform(30, 30, 58)],
+    ] as const) {
+      expect(inkCoverage(img), `${label} must have no ink`).toBe(0);
+      expect(assessQuality(img).reasons).toContain('no-text-found');
+    }
   });
 
   it('assessQuality still refuses a frame with no document in it', () => {

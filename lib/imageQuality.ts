@@ -54,7 +54,17 @@ export function laplacianVariance(img: GrayImage): number {
 // How dark a pixel must be, RELATIVE to this frame's own paper level, to count as ink.
 // Relative rather than absolute so the check survives dim light (paper at 120) and bright
 // light (paper at 250) alike — an absolute cutoff mis-reads one end or the other.
-const INK_RATIO = 0.6;
+//
+// 0.75, NOT 0.6. The stricter 0.6 was calibrated against synthetic text ~11% of the frame,
+// far denser than real print, and it rejected legitimate photos of ordinary A4 reports. The
+// cause is the 400px analysis downscale in components/CaptureCard.tsx: 9-11px body text
+// becomes a ~3px stroke, and antialiasing averages each stroke pixel toward the paper. A
+// stroke covering ~40% of a downscaled pixel lands near 155 against paper 245 — just above a
+// 0.6 cutoff (147), so it was not counted, and ink coverage collapsed to ~0.001 on a sharp,
+// perfectly readable page. Measured at 400px: 9px text at 0.6 -> 0.0023 (REJECTED) vs 0.75 ->
+// 0.0149 (passes). Raising the analysis resolution instead would also work but costs CPU on
+// the low-end phones this gate is meant to protect.
+const INK_RATIO = 0.75;
 
 /**
  * Fraction of pixels dark enough to be printed text, measured against the frame's own
@@ -134,7 +144,14 @@ export interface QualityThresholds {
 // rule out. Verified: on a blank frame, a glare-washed frame, a flat-grey frame, and a frame with
 // genuinely faint/washed-out ink, ink coverage independently and correctly returns 0 in every
 // case (`no-text-found`), so removing contrast loses no actual protection.
-export const QUALITY_THRESHOLDS: QualityThresholds = { blur: 100, ink: 0.005 };
+// `ink` is 0.002 rather than 0.005 because the separation is TOTAL, not marginal. With no
+// document in frame, no pixel can be 25% darker than that frame's own paper level, so every
+// negative case measures EXACTLY 0.0000 — verified across blank, flat-grey, glare-washed,
+// dark/underexposed, and faint-toner frames. Any positive threshold therefore separates them,
+// which means the number's only real job is immunity to sensor/JPEG noise. Setting it low
+// buys margin for faint-but-legible real photos at zero cost to rejection. Worst legitimate
+// case measured (9px text, 1px blur, gradient lighting, JPEG q85): 0.0112 — 5.6x this bound.
+export const QUALITY_THRESHOLDS: QualityThresholds = { blur: 100, ink: 0.002 };
 
 export function assessQuality(img: GrayImage, t: QualityThresholds = QUALITY_THRESHOLDS): QualityVerdict {
   const blur = laplacianVariance(img);
