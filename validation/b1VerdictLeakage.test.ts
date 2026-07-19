@@ -73,6 +73,7 @@ const ALLOWED_CHIPS_EN = new Set([
   'Below your report’s range',
   'Within your report’s range',
   'Above your report’s range',
+  'Outside your report’s range',
   'Ask your clinician to interpret',
   'Not assessed',
 ]);
@@ -174,8 +175,8 @@ describe('B1 gate — no user-visible verdict about the patient’s own value', 
   });
 
   // EXHAUSTIVE: the card renders entry.definitionEn/Zh verbatim, so policing the source field
-  // covers every one of the 89 — not only the analytes that happen to appear in the corpora.
-  it('every reference definition (the card education text) leaks no verdict/triage — all 89', () => {
+  // covers every entry — not only the analytes that happen to appear in the corpora.
+  it('every reference definition (the card education text) leaks no verdict or triage', () => {
     const violations: string[] = [];
     const CARD_RULES = [...BANNED, ...CARD_BANNED];
     for (const e of REFERENCE_LABS) {

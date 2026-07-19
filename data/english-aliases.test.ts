@@ -24,15 +24,15 @@ describe('US English aliases — verified Blood-only names now resolve', () => {
     expect(row.flags.some((f) => f.id === 'R6-HIGH-STAKES-MANDATORY-CONFIRM')).toBe(true);
   });
 
-  it('CBC names resolve for blood and legacy unknown context, never for known urine', () => {
+  it('CBC names keep legacy/blood identity while known urine routes to microscopy', () => {
     expect(findEntry('White Blood Cells')?.key).toBe('wbc_count');
     expect(findEntry('White Blood Cells', 'blood')?.key).toBe('wbc_count');
-    expect(findEntry('White Blood Cells', 'urine')).toBeNull();
-    expect(findEntry('WBC', 'urine')).toBeNull();
+    expect(findEntry('White Blood Cells', 'urine')?.key).toBe('urine_wbc_microscopy');
+    expect(findEntry('WBC', 'urine')?.key).toBe('urine_wbc_microscopy');
     expect(findEntry('Red Blood Cells')?.key).toBe('rbc_count');
     expect(findEntry('Red Blood Cells', 'blood')?.key).toBe('rbc_count');
-    expect(findEntry('Red Blood Cells', 'urine')).toBeNull();
-    expect(findEntry('RBC', 'urine')).toBeNull();
+    expect(findEntry('Red Blood Cells', 'urine')?.key).toBe('urine_rbc_microscopy');
+    expect(findEntry('RBC', 'urine')?.key).toBe('urine_rbc_microscopy');
   });
 
   it('serum calcium English names still resolve', () => {
@@ -86,5 +86,36 @@ describe('US English aliases — specimen-scoped urine names', () => {
     expect(findEntry('PRO', 'blood')).toBeNull();
     expect(findEntry('Ketones', 'blood')).toBeNull();
     expect(findEntry('Specific Gravity', 'blood')).toBeNull();
+  });
+
+  it('routes microscopy and dipstick collisions by their printed specimen', () => {
+    expect(findEntry('RBC', 'blood')?.key).toBe('rbc_count');
+    expect(findEntry('RBC', 'urine')?.key).toBe('urine_rbc_microscopy');
+    expect(findEntry('WBC', 'blood')?.key).toBe('wbc_count');
+    expect(findEntry('WBC', 'urine')?.key).toBe('urine_wbc_microscopy');
+    expect(findEntry('胆红素', 'blood')?.key).toBe('total_bilirubin');
+    expect(findEntry('胆红素', 'urine')?.key).toBe('urine_bilirubin');
+  });
+
+  it.each([
+    ['Color', 'urine_color'],
+    ['Appearance', 'urine_appearance'],
+    ['Nitrite', 'urine_nitrite'],
+    ['Bilirubin', 'urine_bilirubin'],
+    ['Urobilinogen', 'urine_urobilinogen'],
+    ['Pus Cells', 'urine_wbc_microscopy'],
+    ['Epithelial Cells', 'urine_epithelial_cells'],
+    ['Casts', 'urine_casts'],
+    ['Crystals', 'urine_crystals'],
+    ['Bacteria', 'urine_bacteria'],
+    ['Yeast Cells', 'urine_yeast_cells'],
+    ['Mucus Thread', 'urine_mucus'],
+    ['Amorphous Deposits', 'urine_amorphous_deposits'],
+  ])('requires printed urine context for the generic report-only name %s', (name, key) => {
+    expect(findEntry(name)).toBeNull();
+    expect(findEntry(name, 'unknown')).toBeNull();
+    expect(findEntry(name, null)).toBeNull();
+    expect(findEntry(name, 'blood')).toBeNull();
+    expect(findEntry(name, 'urine')?.key).toBe(key);
   });
 });

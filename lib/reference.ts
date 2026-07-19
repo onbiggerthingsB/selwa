@@ -187,6 +187,51 @@ export function parseScalar(s: string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+export type QualitativeValue = 'negative' | 'positive' | 'trace';
+
+const QUALITATIVE_TOKENS = new Map<string, QualitativeValue>([
+  ['absent', 'negative'],
+  ['negative', 'negative'],
+  ['not detected', 'negative'],
+  ['nil', 'negative'],
+  ['-', 'negative'],
+  ['阴性', 'negative'],
+  ['未检出', 'negative'],
+  ['present', 'positive'],
+  ['positive', 'positive'],
+  ['+', 'positive'],
+  ['++', 'positive'],
+  ['+++', 'positive'],
+  ['阳性', 'positive'],
+  ['检出', 'positive'],
+  ['trace', 'trace'],
+  ['±', 'trace'],
+  ['+/-', 'trace'],
+  ['微量', 'trace'],
+]);
+
+// Qualitative cells are a separate value shape. Keep this whole-field anchored:
+// parseScalar must continue rejecting non-numeric values and numeric ranges.
+export function parseQualitative(raw: string | null | undefined): QualitativeValue | null {
+  if (raw === null || raw === undefined) return null;
+  const token = raw.trim().toLowerCase().replace(/\s+/g, ' ');
+  return QUALITATIVE_TOKENS.get(token) ?? null;
+}
+
+export interface ValueRange {
+  low: number;
+  high: number;
+}
+
+// A range-valued RESULT is not a scalar. Reuse the strict whole-field printed
+// range parser, then require both bounds; comparators and partial ranges defer.
+export function parseValueRange(raw: string | null | undefined): ValueRange | null {
+  if (raw === null || raw === undefined) return null;
+  const parsed = parsePrintedRange(raw);
+  if (parsed === null || parsed.low === null || parsed.high === null) return null;
+  return { low: parsed.low, high: parsed.high };
+}
+
 /**
  * Where does a value sit relative to the range PRINTED on the report? Honours bound strictness.
  * 'none' = we cannot say (no parseable range, or the value is not a scalar) → the caller must
@@ -198,6 +243,43 @@ export function statusAgainstPrinted(v: number | null, pr: PrintedRange | null):
   if (pr.low !== null && (pr.lowInclusive ? v < pr.low : v <= pr.low)) return 'below';
   if (pr.high !== null && (pr.highInclusive ? v > pr.high : v >= pr.high)) return 'above';
   return 'within';
+}
+
+export function statusQualitativeAgainstPrinted(
+  value: QualitativeValue | null,
+  reference: QualitativeValue | null,
+): 'within' | 'outside' | 'none' {
+  if (value === null || reference === null) return 'none';
+  return value === reference ? 'within' : 'outside';
+}
+
+export function statusRangeAgainstPrinted(
+  value: ValueRange | null,
+  reference: PrintedRange | null,
+): 'below' | 'within' | 'above' | 'none' {
+  if (value === null || reference === null || reference.low === null || reference.high === null) {
+    return 'none';
+  }
+
+  const lowerContained =
+    value.low > reference.low || (value.low === reference.low && reference.lowInclusive);
+  const upperContained =
+    value.high < reference.high || (value.high === reference.high && reference.highInclusive);
+  if (lowerContained && upperContained) return 'within';
+
+  const whollyBelow = reference.lowInclusive
+    ? value.high < reference.low
+    : value.high <= reference.low;
+  if (whollyBelow) return 'below';
+
+  const whollyAbove = reference.highInclusive
+    ? value.low > reference.high
+    : value.low >= reference.high;
+  if (whollyAbove) return 'above';
+
+  // Any overlap that is not full containment is ambiguous: the result range
+  // spans both an in-range and an out-of-range region, so do not guess.
+  return 'none';
 }
 
 /**

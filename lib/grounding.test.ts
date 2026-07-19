@@ -120,7 +120,7 @@ describe('groundExtraction', () => {
 });
 
 describe('specimen-scoped grounding', () => {
-  it('rejects a known urine RBC row before blood units or bands can be considered', () => {
+  it('never hands a known urine RBC row to the blood-count entry or band', () => {
     const row = groundExtraction(
       {
         rows: [
@@ -137,11 +137,15 @@ describe('specimen-scoped grounding', () => {
       'unknown',
     ).rows[0];
 
-    expect(row.entry).toBeNull();
-    expect(row.matchedVia).toBe('unmatched');
-    expect(row.action).toBe('abstain');
+    expect(row.entry?.key).toBe('urine_rbc_microscopy');
+    expect(row.entry?.key).not.toBe('rbc_count');
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect(row.matchedVia).toBe('specimen-scoped');
+    expect(row.action).toBe('classify');
     expect(row.classification).toBe('unclassified');
-    expect(row.flags.map((f) => f.id)).toContain('R1-UNKNOWN-ANALYTE');
+    expect([row.entry?.refLow, row.entry?.refHigh]).toEqual([null, null]);
+    expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+    expect(row.flags.map((f) => f.id)).not.toContain('R1-UNKNOWN-ANALYTE');
     expect(row.flags.map((f) => f.id)).not.toContain('R2-UNIT-MISMATCH');
   });
 
@@ -193,6 +197,31 @@ describe('specimen-scoped grounding', () => {
     expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
   });
 
+  it('classifies dimensionless specific gravity when the report leaves its unit blank', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Specific Gravity',
+            value: '1.005',
+            unit: null,
+            printedRange: '1.005 - 1.025',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('urine_specific_gravity');
+    expect(row.matchedVia).toBe('specimen-scoped');
+    expect(row.action).toBe('classify');
+    expect(row.classification).toBe('normal');
+    expect(row.flags.map((f) => f.id)).not.toContain('R2-UNIT-MISMATCH');
+    expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+  });
+
   it('abstains when a scoped urine match conflicts with a blood-gas printed range', () => {
     const row = groundExtraction(
       {
@@ -216,6 +245,101 @@ describe('specimen-scoped grounding', () => {
     expect(row.classification).toBe('unclassified');
     expect(row.needsConfirm).toBe(false);
     expect(row.flags.map((f) => f.id)).toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+  });
+
+  it.each([
+    ['Glucose', 'urine_glucose'],
+    ['Protein', 'urine_protein'],
+    ['Ketones', 'urine_ketones'],
+  ])('treats a printed qualitative reference as corroboration for %s', (name, key) => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name,
+            value: 'Absent',
+            unit: null,
+            printedRange: 'Absent',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe(key);
+    expect(row.matchedVia).toBe('specimen-scoped');
+    expect(row.action).toBe('classify');
+    expect(row.classification).toBe('unclassified');
+    expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+    expect(row.flags.map((f) => f.id)).not.toContain('R2-UNIT-MISMATCH');
+    expect(row.flags.map((f) => f.id)).not.toContain('R5-LOW-OCR-CONFIDENCE-NUMERIC');
+  });
+
+  it.each(['Absent', 'Negative', 'Not Detected', 'Nil', '-', '阴性', '未检出'])(
+    'recognises the printed qualitative reference token %s as evidence',
+    (printedRange) => {
+      const row = groundExtraction(
+        {
+          rows: [
+            {
+              name: 'Glucose',
+              value: 'Absent',
+              unit: null,
+              printedRange,
+              confidence: 'high',
+              specimen: 'urine',
+            },
+          ],
+        },
+        'unknown',
+      ).rows[0];
+
+      expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+    },
+  );
+
+  it('does not treat a positive result token as a corroborating reference token', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Glucose',
+            value: 'Positive',
+            unit: null,
+            printedRange: 'Positive',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.flags.map((f) => f.id)).toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+  });
+
+  it('accepts an explicitly printed matching unit as scoped-match evidence', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'pH',
+            value: '5',
+            unit: 'pH',
+            printedRange: null,
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('urine_ph');
+    expect(row.action).toBe('classify');
+    expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
   });
 
   // THE HOLE THE FIRST R18 LEFT OPEN. The original condition required `printed !== null`,
@@ -270,5 +394,134 @@ describe('specimen-scoped grounding', () => {
     expect(row.matchedVia).toBe('unmatched');
     expect(row.action).toBe('abstain');
     expect(row.flags.map((f) => f.id)).toContain('R1-UNKNOWN-ANALYTE');
+  });
+});
+
+describe('report-only urinalysis grounding', () => {
+  it.each([
+    ['Nitrite', 'Negative', null, 'Negative', 'urine_nitrite'],
+    ['Bilirubin', 'Absent', null, 'Absent', 'urine_bilirubin'],
+    ['Urobilinogen', 'Absent', null, 'Absent', 'urine_urobilinogen'],
+    ['RBC', '0-2', 'hpf', '0-2', 'urine_rbc_microscopy'],
+    ['Pus Cells', '0-1', 'hpf', '0 - 5', 'urine_wbc_microscopy'],
+  ])('handles %s without an owned clinical band', (name, value, unit, printedRange, key) => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name,
+            value,
+            unit,
+            printedRange,
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe(key);
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect(row.action).toBe('classify');
+    expect(row.classification).toBe('unclassified');
+    expect(row.flags.map((f) => f.id)).not.toContain('R1-UNKNOWN-ANALYTE');
+    expect(row.flags.map((f) => f.id)).not.toContain('R2-UNIT-MISMATCH');
+    expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+  });
+
+  it('keeps a generic other-fluid name unknown instead of assigning a urine identity', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Crystals',
+            value: 'Present',
+            unit: null,
+            printedRange: 'Absent',
+            confidence: 'high',
+            specimen: 'unknown',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry).toBeNull();
+    expect(row.matchedVia).toBe('unmatched');
+    expect(row.action).toBe('abstain');
+    expect(row.classification).toBe('unclassified');
+    expect(row.flags.map((f) => f.id)).toContain('R1-UNKNOWN-ANALYTE');
+  });
+
+  it('keeps low-confidence report-only OCR in the confirmation flow', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Nitrite',
+            value: 'Positive',
+            unit: null,
+            printedRange: 'Negative',
+            confidence: 'low',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('urine_nitrite');
+    expect(row.action).toBe('classify');
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(true);
+    expect(row.flags.map((f) => f.id)).toContain('R5-LOW-OCR-CONFIDENCE-NUMERIC');
+  });
+
+  it('rejects an explicit unit contradiction on a scoped report-only identity', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'RBC',
+            value: '4.5',
+            unit: '10^12/L',
+            printedRange: '4.3-5.8',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('urine_rbc_microscopy');
+    expect(row.action).toBe('abstain');
+    expect(row.classification).toBe('unclassified');
+    expect(row.flags.map((f) => f.id)).toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+  });
+
+  it('does not treat an intentionally uncurated report-only unit as a contradiction', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Urobilinogen',
+            value: '0.2',
+            unit: 'mg/dL',
+            printedRange: '0.0-1.0',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('urine_urobilinogen');
+    expect(row.entry?.unit).toBe('as reported');
+    expect(row.action).toBe('classify');
+    expect(row.classification).toBe('unclassified');
+    expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
   });
 });

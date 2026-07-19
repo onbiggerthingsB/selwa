@@ -11,6 +11,30 @@ describe('reference table integrity', () => {
     expect(REFERENCE_LABS.length).toBeGreaterThanOrEqual(80);
   });
 
+  it('declares the complete report-only urinalysis set without curated bands', () => {
+    expect(
+      REFERENCE_LABS
+        .filter((e) => e.interpretation === 'report-only')
+        .map((e) => e.key)
+        .sort(),
+    ).toEqual([
+      'urine_amorphous_deposits',
+      'urine_appearance',
+      'urine_bacteria',
+      'urine_bilirubin',
+      'urine_casts',
+      'urine_color',
+      'urine_crystals',
+      'urine_epithelial_cells',
+      'urine_mucus',
+      'urine_nitrite',
+      'urine_rbc_microscopy',
+      'urine_urobilinogen',
+      'urine_wbc_microscopy',
+      'urine_yeast_cells',
+    ]);
+  });
+
   it('every alias is unique across the whole table (no analyte collisions)', () => {
     const seen = new Map<string, string>();
     for (const e of REFERENCE_LABS) {
@@ -34,8 +58,12 @@ describe('reference table integrity', () => {
     }
   });
 
-  it('keeps missing-unit acceptance narrowly curated to dimensionless urine pH', () => {
-    expect(REFERENCE_LABS.filter((e) => e.unitOptional).map((e) => e.key)).toEqual(['urine_ph']);
+  it('accepts a blank unit only for quantities that have no physical unit at all', () => {
+    // Never add a quantity here merely because one report happened to omit its unit.
+    expect(REFERENCE_LABS.filter((e) => e.unitOptional).map((e) => e.key)).toEqual([
+      'urine_ph',
+      'urine_specific_gravity',
+    ]);
   });
 
   it('age-banded entries are well-formed', () => {
@@ -62,6 +90,7 @@ describe('reference table integrity', () => {
       expect(keys.has(e.key)).toBe(false);
       keys.add(e.key);
       expect(e.specimen).toBe(e.key.startsWith('urine_') ? 'urine' : 'blood');
+      expect(['ours', 'report-only']).toContain(e.interpretation);
       expect(e.unit.length).toBeGreaterThan(0);
       expect(e.allowedUnits).toContain(e.unit);
       expect(e.plainEn.length).toBeGreaterThan(0);
@@ -69,9 +98,20 @@ describe('reference table integrity', () => {
       // B1 card definition (Codex blocker #2): every entry carries a direction-neutral definition.
       expect(e.definitionEn.length).toBeGreaterThan(0);
       expect(e.definitionZh.length).toBeGreaterThan(0);
-      expect(e.source.length).toBeGreaterThan(0);
-      // at least one bound exists
-      expect(e.refLow !== null || e.refHigh !== null).toBe(true);
+      if (e.interpretation === 'ours') {
+        expect(e.source.length).toBeGreaterThan(0);
+        expect(e.refLow !== null || e.refHigh !== null).toBe(true);
+      } else {
+        expect(e.source).toBe('');
+        expect([
+          e.refLow,
+          e.refHigh,
+          e.criticalLow,
+          e.criticalHigh,
+          e.absoluteLow,
+          e.absoluteHigh,
+        ]).toEqual([null, null, null, null, null, null]);
+      }
     }
   });
 

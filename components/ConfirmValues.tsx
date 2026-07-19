@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import type { GroundedReport, Sex } from '@/lib/types';
 import { groundExtraction } from '@/lib/grounding';
 import type { LabExtraction } from '@/lib/extractionSchema';
+import { parseScalar } from '@/lib/reference';
 
 export function ConfirmValues({
   report,
@@ -48,11 +49,11 @@ export function ConfirmValues({
   return (
     <div className="confirm">
       <p className="eyebrow" style={{ marginBottom: 6 }}>{t('One quick step', '快速一步')}</p>
-      <h2 lang={lang}>{t('Please check these readings', '请核对这些数值')}</h2>
+      <h2 lang={lang}>{t('Please check these readings', '请核对这些结果')}</h2>
       <p className="confirm-help" lang={lang}>
         {t(
-          'Let’s double-check a few numbers from your photo. A tiny difference in a decimal point matters — please confirm each value below matches your report.',
-          '让我们核对照片中的几个数值。小数点的微小差异也很重要——请确认下面每个数值与您的报告一致。',
+          'Let’s double-check a few results from your photo. Please confirm each result and unit below matches your report exactly.',
+          '让我们核对照片中的几项结果。请确认下面每项结果和单位与您的报告完全一致。',
         )}
       </p>
 
@@ -71,8 +72,8 @@ export function ConfirmValues({
               <div className="confirm-inputs">
                 <input
                   className="num"
-                  inputMode="decimal"
-                  aria-label={`${t('value', '数值')} ${i}`}
+                  inputMode={parseScalar(r.extracted.value) === null ? 'text' : 'decimal'}
+                  aria-label={`${t('result', '结果')} ${i}`}
                   value={edits[i].value}
                   onChange={(e) => setEdits({ ...edits, [i]: { ...edits[i], value: e.target.value } })}
                 />
@@ -82,7 +83,17 @@ export function ConfirmValues({
                   onChange={(e) => setEdits({ ...edits, [i]: { ...edits[i], unit: e.target.value } })}
                 />
               </div>
-              <p className="confirm-hint">{t('Check the decimal point (e.g. 7.0, not 70).', '请核对小数点（例如 7.0，而不是 70）。')}</p>
+              <p className="confirm-hint">
+                {parseScalar(r.extracted.value) === null
+                  ? t(
+                      'Check the result text and symbols exactly as printed.',
+                      '请逐字核对报告上打印的结果和符号。',
+                    )
+                  : t(
+                      'Check the decimal point (e.g. 7.0, not 70).',
+                      '请核对小数点（例如 7.0，而不是 70）。',
+                    )}
+              </p>
             </li>
           ) : null,
         )}

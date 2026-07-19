@@ -77,6 +77,96 @@ describe('buildSummary', () => {
     expect(cer.plainEn).toBe(''); // no invented meaning
     expect(cer.typicalRange).toBe(''); // no curated range to offer as context
   });
+
+  it('a report-only row renders its definition but never an owned range or source', () => {
+    const report = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Nitrite',
+            value: 'Negative',
+            unit: null,
+            printedRange: 'Negative',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    );
+    const row = report.rows[0];
+    const section = buildSummary(report, 'en').sections[0];
+
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect(row.action).toBe('classify');
+    expect(section.nameEn).toBe('Urine Nitrite (Dipstick)');
+    expect(section.chipEn).toBe('Within your report’s range');
+    expect(section.plainEn).toMatch(/urine dipstick test/i);
+    expect(section.plainZh).toContain('尿液');
+    expect(section.typicalRange).toBe('');
+    expect(section.source).toBe('');
+    expect(section.flags.map((f) => f.messageEn).join(' ')).not.toMatch(/not in our reference set/i);
+  });
+
+  it.each([
+    ['Absent', 'Absent', 'Within your report’s range'],
+    ['Negative', 'Absent', 'Within your report’s range'],
+    ['Positive', 'Absent', 'Outside your report’s range'],
+    ['Trace', 'Negative', 'Outside your report’s range'],
+  ])('reproduces qualitative result %s against printed reference %s', (value, printedRange, chip) => {
+    const report = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Nitrite',
+            value,
+            unit: null,
+            printedRange,
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    );
+    const section = buildSummary(report, 'en').sections[0];
+
+    expect(section.chipEn).toBe(chip);
+    expect(section.tone).toBe('report');
+  });
+
+  it.each([
+    ['0-2', '0-2', 'Within your report’s range'],
+    ['0 - 1', '0 - 5', 'Within your report’s range'],
+    ['6-8', '0-5', 'Above your report’s range'],
+    ['-2~-1', '0-5', 'Below your report’s range'],
+    ['4-7', '0-5', 'Ask your clinician to interpret'],
+  ])('reproduces range-valued result %s against printed range %s', (value, printedRange, chip) => {
+    const report = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Pus Cells',
+            value,
+            unit: 'hpf',
+            printedRange,
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    );
+    const section = buildSummary(report, 'en').sections[0];
+
+    expect(section.chipEn).toBe(chip);
+    if (chip === 'Ask your clinician to interpret') {
+      expect(section.reportRange).toBe('');
+    } else {
+      expect(section.reportRange).toBe(printedRange);
+      expect(section.tone).toBe('report');
+    }
+  });
 });
 
 describe('R13 suppression rendering', () => {

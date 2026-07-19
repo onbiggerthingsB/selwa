@@ -10,6 +10,7 @@ import {
   unitMatches,
   resolveBounds,
   parsePrintedRange,
+  parseQualitative,
   statusAgainstPrinted,
   printedRangePlausible,
   type PrintedRange,
@@ -34,9 +35,29 @@ export interface GuardOutcome {
   flags: GuardFlag[];
 }
 
-// Structural OCR suspicion: missing value, or a value we couldn't parse to a clean number.
-function structurallySuspicious(value: string | null, valueNum: number | null): boolean {
+// A recognised qualitative result carries its own scale in the value cell; reports
+// ordinarily leave the physical-unit column blank. This is deliberately separate
+// from unitOptional, whose integrity lock is reserved for dimensionless quantities.
+function hasImplicitQualitativeUnit(
+  extracted: ExtractedRow,
+  entry: ReferenceEntry,
+): boolean {
+  return (
+    entry.unit === 'qualitative' &&
+    !extracted.unit?.trim() &&
+    parseQualitative(extracted.value) !== null
+  );
+}
+
+// Structural OCR suspicion: missing value, or a value we couldn't parse in the
+// shape curated for this entry.
+function structurallySuspicious(
+  value: string | null,
+  valueNum: number | null,
+  entry: ReferenceEntry,
+): boolean {
   if (value === null) return true;
+  if (entry.unit === 'qualitative' && parseQualitative(value) !== null) return false;
   if (valueNum === null) return true; // couldn't parse a clean number
   return false;
 }
@@ -49,6 +70,46 @@ function outsideAbsoluteBounds(valueNum: number, entry: ReferenceEntry): boolean
   if (entry.absoluteLow !== null && valueNum < entry.absoluteLow) return true;
   if (entry.absoluteHigh !== null && valueNum > entry.absoluteHigh) return true;
   return false;
+}
+
+function specimenMatchCorroborated(
+  extracted: ExtractedRow,
+  entry: ReferenceEntry,
+  printed: PrintedRange | null,
+  sex: Sex,
+  age?: number,
+): boolean {
+  // A contradictory numeric range is a hard veto. A matching printed unit must
+  // never overrule the evidence that closed the mislabelled-blood-gas hole.
+  if (printed !== null && entry.interpretation === 'ours') {
+    return !printedRangeDisagrees(printed, entry, sex, age);
+  }
+
+  // Dipstick reports use a qualitative reference token instead of a numeric
+  // band. These exact negative tokens are real printed corroboration.
+  if (entry.unit === 'qualitative' && parseQualitative(extracted.printedRange) === 'negative') {
+    return true;
+  }
+
+  // Only an ACTUALLY PRINTED unit is evidence. unitOptional makes a blank unit
+  // acceptable later in R2; it must not turn absence into R18 corroboration.
+  const printedUnit = extracted.unit?.trim();
+  return printedUnit !== undefined && printedUnit.length > 0 && unitMatches(printedUnit, entry);
+}
+
+function reportOnlySpecimenContradicted(
+  extracted: ExtractedRow,
+  entry: ReferenceEntry,
+): boolean {
+  // "as reported" is an explicit wildcard: this report-only entry has no
+  // curated unit family, so a printed unit is not contradictory evidence.
+  if (entry.unit === 'as reported') return false;
+  const printedUnit = extracted.unit?.trim();
+  return (
+    printedUnit !== undefined &&
+    printedUnit.length > 0 &&
+    !unitMatches(printedUnit, entry)
+  );
 }
 
 export function evaluateRow(
@@ -93,10 +154,17 @@ export function evaluateRow(
 
   const printed = normalizedPrintedRange ?? parsePrintedRange(extracted.printedRange);
 
-  // R18 — a specimen-scoped alias is trusted ONLY while the report's own printed range
-  // corroborates it. A wrong specimen label hands classification the wrong clinical frame
-  // (blood-gas pH against a urine pH band), so this fails closed before unit handling or
-  // classification can present the scoped entry as understood.
+  // R18 — an owned-band (`ours`) specimen-scoped alias is trusted ONLY while the report supplies
+  // independent corroboration: a compatible numeric range, an exact qualitative reference token
+  // for a qualitative entry, or an explicitly printed matching unit. A contradictory numeric
+  // range always wins. A wrong specimen label hands classification the wrong clinical frame, so
+  // this fails closed before unit handling or classification can present the entry as understood.
+  //
+  // A report-only entry has no owned band or clinical classification to misapply. Its generic
+  // names exist only in the scoped index, so unknown/other-fluid rows cannot reach it; when urine
+  // context is printed, absence of row-level corroboration may still unlock translation and the
+  // report's own comparison. Positive contradictory evidence remains fail-closed: an explicitly
+  // printed unit outside that entry's curated unit family still triggers R18.
   //
   // ABSENCE OF A PRINTED RANGE IS NOT CORROBORATION. An earlier version required
   // `printed !== null`, which treated "no evidence" as "no problem" and left the exact hole
@@ -112,14 +180,16 @@ export function evaluateRow(
   // either, so the row loses only typicalRange and the definition, and it still discloses.
   if (
     matchedVia === 'specimen-scoped' &&
-    (printed === null || printedRangeDisagrees(printed, entry, sex, age))
+    (entry.interpretation === 'report-only'
+      ? reportOnlySpecimenContradicted(extracted, entry)
+      : !specimenMatchCorroborated(extracted, entry, printed, sex, age))
   ) {
     flags.push(
       flag(
         'R18-SPECIMEN-MATCH-UNCORROBORATED',
         'caution',
-        'We could not corroborate the specimen label we read with the reference range printed on your report, so we are not interpreting this test. Please check the specimen and range on your report.',
-        '我们无法用报告上打印的参考范围确认所读取的样本类型，因此不解读此项目。请核对报告上的样本类型和范围。',
+        'We could not corroborate the specimen label we read with the reference details printed on your report, so we are not interpreting this test. Please check the specimen, range, and unit on your report.',
+        '我们无法用报告上打印的参考信息确认所读取的样本类型，因此不解读此项目。请核对报告上的样本类型、范围和单位。',
       ),
     );
     // The existing confirmation screen can edit only value and unit. Sending an
@@ -128,8 +198,28 @@ export function evaluateRow(
     return { action: 'abstain', needsConfirm: false, flags };
   }
 
+  // Report-only entries are intentionally handled without an owned band. Their
+  // name and definition may render, and the summary may reproduce the report's
+  // own comparison, but no unit/value/clinical classification runs here. Low
+  // OCR confidence still enters the confirmation flow; the result can be a word
+  // or a range, so do not mislabel it as a suspicious numeric shape.
+  if (entry.interpretation === 'report-only') {
+    if (extracted.confidence === 'low') {
+      flags.push(
+        flag(
+          'R5-LOW-OCR-CONFIDENCE-NUMERIC',
+          'caution',
+          'We may have misread this result. Please check it against your report.',
+          '我们可能读错了这项结果，请与您的报告核对。',
+        ),
+      );
+      return { action: 'classify', needsConfirm: true, flags };
+    }
+    return { action: 'classify', needsConfirm: false, flags };
+  }
+
   // R2 — unit mismatch: abstain (no auto-conversion in v0).
-  if (!unitMatches(extracted.unit, entry)) {
+  if (!unitMatches(extracted.unit, entry) && !hasImplicitQualitativeUnit(extracted, entry)) {
     flags.push(
       flag(
         'R2-UNIT-MISMATCH',
@@ -188,7 +278,10 @@ export function evaluateRow(
   }
 
   // R5 — low OCR confidence or structurally suspicious numeric → confirm.
-  if (extracted.confidence === 'low' || structurallySuspicious(extracted.value, valueNum)) {
+  if (
+    extracted.confidence === 'low' ||
+    structurallySuspicious(extracted.value, valueNum, entry)
+  ) {
     needsConfirm = true;
     flags.push(
       flag(

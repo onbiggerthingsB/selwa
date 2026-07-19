@@ -1,9 +1,18 @@
 import type { Classification, GroundedReport, GroundedRow, ReferenceEntry, Sex } from '@/lib/types';
-import { resolveBounds, parsePrintedRange, parseScalar, statusAgainstPrinted } from '@/lib/reference';
+import {
+  resolveBounds,
+  parsePrintedRange,
+  parseQualitative,
+  parseScalar,
+  parseValueRange,
+  statusAgainstPrinted,
+  statusQualitativeAgainstPrinted,
+  statusRangeAgainstPrinted,
+} from '@/lib/reference';
 import { disclaimers } from '@/lib/disclaimers';
 
 export type Lang = 'en' | 'zh';
-export type ReportStatus = 'below' | 'within' | 'above' | 'none';
+export type ReportStatus = 'below' | 'within' | 'above' | 'outside' | 'none';
 
 export interface SummaryFlag {
   severity: string;
@@ -46,6 +55,7 @@ const REPORT_STATUS_LABEL: Record<ReportStatus, { en: string; zh: string }> = {
   below: { en: 'Below your report’s range', zh: '低于报告所列范围' },
   within: { en: 'Within your report’s range', zh: '在报告所列范围内' },
   above: { en: 'Above your report’s range', zh: '高于报告所列范围' },
+  outside: { en: 'Outside your report’s range', zh: '不在报告所列范围内' },
   none: { en: 'Ask your clinician to interpret', zh: '请由医生解读' },
 };
 
@@ -104,10 +114,19 @@ function reportStatus(row: GroundedRow): ReportStatus {
   // normal Troponin 0.02 ng/mL -> 20 ng/L vs "0-0.04" -> "Above"). Both frames must be the
   // report's. This is also what makes the chip table-independent — pure arithmetic on the page.
   //
-  // The comparison itself is DELEGATED to statusAgainstPrinted (lib/reference.ts), shared with
-  // R11. A local re-implementation is how this drifted: it used Number.parseFloat (which turns
-  // "3-15" into 3) and ignored bound strictness (so 5.2 read as "within" a printed "<5.2").
-  return statusAgainstPrinted(parseScalar(row.extracted.value), parsePrintedRange(row.extracted.printedRange));
+  // Each result shape has its own whole-field parser. Never relax parseScalar:
+  // ranges such as "3-15" must reach parseValueRange, not silently become 3.
+  const printed = parsePrintedRange(row.extracted.printedRange);
+  const scalar = statusAgainstPrinted(parseScalar(row.extracted.value), printed);
+  if (scalar !== 'none') return scalar;
+
+  const qualitative = statusQualitativeAgainstPrinted(
+    parseQualitative(row.extracted.value),
+    parseQualitative(row.extracted.printedRange),
+  );
+  if (qualitative !== 'none') return qualitative;
+
+  return statusRangeAgainstPrinted(parseValueRange(row.extracted.value), printed);
 }
 
 // TONE IS NEUTRAL (B1). Position within the report's range is stated in the CHIP TEXT, which is
@@ -121,7 +140,13 @@ function reportStatus(row: GroundedRow): ReportStatus {
 // 'report' is a NEUTRAL gray with no valence. Mapping these to 'normal' was a bug: --sev-normal
 // is semantic GREEN, so an above-range troponin rendered as "good" — trading a false alarm for a
 // false reassurance, which is strictly worse.
-const REPORT_TONE: Record<ReportStatus, string> = { below: 'report', within: 'report', above: 'report', none: 'unclassified' };
+const REPORT_TONE: Record<ReportStatus, string> = {
+  below: 'report',
+  within: 'report',
+  above: 'report',
+  outside: 'report',
+  none: 'unclassified',
+};
 
 function valueText(row: GroundedRow): string {
   const v = row.extracted.value ?? '—';
@@ -144,7 +169,8 @@ export function buildSummary(
 ): { sections: SummarySection[]; disclaimers: string[] } {
   const sections: SummarySection[] = report.rows.map((row, i) => {
     const entry = row.entry;
-    const classified = entry !== null && row.action === 'classify';
+    const handled = entry !== null && row.action === 'classify';
+    const curated = handled && entry.interpretation === 'ours';
 
     // DECOUPLED (grilling Q1): the chip reproduces the report's OWN printed range — pure
     // arithmetic on the page, no table lookup — so it is NOT gated on whether we recognise the
@@ -176,7 +202,7 @@ export function buildSummary(
       tone = REPORT_TONE[rs];
       chipEn = REPORT_STATUS_LABEL[rs].en;
       chipZh = REPORT_STATUS_LABEL[rs].zh;
-    } else if (classified) {
+    } else if (handled) {
       tone = REPORT_TONE.none;
       chipEn = REPORT_STATUS_LABEL.none.en; // "Ask your clinician to interpret"
       chipZh = REPORT_STATUS_LABEL.none.zh;
@@ -195,11 +221,11 @@ export function buildSummary(
       chipEn,
       chipZh,
       // CARD: the direction-neutral definition (never the directional plainEn — that is glossary-only).
-      plainEn: classified ? entry!.definitionEn : '',
-      plainZh: classified ? entry!.definitionZh : '',
+      plainEn: handled ? entry!.definitionEn : '',
+      plainZh: handled ? entry!.definitionZh : '',
       // GLOSSARY: the fuller description, surfaced separately (not beneath the chip).
-      glossaryEn: classified ? entry!.plainEn : '',
-      glossaryZh: classified ? entry!.plainZh : '',
+      glossaryEn: handled ? entry!.plainEn : '',
+      glossaryZh: handled ? entry!.plainZh : '',
       flags: row.flags
         .filter((f) => SURFACING_FLAGS.has(f.id))
         .map((f) => ({ severity: f.severity, messageEn: f.messageEn, messageZh: f.messageZh })),
@@ -211,8 +237,8 @@ export function buildSummary(
       // measuring this row (usually a different SPECIMEN under the same name — the urine-vs-serum
       // β2-microglobulin case). Presenting it as "Typical range" beside the patient's number is a
       // wrong-range claim, so we withhold it and its provenance rather than guess the specimen.
-      typicalRange: classified && !bandNotComparable ? formatRefRange(entry!, report.sex, report.age) : '',
-      source: classified && !bandNotComparable ? (entry!.source ?? '') : '',
+      typicalRange: curated && !bandNotComparable ? formatRefRange(entry!, report.sex, report.age) : '',
+      source: curated && !bandNotComparable ? (entry!.source ?? '') : '',
     };
   });
 

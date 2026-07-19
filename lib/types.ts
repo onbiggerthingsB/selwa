@@ -9,6 +9,11 @@ export interface ReferenceEntry {
   aliases: string[]; // EN abbreviations + ZH names/synonyms, matched case-insensitively
   specimen: 'blood' | 'urine'; // required: known context must never cross specimen frames
   /**
+   * 'ours' uses a curated band. 'report-only' names/translates the test but
+   * never classifies it; any position comes solely from the printed report.
+   */
+  interpretation: 'ours' | 'report-only';
+  /**
    * Aliases that are safe only when the report explicitly identifies the row's
    * specimen. These are indexed separately from the unscoped aliases above.
    */

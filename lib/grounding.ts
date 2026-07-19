@@ -21,7 +21,12 @@ export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: numb
     // canonical SI value and record an info flag. Unconvertible mismatches fall
     // through unchanged so the guard's R2 abstain still fires.
     let converted: { from: string; to: string } | null = null;
-    if (entry && valueNum !== null && extracted.unit && !unitMatches(extracted.unit, entry)) {
+    if (
+      entry?.interpretation === 'ours' &&
+      valueNum !== null &&
+      extracted.unit &&
+      !unitMatches(extracted.unit, entry)
+    ) {
       const c = convertValue(valueNum, extracted.unit, entry);
       if (c) {
         converted = { from: `${extracted.value} ${extracted.unit}`, to: `${c.value.toFixed(2)} ${c.unit}` };
@@ -51,7 +56,10 @@ export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: numb
     }
 
     // classify only when grounded against a matched entry; the guard owns abstention.
-    const classification = entry ? classify(valueNum, entry, sex, age) : 'unclassified';
+    const classification =
+      entry?.interpretation === 'ours'
+        ? classify(valueNum, entry, sex, age)
+        : 'unclassified';
     const outcome = evaluateRow(
       { ...extracted, unit: effectiveUnit },
       entry,
