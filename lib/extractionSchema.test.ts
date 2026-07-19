@@ -45,6 +45,26 @@ describe('LabExtractionSchema', () => {
     expect(bad.success).toBe(false);
   });
 
+  it.each([null, '↑'] as const)(
+    'accepts an explicitly copied printed flag value %s',
+    (printedFlagRaw) => {
+      const ok = LabExtractionSchema.safeParse({
+        rows: [
+          {
+            name: 'X',
+            value: '1',
+            unit: null,
+            printedRange: null,
+            printedFlagRaw,
+            confidence: 'low',
+          },
+        ],
+      });
+      expect(ok.success).toBe(true);
+      if (ok.success) expect(ok.data.rows[0].printedFlagRaw).toBe(printedFlagRaw);
+    },
+  );
+
   it('keeps specimen capture OCR-only and safely defaults unprinted or other fluids', () => {
     expect(EXTRACTION_PROMPT).toMatch(/do not infer/i);
     expect(EXTRACTION_PROMPT).toMatch(/null/i);
@@ -56,5 +76,18 @@ describe('LabExtractionSchema', () => {
     expect(EXTRACTION_PROMPT).toMatch(
       /do not infer specimen from the analyte name, value, or reference range/i,
     );
+  });
+
+  it('keeps printed-flag capture copy-only and fail-closed', () => {
+    expect(EXTRACTION_PROMPT).toContain(
+      'Do NOT classify results as normal/abnormal and do NOT add reference ranges from your own knowledge — only copy the range printed on the page.',
+    );
+    expect(EXTRACTION_PROMPT).toMatch(/exactly as printed/i);
+    expect(EXTRACTION_PROMPT).toMatch(/keep it OUT of the value field/i);
+    expect(EXTRACTION_PROMPT).toMatch(/printedFlagRaw MUST be null/i);
+    expect(EXTRACTION_PROMPT).toMatch(
+      /never .* comparing the value to the reference range/i,
+    );
+    expect(EXTRACTION_PROMPT).toMatch(/printing artifact, use null/i);
   });
 });

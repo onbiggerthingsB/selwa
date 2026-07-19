@@ -16,6 +16,7 @@ export const LabsRowSchema = z.object({
   value: z.string().nullable(),
   unit: z.string().nullable(),
   printedRange: z.string().nullable(),
+  printedFlagRaw: z.string().nullable().optional(),
   confidence: z.enum(['low', 'medium', 'high']),
 });
 
