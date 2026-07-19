@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { getAnthropic } from '@/lib/anthropic';
-import { NotesTranslationSchema, NOTES_PROMPT } from '@/lib/notesSchema';
+import { NotesTranslationSchema, NOTES_PROMPT, MAX_NOTES_CHARS } from '@/lib/notesSchema';
+import { CONSENT_HEADER, checkConsent } from '@/lib/consentGate';
 
 export const runtime = 'nodejs'; // REQUIRED: the SDK breaks on the edge runtime
 export const dynamic = 'force-dynamic'; // never cache a notes handler
 
 export async function POST(req: NextRequest) {
+  const consent = checkConsent(req.headers.get(CONSENT_HEADER));
+  if (!consent.ok) return NextResponse.json({ error: consent.error }, { status: consent.status });
+
   let body: unknown;
   try {
     body = await req.json();
@@ -17,6 +21,9 @@ export async function POST(req: NextRequest) {
   const text = (body as { text?: unknown } | null)?.text;
   if (typeof text !== 'string' || text.trim().length === 0) {
     return NextResponse.json({ error: 'No notes provided' }, { status: 400 });
+  }
+  if (text.length > MAX_NOTES_CHARS) {
+    return NextResponse.json({ error: 'Notes too long' }, { status: 413 });
   }
 
   try {

@@ -3,11 +3,18 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { getAnthropic } from '@/lib/anthropic';
 import { LabExtractionSchema, EXTRACTION_PROMPT } from '@/lib/extractionSchema';
 import { checkUpload } from '@/lib/uploadValidation';
+import { CONSENT_HEADER, checkConsent } from '@/lib/consentGate';
 
 export const runtime = 'nodejs'; // REQUIRED: the SDK breaks on the edge runtime
 export const dynamic = 'force-dynamic'; // never cache an upload handler
 
 export async function POST(req: NextRequest) {
+  // FIRST — before reading the body. The image is the sensitive payload; refusing after parsing it
+  // would still have pulled it into this process. See lib/consentGate.ts for what this does and
+  // does not guarantee (integrity control, not authentication).
+  const consent = checkConsent(req.headers.get(CONSENT_HEADER));
+  if (!consent.ok) return NextResponse.json({ error: consent.error }, { status: consent.status });
+
   const form = await req.formData();
   const file = form.get('image');
   const fileMeta = file instanceof File ? { type: file.type, size: file.size } : null;
