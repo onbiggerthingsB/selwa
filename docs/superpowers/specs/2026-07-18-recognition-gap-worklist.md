@@ -80,11 +80,16 @@ These are **not** gaps to close. Recording them so a future pass doesn't "fix" t
 Closing these safely requires **panel/specimen context capture**, which is the already-deferred
 prerequisite — not an alias.
 
-## 4. SEPARATE BUG FOUND during triage (not yet fixed)
+## 4. RESOLVED — specimen-mismatched curated range
+
+Status: **FIXED** in commit `2d4982e`. `R17-BAND-NOT-COMPARABLE` now detects the
+non-overlapping printed and curated bands, and `lib/summary.ts` withholds the curated
+`typicalRange` and `source` on that row. This is retained below as historical failure
+evidence, not as an open work item.
 
 The Opus adversary, while clearing `β2微球蛋白`, demonstrated a **pre-existing** hazard that the alias
 did not create and does not worsen (the same state is already reachable via the entry's canonical
-`β2-微球蛋白`), but which is real and unmitigated:
+`β2-微球蛋白`), which was real before R17:
 
 > A specimen-unqualified **urine** β2-microglobulin of 1.03 mg/L against a printed range 0-0.3
 > renders a correct chip ("Above your report's range") next to **"Typical range 0.8-2.4 mg/L"** —
@@ -93,7 +98,6 @@ did not create and does not worsen (the same state is already reachable via the 
 > an 8× ratio, under `SCALE_TOLERANCE = 10`. R13 fires only for *normal* urine values — it catches
 > the healthy patient and misses the injured one.
 
-Generalised: whenever our curated band materially disagrees with the printed range, we still show
-"Typical range …" with no visible caveat. Options: surface an R11 variant (its message is about the
-report's own content, so it is speakable under B1), suppress `typicalRange` when R11 fires, or
-tighten `SCALE_TOLERANCE`. Needs its own decision — recorded here so it is not lost.
+Resolution: R17 treats fully non-overlapping bands as evidence that our curated frame is not
+comparable to the row, keeps the report-derived chip, and suppresses our curated range and
+provenance. The earlier alternatives were superseded by that implementation.
