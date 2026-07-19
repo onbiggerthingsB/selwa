@@ -1,6 +1,8 @@
 # Chinese coverage — plan
 
-Status: **NOT STARTED.** Written for implementation by Codex.
+Status: **SHIPPED** in commit `eef0235` (3 Chinese aliases + 5 reason-bearing locks).
+Measured outcome: MedRepBench R6-gold **54.1% (20/37) → 62.2% (23/37)**. The 54.1% baseline quoted
+below is HISTORICAL — do not baseline new work against it.
 
 The advisor confirmed the lab-report **source language is Chinese**. That inverts the coverage
 priority: recent curation was tuned for the US corpus — `validation/real-corpus/run.ts` still labels
