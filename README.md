@@ -23,18 +23,23 @@ The LLM (Claude vision) does **OCR/extraction only** — it transcribes the prin
 The model never supplies a reference range, never classifies a value, never diagnoses, never translates a clinical claim. The guard biases toward deferral: unknown analytes and unit mismatches **abstain** (shown verbatim, no judgment); high-stakes analytes (glucose, potassium, creatinine, LDL, hemoglobin) and critical values are **always re-confirmed** by the user before interpretation and flagged "confirm with your clinician." PHI stays on-device — the image transits the server only transiently to reach Claude and is never persisted; the kept record lives only in your browser's IndexedDB.
 
 ## Running v0 locally
-Prerequisites: Node 20+.
+Prerequisites: Node 20+. Live report extraction and notes translation also require
+an Anthropic API key and an Upstash Redis database.
 
 ```bash
 npm install
-cp .env.local.example .env.local      # then set ANTHROPIC_API_KEY (server-only; never NEXT_PUBLIC_)
+cp .env.local.example .env.local      # then set the required server-only values
 npm test                              # unit + component tests (no API key needed)
 npm run dev                           # http://localhost:3000  (Turbopack)
 npm run dev:pwa                       # dev with the service worker (webpack — Serwist needs webpack)
 npm run build                         # production build; generates public/sw.js (webpack)
 ```
 
-The home page and tests run without a key; **photographing a report** needs `ANTHROPIC_API_KEY` set in `.env.local` (the extract route calls Claude server-side). See [`docs/RUNNING.md`](docs/RUNNING.md) for constraints and gotchas.
+The home page and tests run without credentials. The two paid routes fail closed unless
+`ANTHROPIC_API_KEY`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and a
+32-or-more-character `RATE_LIMIT_IP_HASH_SECRET` are configured server-side. See
+[`docs/RUNNING.md`](docs/RUNNING.md) for Upstash provisioning, configurable limits,
+live overrides, and deployment checks.
 
 ## v0 scope and what's deferred
 - **In v0:** labs-only, Mandarin ↔ English, the deterministic safety core, the confirm-the-values gate, the kept on-device record, PWA/offline shell.

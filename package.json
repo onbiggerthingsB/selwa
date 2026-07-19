@@ -8,6 +8,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "rate-limit:set": "tsx scripts/set-rate-limit.mts",
     "test": "vitest run",
     "test:watch": "vitest",
     "validate": "tsx validation/run.ts"
@@ -15,6 +16,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.105.0",
     "@serwist/next": "^9.5.11",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "idb": "^8.0.3",
     "next": "16.2.9",
     "react": "19.2.4",
@@ -24,6 +27,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@next/env": "16.2.9",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

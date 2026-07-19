@@ -17,6 +17,7 @@ type Phase = 'idle' | 'preview' | 'redact' | 'consent' | 'quality' | 'extracting
 
 type FailureCause =
   | 'server-unavailable'
+  | 'rate-limited'
   | 'not-permitted'
   | 'image-rejected'
   | 'network'
@@ -44,6 +45,13 @@ const FAILURE_PRESENTATION: Record<
     action: 'retry',
     actionEn: 'Try again',
     actionZh: '重试',
+  },
+  'rate-limited': {
+    en: 'Too many report-reading requests have been made from this network. Please wait and try again later.',
+    zh: '当前网络的报告读取请求次数过多。请稍后重试。',
+    action: 'retry',
+    actionEn: 'Try again later',
+    actionZh: '稍后重试',
   },
   'not-permitted': {
     en: 'Please confirm your consent again before the photo is sent for reading.',
@@ -77,6 +85,7 @@ const FAILURE_PRESENTATION: Record<
 
 function failureCauseForStatus(status: number): FailureCause {
   if (status === 403) return 'not-permitted';
+  if (status === 429) return 'rate-limited';
   if (status === 413 || status === 415) return 'image-rejected';
   if (status === 422) return 'unreadable';
   if (status >= 500) return 'server-unavailable';

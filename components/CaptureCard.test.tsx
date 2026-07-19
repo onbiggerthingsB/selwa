@@ -134,6 +134,32 @@ describe('CaptureCard extraction failures', () => {
     expect(json).not.toHaveBeenCalled();
   });
 
+  it('shows network-scoped rate-limit copy for 429 without reading or leaking the response body', async () => {
+    const secret = 'ANTHROPIC_API_KEY=server-only-secret';
+    const { json, response } = failedResponse(429, secret);
+    mocks.fetch.mockResolvedValue(response);
+
+    await uploadAndSubmit();
+    const alert = await screen.findByRole('alert');
+
+    expect(alert).toHaveTextContent(
+      'Too many report-reading requests have been made from this network. Please wait and try again later.',
+    );
+    expect(alert).toHaveTextContent('当前网络的报告读取请求次数过多。请稍后重试。');
+    expect(
+      within(alert).getByRole('button', { name: 'Try again later · 稍后重试' }),
+    ).toBeInTheDocument();
+    expect(alert).not.toHaveTextContent(
+      /photo|brighter|flatter|Retake|照片|更亮|更平整|重拍/i,
+    );
+    expect(alert).not.toHaveTextContent(secret);
+    expect(json).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith('capture submission failed', {
+      status: 429,
+      cause: 'rate-limited',
+    });
+  });
+
   it('routes a server 403 directly back to the contextual consent dialog', async () => {
     const { json, response } = failedResponse(403, 'Consent required');
     mocks.fetch.mockResolvedValue(response);

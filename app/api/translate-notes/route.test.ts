@@ -1,8 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const parse = vi.fn();
+const { parse, getAnthropic } = vi.hoisted(() => {
+  const parseMock = vi.fn();
+  return {
+    parse: parseMock,
+    getAnthropic: vi.fn(() => ({ messages: { parse: parseMock } })),
+  };
+});
 vi.mock('@/lib/anthropic', () => ({
-  getAnthropic: () => ({ messages: { parse } }),
+  getAnthropic,
+}));
+
+const { enforcePaidRouteRateLimit } = vi.hoisted(() => ({
+  enforcePaidRouteRateLimit: vi.fn(),
+}));
+vi.mock('@/lib/rateLimit', () => ({
+  enforcePaidRouteRateLimit,
 }));
 
 import { POST } from './route';
@@ -10,15 +23,24 @@ import { CONSENT_HEADER } from '@/lib/consentGate';
 import { CONSENT_VERSION } from '@/lib/consent';
 import { MAX_NOTES_CHARS } from '@/lib/notesSchema';
 
-function reqWith(body: unknown, consentHeader: string | null = String(CONSENT_VERSION)): Parameters<typeof POST>[0] {
+function reqWith(
+  body: unknown,
+  consentHeader: string | null = String(CONSENT_VERSION),
+  bodyReader?: () => Promise<unknown>,
+): Parameters<typeof POST>[0] {
   return {
-    json: async () => body,
+    json: bodyReader ?? (async () => body),
     headers: { get: (k: string) => (k.toLowerCase() === CONSENT_HEADER ? consentHeader : null) },
   } as unknown as Parameters<typeof POST>[0];
 }
 
 describe('POST /api/translate-notes', () => {
-  beforeEach(() => parse.mockReset());
+  beforeEach(() => {
+    parse.mockReset();
+    getAnthropic.mockClear();
+    enforcePaidRouteRateLimit.mockReset();
+    enforcePaidRouteRateLimit.mockResolvedValue(null);
+  });
 
   it('400s when text is missing', async () => {
     const res = await POST(reqWith({}));
@@ -71,16 +93,57 @@ describe('POST /api/translate-notes', () => {
   });
 
   it('502s when the SDK throws (never echoes raw error)', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     parse.mockRejectedValueOnce(new Error('upstream 500: secret-key-leak'));
-    const res = await POST(reqWith({ text: 'some notes' }));
-    expect(res.status).toBe(502);
-    const body = await res.json();
-    expect(JSON.stringify(body)).not.toMatch(/secret-key-leak/);
+
+    try {
+      const res = await POST(reqWith({ text: 'some notes' }));
+      expect(res.status).toBe(502);
+      const body = await res.json();
+      expect(JSON.stringify(body)).not.toMatch(/secret-key-leak/);
+      expect(consoleError).toHaveBeenCalledWith('translate-notes: model call failed');
+      expect(JSON.stringify(consoleError.mock.calls)).not.toContain('secret-key-leak');
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
-  it('403s without consent — notes are also transferred to Anthropic, so they are gated too', async () => {
-    const res = await POST(reqWith({ text: 'take one tablet daily' }, null));
+  it('403s without consent before rate limiting, body reading, or the model', async () => {
+    const bodyReader = vi.fn(async () => {
+      throw new Error('body must not be read without consent');
+    });
+    const res = await POST(reqWith({ text: 'take one tablet daily' }, null, bodyReader));
     expect(res.status).toBe(403);
+    expect(enforcePaidRouteRateLimit).not.toHaveBeenCalled();
+    expect(bodyReader).not.toHaveBeenCalled();
+    expect(getAnthropic).not.toHaveBeenCalled();
+    expect(parse).not.toHaveBeenCalled();
+  });
+
+  it('429s a rate-limited request before reading the notes or calling the model', async () => {
+    enforcePaidRouteRateLimit.mockResolvedValueOnce(Response.json({
+      error: 'Too many requests. Please try again later.',
+      errorZh: '请求过于频繁，请稍后再试。',
+    }, { status: 429 }));
+    const bodyReader = vi.fn(async () => {
+      throw new Error('rate-limited notes must not be read');
+    });
+    const req = reqWith(
+      { text: 'take one tablet daily' },
+      String(CONSENT_VERSION),
+      bodyReader,
+    );
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(429);
+    await expect(res.json()).resolves.toEqual({
+      error: 'Too many requests. Please try again later.',
+      errorZh: '请求过于频繁，请稍后再试。',
+    });
+    expect(enforcePaidRouteRateLimit).toHaveBeenCalledWith(req, 'translate-notes');
+    expect(bodyReader).not.toHaveBeenCalled();
+    expect(getAnthropic).not.toHaveBeenCalled();
     expect(parse).not.toHaveBeenCalled();
   });
 

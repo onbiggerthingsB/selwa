@@ -3,6 +3,7 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { getAnthropic } from '@/lib/anthropic';
 import { NotesTranslationSchema, NOTES_PROMPT, MAX_NOTES_CHARS } from '@/lib/notesSchema';
 import { CONSENT_HEADER, checkConsent } from '@/lib/consentGate';
+import { enforcePaidRouteRateLimit } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs'; // REQUIRED: the SDK breaks on the edge runtime
 export const dynamic = 'force-dynamic'; // never cache a notes handler
@@ -10,6 +11,9 @@ export const dynamic = 'force-dynamic'; // never cache a notes handler
 export async function POST(req: NextRequest) {
   const consent = checkConsent(req.headers.get(CONSENT_HEADER));
   if (!consent.ok) return NextResponse.json({ error: consent.error }, { status: consent.status });
+
+  const rateLimitResponse = await enforcePaidRouteRateLimit(req, 'translate-notes');
+  if (rateLimitResponse) return rateLimitResponse;
 
   let body: unknown;
   try {

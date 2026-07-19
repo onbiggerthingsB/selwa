@@ -4,6 +4,7 @@ import { getAnthropic } from '@/lib/anthropic';
 import { LabExtractionSchema, EXTRACTION_PROMPT } from '@/lib/extractionSchema';
 import { checkUpload } from '@/lib/uploadValidation';
 import { CONSENT_HEADER, checkConsent } from '@/lib/consentGate';
+import { enforcePaidRouteRateLimit } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs'; // REQUIRED: the SDK breaks on the edge runtime
 export const dynamic = 'force-dynamic'; // never cache an upload handler
@@ -14,6 +15,9 @@ export async function POST(req: NextRequest) {
   // does not guarantee (integrity control, not authentication).
   const consent = checkConsent(req.headers.get(CONSENT_HEADER));
   if (!consent.ok) return NextResponse.json({ error: consent.error }, { status: consent.status });
+
+  const rateLimitResponse = await enforcePaidRouteRateLimit(req, 'extract');
+  if (rateLimitResponse) return rateLimitResponse;
 
   const form = await req.formData();
   const file = form.get('image');
@@ -43,8 +47,9 @@ export async function POST(req: NextRequest) {
     const parsed = message.parsed_output;
     if (!parsed) return NextResponse.json({ error: 'Could not read the report' }, { status: 422 });
     return NextResponse.json({ data: parsed });
-  } catch (err) {
-    console.error('extract error', err); // never echo raw SDK errors to the client
+  } catch {
+    // Swallow the raw SDK error: it may carry request payloads or key material.
+    console.error('extract: model call failed');
     return NextResponse.json({ error: 'Could not read the report' }, { status: 502 });
   }
 }
