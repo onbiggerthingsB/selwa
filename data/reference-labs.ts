@@ -155,7 +155,12 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'urea', nameEn: 'Urea', nameZh: '尿素',
-    aliases: ['UREA', 'BUN', '尿素氮', '尿素'],
+    // 'BUN' REMOVED: blood urea nitrogen is a different quantity from urea (mass of nitrogen vs
+    // molar urea, ~2.14x), and it now has its own mg/dL entry. Keeping it here mapped a US
+    // 'BUN 47 mg/dL' row onto this mmol/L band, where only R2's unit-mismatch abstain
+    // prevented a mis-scaled verdict. 尿素氮 STAYS: Chinese reports print it in mmol/L as the
+    // molar urea concentration, which is this entry.
+    aliases: ['UREA', '尿素氮', '尿素'],
     unit: 'mmol/L', allowedUnits: ['mmol/L'],
     refLow: 2.9, refHigh: 7.1, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
     absoluteLow: 0.5, absoluteHigh: 150,
@@ -1177,5 +1182,133 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     definitionEn: 'Specific gravity reflects how concentrated the urine is, which mainly tracks hydration.',
     definitionZh: '尿比重反映尿液的浓缩程度，主要与体内水分状态有关。',
     source: 'Medscape Urinalysis; AAFP 2005 (1.003-1.030, dimensionless)',
+  },
+
+  // --- HIGH-STAKES CURATION TRANCHE 1 (Codex #7 recognition gap) ---
+  // Each band was proposed by 3 independent researchers and then ADVERSARIALLY verified against the
+  // reference ranges REAL hospital reports print for the same analyte (validation/real-corpus/).
+  // That cross-check mattered: for lactate, all three researchers "converged" on 0.5-2.2, but two
+  // cited a page neither had opened and the third triangulated from an analyser vendor's marketing
+  // page — convergence was not independent confirmation. The verifier resolved it against a primary
+  // standardization document instead.
+  // R13 absolute bounds are deliberately extreme. Two of three researchers set lactate's ceiling to
+  // 30, which would suppress a documented survived value of 47.6 mmol/L — the same class of error as
+  // clipping the real pO2 = 374 observation in our corpus. R13 exists to catch OCR misreads, never
+  // to silence the sickest patient, so the ceilings here are far above any survivable value.
+  // DEFERRED, deliberately (see docs/superpowers/specs/2026-07-18-recognition-gap-worklist.md):
+  //   pO2  — a venous blood gas prints the identical row name "pO2"; specimen appears only in the
+  //          report header, which row-level extraction never sees, so a NORMAL venous pO2 (~40)
+  //          would trip an arterial critical-low alarm.
+  //   Base Excess — would be the first SIGNED analyte, and lib/classify.ts's NUMERIC regex rejects
+  //          a leading '-', so its entire negative half silently parses to null.
+  {
+    key: 'calcium_ionized', nameEn: 'Ionized calcium (free calcium)', nameZh: '游离钙(离子钙)',
+    aliases: ['Free Calcium', 'Ionized Calcium', 'Ionised Calcium', 'Calcium, Ionized', 'Calcium, Ionised', 'Calcium Ionized', 'iCa', 'iCa2+', 'Ca2+ (ionized)', '游离钙', '离子钙', '血清游离钙'],
+    unit: 'mmol/L', allowedUnits: ['mmol/L'],
+    refLow: 1.1, refHigh: 1.35,
+    criticalLow: 0.8, criticalHigh: 1.6, highStakes: true, populationSensitive: false,
+    absoluteLow: 0.2, absoluteHigh: 3.5,
+    definitionEn: 'Ionized calcium, also called free calcium, is the part of the calcium in your blood that is not attached to proteins. It is a separate test from total calcium, which counts both the attached and the unattached parts.',
+    definitionZh: '游离钙(又称离子钙)是血液中未与蛋白质结合的那部分钙。它与总钙是两项不同的检测——总钙同时包含结合和未结合的部分。',
+    plainEn: 'Ionized (free) calcium is the protein-unbound fraction of blood calcium — the form the body actually uses for nerve signalling, muscle contraction, heart rhythm, and clotting. It is usually measured directly on a blood-gas analyzer, and arterial and venous samples give essentially the same result for this analyte (unlike oxygen levels). Unlike total calcium, it is not distorted by a low or high albumin level, which is why it is preferred in hospitalized and critically ill patients. It shifts with blood pH — more acidic blood tends to raise it, more alkaline blood tends to lower it — and a non-calcium-balanced heparin tube can lower it artificially, so it is best read alongside the rest of the blood-gas panel. Reference intervals differ slightly between analyzer manufacturers, so the range printed on your own report takes precedence over any general range. A result below the range is called hypocalcemia and above it hypercalcemia. This number is NOT comparable to a total-calcium reference range: total calcium normally runs roughly twice as high in the same units, so comparing the two will look alarming when nothing is wrong.',
+    plainZh: '游离钙(离子钙)是血液中未与蛋白结合的那部分钙,是身体真正用于神经传导、肌肉收缩、心律和凝血的活性形式。通常由血气分析仪直接测定;与氧分压不同,动脉血与静脉血的游离钙结果基本一致。与总钙不同,它不受白蛋白高低的影响,因此在住院和危重患者中更常用。其数值会随血液 pH 变化——血液偏酸时倾向升高,偏碱时倾向降低;采血管中使用未经钙平衡的肝素也会人为降低结果,因此宜结合血气全套一起解读。不同厂家分析仪的参考区间略有差异,应以您报告上打印的范围为准。低于参考范围称为低钙血症,高于则称为高钙血症。该数值不能与总钙的参考范围对照:在相同单位下总钙通常约为游离钙的两倍,两者直接比较会显得异常,实际上并无问题。',
+    source: 'Corpus-observed printed reference range, MIMIC-IV / US hospital blood-gas panel: 1.12-1.32 mmol/L (curate-evidence.json, row name "Free Calcium", n=4, gold canonical "Ionized calcium"). Mayo Clinic Laboratories test catalog, Calcium, Ionized, Serum: reference interval approximately 1.12-1.30 mmol/L. The shipped 1.10-1.35 mmol/L is a deliberate cross-analyzer envelope around those two, NOT any single lab\'s printed interval. criticalLow/criticalHigh 0.80/1.60 mmol/L follow common hospital blood-gas panic-value practice and are explicitly NOT traceable to a single authoritative standard — treat as a convention, not a citation.',
+  },
+  {
+    // 'Urea Nitrogen' and 'Urea N' are DELIBERATELY NOT aliased. The curation pass proposed them;
+    // the raw MIMIC catalog refutes it — 'Urea Nitrogen' is carried in EIGHT fluids there (Blood,
+    // Stool, Urine, Ascites, Pleural, Joint Fluid, Body Fluid, CSF), so it is the Glucose trap
+    // exactly: a 24h urine urea nitrogen has nothing to do with this serum band. Only
+    // specimen-unambiguous spellings are aliased here ('BUN' = Blood Urea Nitrogen by name).
+    // data/english-aliases.test.ts locks 'Urea Nitrogen' as unrecognised.
+    key: 'bun', nameEn: 'Blood urea nitrogen (BUN)', nameZh: '血尿素氮',
+    aliases: ['BUN', 'Blood Urea Nitrogen', 'Serum Urea Nitrogen'],
+    unit: 'mg/dL', allowedUnits: ['mg/dL'],
+    refLow: 6, refHigh: 20,
+    criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
+    absoluteLow: 1, absoluteHigh: 400,
+    definitionEn: 'The nitrogen portion of urea, a waste product formed when the body breaks down protein and cleared from the blood by the kidneys.',
+    definitionZh: '尿素中的含氮部分。尿素是人体分解蛋白质后产生的废物，由肾脏从血液中清除。',
+    plainEn: 'Blood urea nitrogen (BUN) measures the nitrogen portion of urea, a waste product formed when the liver breaks down protein and normally cleared by the kidneys into urine. Higher values can reflect reduced kidney function, dehydration, high protein intake, gastrointestinal bleeding, or heart failure; lower values can reflect severe liver disease, low protein intake, or fluid overload. Clinicians usually read BUN alongside creatinine rather than alone. Important: BUN in mg/dL is NOT the same number as a "urea" result reported in mmol/L — they are different quantities (urea mmol/L x ~2.8 = BUN mg/dL) and must never be compared or substituted without an explicit conversion.',
+    plainZh: '血尿素氮（BUN）测定尿素中的含氮部分。尿素是肝脏分解蛋白质后产生的废物，通常由肾脏清除并随尿液排出。数值偏高可能与肾功能下降、脱水、高蛋白饮食、消化道出血或心力衰竭有关；偏低可能见于严重肝病、蛋白摄入不足或体液潴留。临床上通常将 BUN 与肌酐结合解读，而非单独判断。注意：以 mg/dL 报告的 BUN 与以 mmol/L 报告的"尿素"并非同一数值（尿素 mmol/L × 约 2.8 ≈ BUN mg/dL），两者不可直接比较或互相替代。',
+    source: 'Printed adult reference interval 6-20 mg/dL as it appears on the real US hospital chemistry panels in this project\'s corpus (MIMIC row name "Urea Nitrogen", n=10, all mg/dL); consistent with the conventional adult serum urea nitrogen interval in Tietz Clinical Guide to Laboratory Tests (house convention already used by the sibling \'creatinine\' and \'urea\' entries).',
+  },
+  {
+    key: 'lactate', nameEn: 'Lactate', nameZh: '乳酸',
+    aliases: ['Lactate', 'Lactic Acid', 'Blood Lactate', 'Plasma Lactate', 'Serum Lactate', 'LAC', '乳酸', '血乳酸', '动脉血乳酸'],
+    unit: 'mmol/L', allowedUnits: ['mmol/L', 'mEq/L'],
+    refLow: 0.5, refHigh: 2.2,
+    criticalLow: null, criticalHigh: 4, highStakes: true, populationSensitive: false,
+    absoluteLow: 0.1, absoluteHigh: 60,
+    definitionEn: 'A substance produced by muscles, red blood cells and other tissues as part of how cells turn glucose into energy.',
+    definitionZh: '肌肉、红细胞等组织在细胞将葡萄糖转化为能量的过程中产生的一种物质。',
+    plainEn: 'Lactate is made by muscles, red blood cells and other tissues as they turn glucose into energy. It rises with vigorous exercise, and — more importantly in hospital care — when tissues are not receiving enough blood flow or oxygen, as in sepsis, shock, severe infection, or after cardiac arrest. Because of that, clinicians track lactate over time to judge how sick a patient is and whether treatment is working; many laboratories treat a result above 4.0 mmol/L as a critical value requiring immediate notification of the care team. Results also depend on how the sample was taken: a prolonged tourniquet or a clenched fist can falsely raise a venous lactate, as can delayed processing without a suitable preservative tube. Point-of-care analysers and central-laboratory assays can differ modestly from one another.',
+    plainZh: '乳酸由肌肉、红细胞及其他组织在将葡萄糖转化为能量的过程中生成。剧烈运动时会升高；在住院诊疗中更重要的是，当组织得不到足够的血流或氧气时（如脓毒症、休克、严重感染或心脏骤停后）也会升高。因此临床医生常通过连续监测乳酸来判断病情严重程度以及治疗是否有效；许多实验室将高于 4.0 mmol/L 的结果列为危急值，需立即通知医疗团队。结果还受采血方式影响：止血带绑扎过久或用力握拳可使静脉血乳酸假性升高，标本未使用合适的抗凝保存管而延迟送检也会如此。此外，床旁快速检测仪与中心实验室方法之间可能存在一定差异。',
+    source: 'Alberta Health Services Laboratory Bulletin, "Lactate – Reference Range and Critical Value Standardization" (Oct 6, 2011): province-wide standardized Reference Range 0.5–2.2 mmol/L and Critical Value "Greater than 4.0 mmol/L", stated explicitly for lactate "in whole blood (arterial, venous and capillary), serum and plasma". absoluteHigh headroom: Oster Y, Wexler ID, Heyman SN, Fried E, "Recoverable, Record-High Lactic Acidosis in a Patient with Glycogen Storage Disease Type 1: A Mixed Type A and Type B Lactate Disorder," Case Reports in Medicine 2016;2016:4362743 — patient survived a peak lactate of 47.6 mmol/L.',
+  },
+  {
+    key: 'pco2', nameEn: 'pCO2 (partial pressure of carbon dioxide, blood gas)', nameZh: '二氧化碳分压（血气分析）',
+    aliases: ['pCO2', 'PaCO2', 'CO2 partial pressure', 'Carbon dioxide partial pressure', '二氧化碳分压', '动脉血二氧化碳分压', '血气二氧化碳分压'],
+    unit: 'mm Hg', allowedUnits: ['mm Hg', 'mmHg'],
+    refLow: 35, refHigh: 45,
+    criticalLow: 20, criticalHigh: 70, highStakes: true, populationSensitive: false,
+    absoluteLow: 5, absoluteHigh: 400,
+    definitionEn: 'The pressure of carbon dioxide gas dissolved in the blood, measured from a blood-gas sample and reported alongside pH, oxygen, and bicarbonate. It relates to how breathing moves carbon dioxide out of the body.',
+    definitionZh: '血液中溶解的二氧化碳气体的分压，通过血气样本测得，通常与pH值、氧分压和碳酸氢盐一起报告。它与呼吸将二氧化碳排出体外的过程有关。',
+    plainEn: 'pCO2 measures the amount of carbon dioxide dissolved in the blood and reflects how effectively the lungs are clearing CO2 through breathing. A value above the reference range (hypercapnia) points toward under-breathing or a lung/airway problem such as COPD, sedation, or neuromuscular weakness; a value below range (hypocapnia) usually reflects over-breathing, or the body\'s respiratory compensation for a metabolic acid-base problem. The 35-45 mm Hg range assumes an ARTERIAL sample. Venous blood gas pCO2 normally runs several mm Hg higher (commonly cited as roughly 41-51 mm Hg), so a venous result compared against this arterial range can look falsely elevated. Normal pregnancy also physiologically lowers pCO2 (roughly 28-32 mm Hg) through increased breathing, which this single band does not account for. People with chronic CO2 retention, such as advanced COPD, can live at a baseline well above the reference range, so this band describes a population norm rather than any individual\'s expected value.',
+    plainZh: '二氧化碳分压反映血液中溶解的二氧化碳量，体现肺部通过呼吸清除二氧化碳的效率。高于参考范围（高碳酸血症）提示通气不足或肺部/气道问题，如慢阻肺、镇静或神经肌肉无力；低于范围（低碳酸血症）通常提示过度通气，或是身体对代谢性酸碱失衡的呼吸代偿。35-45 mm Hg 这一范围针对的是动脉血样本。静脉血气的二氧化碳分压通常会高出若干 mm Hg（常见参考区间约 41-51 mm Hg），因此用此动脉范围解读静脉结果可能出现假性偏高。正常妊娠期由于通气增加，二氧化碳分压也会生理性降低（约 28-32 mm Hg），本区间未涵盖这一情况。慢性二氧化碳潴留者（如晚期慢阻肺）的基线水平可长期高于参考范围，因此本区间描述的是人群常模，而非某个人应有的数值。',
+    source: 'Reference interval 35-45 mm Hg: standard arterial blood gas interval as given in Tietz Fundamentals of Clinical Chemistry and Molecular Diagnostics; independently corroborated by the empirical anchor in this project\'s corpus, where all 6 real de-identified pCO2 rows print exactly one range, 35-45 mm Hg, in mm Hg. Critical limits 20/70 mm Hg are a widely used US-hospital panic-value convention rather than a single authoritative standard; the convention traces to survey work on US critical limits (Kost GJ, JAMA 1990;263:704-707) but individual institutions differ materially.',
+  },
+  {
+    key: 'troponin_t', nameEn: 'Cardiac troponin T', nameZh: '心肌肌钙蛋白T',
+    aliases: ['Troponin T', 'Troponin-T', 'cTnT', 'TnT', 'hs-cTnT', 'hs-TnT', 'hs cTnT', '肌钙蛋白T', '心肌肌钙蛋白T', '高敏肌钙蛋白T', '超敏肌钙蛋白T'],
+    unit: 'ng/L', allowedUnits: ['ng/L', 'pg/mL'],
+    refLow: null, refHigh: 10,
+    criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
+    absoluteLow: 0, absoluteHigh: 1000000,
+    definitionEn: 'A protein released into the blood when heart muscle is damaged; with troponin I, one of the two main blood tests used to assess for heart attack.',
+    definitionZh: '心肌受损时释放入血的一种蛋白；与肌钙蛋白I同为评估心肌梗死的两项主要血液检查之一。',
+    plainEn: 'A protein released into the blood when heart muscle is damaged; with troponin I it is the key laboratory test for heart attack. It can also rise from kidney impairment, sepsis, heart failure, or other cardiac strain without a heart attack. Cutoffs are assay-specific and differ by assay GENERATION: the older conventional (4th-generation) troponin T assay uses about 10 ng/L (printed as 0.01 ng/mL on older reports), while current high-sensitivity troponin T (hs-cTnT) assays use about 14 ng/L, and some protocols use sex-specific cutoffs (roughly 9 ng/L for women, 16 ng/L for men). The typical range shown here is the more sensitive conventional-assay figure, so always read your value against the range printed on your own report.',
+    plainZh: '心肌受损时释放入血的一种蛋白，与肌钙蛋白I同为诊断心肌梗死的关键实验室指标。肾功能不全、脓毒症、心力衰竭等造成心脏负荷增加的情况也可使其升高，未必是心梗。其判断界值因检测方法「代次」而异：较早的常规（第4代）肌钙蛋白T检测法界值约为10 ng/L（旧式报告印为0.01 ng/mL），而目前的高敏肌钙蛋白T（hs-cTnT）检测法界值约为14 ng/L，部分方案还采用性别特异界值（女性约9 ng/L，男性约16 ng/L）。此处所列的参考范围取较为敏感的常规检测法数值，请务必以您自己报告上印刷的范围为准。',
+    source: 'Roche Elecsys Troponin T STAT (conventional, 4th-generation) assay: 99th-percentile upper reference limit 0.01 ng/mL = 10 ng/L (package insert), the generation reflected in the MIMIC corpus row \'Troponin T\', ng/mL, printed range 0-0.01, value 0.02 flagged abnormal. Assay-generation differences reviewed in Apple FS, Sandoval Y, Jaffe AS, Ordonez-Llanos J, \'Cardiac Troponin Assays: Guide to Understanding Analytical Characteristics and Their Impact on Clinical Care,\' Clin Chem 2017;63:73-81. High-sensitivity troponin T (Roche Elecsys Troponin T-hs) 99th percentile ~14 ng/L per ESC 2020 NSTE-ACS Guidelines (Collet JP et al., Eur Heart J 2021;42:1289-1367) — a DIFFERENT cutoff not encoded here.',
+  },
+  {
+    key: 'thrombin_time', nameEn: 'Thrombin time (TT)', nameZh: '凝血酶时间',
+    aliases: ['TT', '凝血酶时间(TT)', '凝血酶时间', 'Thrombin Time', 'TT(s)', '血浆凝血酶时间'],
+    unit: 's', allowedUnits: ['s', 'sec', '秒'],
+    refLow: 10, refHigh: 21,
+    criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
+    absoluteLow: 4, absoluteHigh: 300,
+    definitionEn: 'A timed test of the final step of blood clotting, in which the protein fibrinogen is converted into fibrin after thrombin is added to a plasma sample. The timing scale depends on the reagent a laboratory uses.',
+    definitionZh: '一项检测凝血最后一步的计时检查：向血浆样本中加入凝血酶后，纤维蛋白原转化为纤维蛋白所需的时间。其计时范围因实验室所用试剂而异。',
+    plainEn: 'Thrombin time (TT) adds thrombin directly to citrated plasma and times how long it takes to clot, bypassing the earlier factor-driven steps that PT and aPTT test. It is used mainly to look at fibrinogen (how much there is and whether it works normally) and to detect thrombin-inhibiting anticoagulants in the sample. A prolonged TT can reflect low fibrinogen, a structurally abnormal fibrinogen, heparin contamination of the specimen, a direct thrombin inhibitor such as dabigatran, or high fibrin degradation products; TT is not ordinarily used to act on a short/fast time. This assay is unusually reagent-dependent — different thrombin sources and concentrations shift the whole scale, and the two real hospital reports behind this entry printed 14-21 s and 10.00-16.00 s for the same test — so read your result against the range printed on your own report, not against any single universal number.',
+    plainZh: '凝血酶时间(TT)是向枸橼酸抗凝血浆中直接加入凝血酶、测定其凝固所需时间的检查，跳过了PT和APTT所检测的更早期凝血因子步骤，主要用于评估纤维蛋白原的含量与功能，以及检出标本中的凝血酶抑制类抗凝物质。TT延长可能与纤维蛋白原偏低、纤维蛋白原结构异常、标本混入肝素、直接凝血酶抑制剂（如达比加群）或纤维蛋白降解产物增多有关；TT缩短通常不作为临床处理依据。该项目对试剂高度敏感——凝血酶来源与浓度不同会整体改变计时标度，本条目所依据的两份真实医院报告分别印有 14-21 秒 和 10.00-16.00 秒。请以您本次报告单上印刷的范围为准，而非任何单一通用数值。',
+    source: 'Reagent-dependent assay with no harmonized reference interval. The 10-21 s band is the UNION of the two reference ranges printed by real hospital laboratories in our corpus for this same test ("TT" 14-21 s; "凝血酶时间(TT)" 10.00-16.00 s) — it is not a textbook figure and is wider than any single laboratory\'s own range. absoluteLow/absoluteHigh follow the existing prothrombin_time entry\'s clot-timing OCR-plausibility floor/ceiling (4-300 s, same instrument class). No standardized panic value for TT exists, so none is stated.',
+  },
+  {
+    key: 'myoglobin', nameEn: 'Myoglobin', nameZh: '肌红蛋白',
+    aliases: ['Myoglobin', 'MYO', 'Myo', 'Serum myoglobin', 'Myoglobin, Serum', '肌红蛋白', '血清肌红蛋白', '肌红蛋白测定', '肌红蛋白(MYO)', '肌红蛋白(Mb)'],
+    unit: 'ng/mL', allowedUnits: ['ng/mL', 'ug/L', 'µg/L', 'mcg/L'],
+    refLow: null, refHigh: 72,
+    criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: true,
+    absoluteLow: 0, absoluteHigh: 500000,
+    definitionEn: 'An oxygen-binding protein found in heart and skeletal muscle, released into the blood when muscle tissue is injured; it is measured alongside other cardiac markers such as troponin and CK-MB.',
+    definitionZh: '一种存在于心肌和骨骼肌中的携氧蛋白，肌肉组织受损时会释放入血，通常与肌钙蛋白、肌酸激酶同工酶等其他心肌标志物一起检测。',
+    plainEn: 'Myoglobin is released into the blood within 1-3 hours of injury to heart or skeletal muscle — earlier than troponin — which once made it useful as a very early marker after a suspected heart attack. It is not heart-specific: strenuous exercise, muscle trauma, intramuscular injections, and reduced kidney clearance all raise it too, so it cannot on its own point to a cardiac cause, and it has largely been superseded by troponin. Large elevations are also seen in rhabdomyolysis (widespread muscle breakdown). The upper limit is genuinely sex-dependent (MedlinePlus and ARUP both give 72 ng/mL for men and 58 ng/mL for women, reflecting greater muscle mass in men) and also varies by assay platform, with published ceilings across labs spanning roughly 58-110 ng/mL. Many labs — including the one in our corpus — print a single combined ceiling near 70 instead. Always read the range printed on your own report.',
+    plainZh: '肌红蛋白在心肌或骨骼肌受损后1-3小时内即释放入血，比肌钙蛋白更早，因此曾用作疑似心肌梗死的极早期标志物。它并非心脏特异性指标：剧烈运动、肌肉外伤、肌肉注射及肾脏清除能力下降均可使其升高，故单凭此项无法判定为心脏原因，目前已基本被肌钙蛋白取代。横纹肌溶解（大范围肌肉破坏）时也可显著升高。其上限确实与性别相关（MedlinePlus 与 ARUP 均给出男性 72 ng/mL、女性 58 ng/mL，源于男性肌肉量较大），并且随检测平台不同而变化，各实验室公布的上限大致在 58-110 ng/mL 之间。许多实验室（包括本语料中的这家）改用约 70 的统一上限。请以您报告上印刷的参考范围为准。',
+    source: 'MedlinePlus Medical Encyclopedia (NIH/NLM), "Myoglobin blood test" (https://medlineplus.gov/ency/article/003663.htm), fetched and verified in this pass: "The normal range is 0 to 72 ng/mL (0 to 4.19 nmol/L) for males and 0 to 58 ng/mL (0 to 3.37 nmol/L) for females." Independently corroborated by ARUP Laboratories Test Directory, "Myoglobin, Serum" (https://ltd.aruplab.com/Tests/Pub/0020224), reference interval effective 2022-02-22: male <=72 ng/mL, female <=58 ng/mL. We ship the male (wider) ceiling 72 unisex; consistent with the real de-identified ZH hospital report in our corpus, which prints a single 0-70 ng/ml band for 肌红蛋白 (observed 12.1, flagged normal). 1 ng/mL = 1 ug/L exactly.',
+  },
+  {
+    key: 'ckmb_mass', nameEn: 'Creatine kinase-MB, mass', nameZh: '肌酸激酶同工酶(质量法)',
+    aliases: ['肌酸激酶同工酶质量', '肌酸激酶同功酶质量', '肌酸激酶同工酶质量法', 'CK-MB质量', 'CKMB mass'],
+    unit: 'ng/mL', allowedUnits: ['ng/mL', 'ug/L', 'mcg/L'],
+    refLow: null, refHigh: 5,
+    criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
+    absoluteLow: 0, absoluteHigh: 2000,
+    definitionEn: 'The heart-specific MB fraction of creatine kinase, measured by immunoassay as a mass concentration (reported in ng/mL) rather than as enzyme activity (reported in U/L).',
+    definitionZh: '肌酸激酶中心肌特异的MB部分，通过免疫法测定其质量浓度（以ng/mL报告），而非测定酶活性（以U/L报告）。',
+    plainEn: 'CK-MB mass measures the heart-specific fraction of creatine kinase by immunoassay, reported in ng/mL. This is a different method from the activity-based CK-MB reported in U/L (a separate entry, key \'ck_mb\', in this table); the two use different reference ranges and are not interchangeable. It was historically used alongside troponin to help detect heart-muscle injury, but troponin is now the primary marker. A raised value can also come from skeletal-muscle injury or vigorous exercise, so it is read together with troponin and the clinical picture. Reference upper limits are strongly assay-dependent: a US academic laboratory publishes 0-4.9 ng/mL, the Chinese hospital reports in our corpus print 0-4.0 ng/mL, and a published review of cardiac markers cites 5-10 ng/mL across methods. Always compare against the range printed on your own report.',
+    plainZh: 'CK-MB质量法通过免疫分析法检测肌酸激酶中心肌特异的部分，以ng/mL报告。它与以U/L报告的活性法CK-MB（本表中的独立条目，key为\'ck_mb\'）是不同的检测方法，两者参考范围不同，不可互换。过去常与肌钙蛋白联合用于辅助识别心肌损伤，现在肌钙蛋白已成为主要指标。数值升高也可能来自骨骼肌损伤或剧烈运动，需结合肌钙蛋白及临床情况综合判断。参考上限高度依赖检测方法：美国某学术实验室公布为0-4.9 ng/mL，本语料中的中国医院报告印制为0-4.0 ng/mL，而一篇心肌标志物综述则给出各方法5-10 ng/mL。请以您报告单上印制的范围为准。',
+    source: 'Univ. of Michigan MLabs test catalog, "Creatine Kinase, Total and MB Isoenzyme": CK-MB mass 0-4.9 ng/mL when total CK <500 IU/L; not sex-specific (mlabs.umich.edu/tests/creatine-kinase-total-and-mb-isoenzyme, independently fetched and verified 2026-07-19). Cross-method spread: Al-Hadi HA & Fox KA, "Cardiac Markers in the Early Diagnosis and Management of Patients with Acute Coronary Syndrome" (PMC3074795), verbatim: reference ranges "8-16 IU/L for CK-MB activity, and 5-10 ng/ml (ug/l) for CK-MB mass" (fetched and verified 2026-07-19). MedRepBench ZH hospital corpus prints 0-4.0 ng/ml for 肌酸激酶同工酶质量. ng/mL = ug/L exactly, no conversion factor. Reagent/platform-dependent: prefer the range printed on the report.',
   },
 ];

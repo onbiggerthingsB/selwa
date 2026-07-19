@@ -84,6 +84,11 @@ const SURFACING_FLAGS = new Set([
   // name, with no disclosure at all. Silence let a reproduction of the report's own arithmetic read
   // as understanding of the test.
   'R1-UNKNOWN-ANALYTE',
+  // R2 is the same category as R1 — a statement about OUR capability (we do not hold this unit),
+  // not a conclusion about the value. It must be spoken for the same reason: adding a curated
+  // entry moved rows from R1 (spoken) to R2 (silent), so recognising an analyte was making the
+  // user WORSE informed. Seen on Troponin T, whose corpus rows print ng/mL against our ng/L band.
+  'R2-UNIT-MISMATCH',
   'R16-PRINTED-RANGE-UNIT-SUSPECT',
 ]);
 

@@ -100,7 +100,11 @@ export function evaluateRow(
         `报告上的单位与我们的参考单位不同（我们使用 ${entry.unit}）。` + CONFIRM_CLINICIAN_ZH,
       ),
     );
-    return { action: 'abstain', needsConfirm: false, flags };
+    // needsConfirm for a HIGH-STAKES analyte: R2 returns before R6 can fire, so without this a
+    // recognised-but-unit-mismatched troponin abstained with needsConfirm=false AND (before R2 was
+    // surfaced) no visible flag at all — strictly worse than not recognising it, because R1 at
+    // least spoke. Recognising an analyte must never reduce what the user is told.
+    return { action: 'abstain', needsConfirm: entry.highStakes, flags };
   }
 
   // R13 — implausible magnitude → suppress interpretation (likely misread). Abstain

@@ -46,19 +46,50 @@ describe('a row may never assert a position with no disclosure', () => {
     expect([...new Set(silent)], `unrecognised rows asserting a position in silence:\n${[...new Set(silent)].join('\n')}`).toEqual([]);
   });
 
-  it('the disclosure is specifically reachable on high-stakes rows we cannot name', () => {
-    // These are the rows the harm was measured on: gold says high-stakes, we cannot name them.
+  it('still-unrecognised high-stakes rows disclose that we cannot name them', () => {
+    // Lactate / Free Calcium / Troponin T were on this list until the tranche-1 curation gave them
+    // entries. These remain unrecognised on purpose: pO2 because a venous gas prints the identical
+    // row name, 'Urea Nitrogen' because MIMIC carries it in EIGHT fluids (the Glucose trap).
     for (const [n, v, u, r] of [
-      ['Lactate', '8.4', 'mmol/L', '0.5-2.0'],
-      ['Troponin T', '2.4', 'ng/mL', '0-0.01'],
-      ['Free Calcium', '0.72', 'mmol/L', '1.12-1.32'],
       ['pO2', '60', 'mm Hg', '80-100'],
+      ['Urea Nitrogen', '47', 'mg/dL', '6-20'],
+      ['Anion Gap', '20', 'mEq/L', '8-16'],
     ] as const) {
       expect(goldFor(n)?.highStakes, `${n} should be gold-high-stakes`).toBe(true);
       const { row, section } = sectionFor(n, v, u, r);
       expect(row.entry, `${n} is expected to still be unrecognised`).toBeNull();
       expect(section.flags.map((f) => f.messageEn).join(' '), `${n} must disclose`).toMatch(/not in our reference set/i);
     }
+  });
+
+  // THE GENERAL INVARIANT, and the reason it exists: adding curated entries in the tranche-1 pass
+  // MOVED rows from R1 (spoken) to R2 unit-mismatch (then silent). A recognised-but-abstaining
+  // Troponin T asserted "Above your report's range" with needsConfirm=false and no visible flag —
+  // strictly worse than never having recognised it. Recognising an analyte must never reduce what
+  // the user is told, so the rule is about ABSTENTION, not about recognition.
+  it('ANY row that asserts a position while abstaining must say something', () => {
+    const silent: string[] = [];
+    let checked = 0;
+    for (const corpus of [MIMIC_US_SAMPLE, MEDREPBENCH_SAMPLE])
+      for (const rep of corpus)
+        for (const it of rep.items) {
+          const { row, section } = sectionFor(it.item_name, it.item_value || null, it.item_unit || null, it.item_range || null);
+          if (row.action !== 'abstain' || !asserts(section)) continue;
+          checked += 1;
+          if (section.flags.length === 0) silent.push(`${it.item_name.trim()} ${it.item_value}${it.item_unit} → "${section.chipEn}" (entry=${row.entry?.key ?? 'none'}, flags=${row.flags.map((f) => f.id).join(',')})`);
+        }
+    expect(checked).toBeGreaterThan(50);
+    expect([...new Set(silent)], `rows asserting a position while silently abstaining:\n${[...new Set(silent)].join('\n')}`).toEqual([]);
+  });
+
+  it('a high-stakes analyte we recognise but cannot unit-match still confirms and speaks', () => {
+    // Troponin T: corpus prints ng/mL, our band is ng/L. R2 returns before R6 can fire, so this
+    // needed R2 itself to carry the confirm.
+    const { row, section } = sectionFor('Troponin T', '2.4', 'ng/mL', '0-0.01');
+    expect(row.entry?.key).toBe('troponin_t');
+    expect(row.action).toBe('abstain');
+    expect(row.needsConfirm, 'a high-stakes unit mismatch must reach the confirm gate').toBe(true);
+    expect(section.flags.length, 'and must not be silent').toBeGreaterThan(0);
   });
 });
 
