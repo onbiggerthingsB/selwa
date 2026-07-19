@@ -1,0 +1,295 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+const mocks = vi.hoisted(() => ({
+  push: vi.fn<(href: string) => void>(),
+  downscaleToJpeg: vi.fn<(file: File) => Promise<Blob>>(),
+  hasConsent: vi.fn<() => boolean>(),
+  grantConsent: vi.fn<() => void>(),
+  fetch: vi.fn<typeof fetch>(),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mocks.push }),
+}));
+
+vi.mock('@/lib/downscaleImage', () => ({
+  downscaleToJpeg: mocks.downscaleToJpeg,
+}));
+
+vi.mock('@/lib/consent', () => ({
+  hasConsent: mocks.hasConsent,
+  grantConsent: mocks.grantConsent,
+  CONSENT_VERSION: 2,
+}));
+
+import { CaptureCard } from './CaptureCard';
+
+const NativeURL = globalThis.URL;
+let consoleError: ReturnType<typeof vi.spyOn>;
+
+function failedResponse(status: number, error: string) {
+  const json = vi.fn().mockResolvedValue({ error });
+  return {
+    json,
+    response: { ok: false, status, json } as unknown as Response,
+  };
+}
+
+function successfulResponse(payload: unknown) {
+  const json = vi.fn().mockResolvedValue(payload);
+  return {
+    json,
+    response: { ok: true, status: 200, json } as unknown as Response,
+  };
+}
+
+async function uploadAndSubmit() {
+  const user = userEvent.setup();
+  const { container } = render(<CaptureCard />);
+  const input = container.querySelector('input[type="file"]');
+  if (!(input instanceof HTMLInputElement)) throw new Error('Capture file input not found');
+
+  const file = new File(['image bytes'], 'lab.jpg', { type: 'image/jpeg' });
+  await user.upload(input, file);
+  await user.click(screen.getByRole('button', { name: /Use this photo/i }));
+  return { file, user };
+}
+
+function expectUnreadablePresentation(alert: HTMLElement) {
+  expect(alert).toHaveTextContent(
+    'We couldn’t read enough text from this photo. Retake it with the report clear and flat.',
+  );
+  expect(alert).toHaveTextContent(
+    '我们无法从这张照片中清楚读取足够的文字。请将报告放平、拍清楚后重试。',
+  );
+  expect(
+    within(alert).getByRole('button', { name: 'Retake · 重拍' }),
+  ).toBeInTheDocument();
+}
+
+describe('CaptureCard extraction failures', () => {
+  beforeEach(() => {
+    mocks.push.mockReset();
+    mocks.downscaleToJpeg.mockReset();
+    mocks.hasConsent.mockReset();
+    mocks.grantConsent.mockReset();
+    mocks.fetch.mockReset();
+
+    mocks.hasConsent.mockReturnValue(true);
+    mocks.downscaleToJpeg.mockResolvedValue(
+      new Blob(['downscaled'], { type: 'image/jpeg' }),
+    );
+
+    class TestURL extends NativeURL {
+      static createObjectURL = vi.fn(() => 'blob:lab-preview');
+      static revokeObjectURL = vi.fn();
+    }
+    vi.stubGlobal('URL', TestURL);
+    vi.stubGlobal(
+      'createImageBitmap',
+      vi.fn().mockRejectedValue(new Error('Image decoding is not available in jsdom')),
+    );
+    vi.stubGlobal('fetch', mocks.fetch);
+    consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('shows service-unavailable copy for 502, never reads the body, and retries the same file', async () => {
+    const secret = 'ANTHROPIC_API_KEY=server-only-secret';
+    const { json, response } = failedResponse(502, secret);
+    mocks.fetch.mockResolvedValue(response);
+
+    const { file, user } = await uploadAndSubmit();
+    const alert = await screen.findByRole('alert');
+
+    expect(alert).toHaveTextContent(
+      'The report-reading service is temporarily unavailable. Please try again in a moment.',
+    );
+    expect(alert).toHaveTextContent('报告读取服务暂时不可用。请稍后重试。');
+    expect(alert).not.toHaveTextContent(
+      /We couldn’t read this photo clearly|brighter|flatter|Retake|更亮|更平整|重拍/i,
+    );
+    expect(alert).not.toHaveTextContent(secret);
+    expect(json).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith('capture submission failed', {
+      status: 502,
+      cause: 'server-unavailable',
+    });
+
+    await user.click(
+      within(alert).getByRole('button', { name: 'Try again · 重试' }),
+    );
+
+    await waitFor(() => expect(mocks.fetch).toHaveBeenCalledTimes(2));
+    expect(mocks.downscaleToJpeg).toHaveBeenCalledTimes(2);
+    expect(mocks.downscaleToJpeg).toHaveBeenNthCalledWith(1, file);
+    expect(mocks.downscaleToJpeg).toHaveBeenNthCalledWith(2, file);
+    expect(json).not.toHaveBeenCalled();
+  });
+
+  it('routes a server 403 directly back to the contextual consent dialog', async () => {
+    const { json, response } = failedResponse(403, 'Consent required');
+    mocks.fetch.mockResolvedValue(response);
+
+    await uploadAndSubmit();
+    const dialog = await screen.findByRole('dialog', {
+      name: 'Before we read your report',
+    });
+
+    expect(dialog).toHaveTextContent(
+      'Please confirm your consent again before the photo is sent for reading.',
+    );
+    expect(dialog).toHaveTextContent('发送照片进行读取前，请再次确认您的同意。');
+    expect(
+      within(dialog).getByRole('button', { name: /I agree — read my report/i }),
+    ).toBeInTheDocument();
+    expect(json).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith('capture submission failed', {
+      status: 403,
+      cause: 'not-permitted',
+    });
+  });
+
+  it('shows honest retake copy for an unreadable 422 response', async () => {
+    const { json, response } = failedResponse(422, 'Could not read the report');
+    mocks.fetch.mockResolvedValue(response);
+
+    await uploadAndSubmit();
+    const alert = await screen.findByRole('alert');
+
+    expectUnreadablePresentation(alert);
+    expect(json).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith('capture submission failed', {
+      status: 422,
+      cause: 'unreadable',
+    });
+  });
+
+  it.each([413, 415])('offers another photo when the server rejects the image with %i', async (status) => {
+    const { json, response } = failedResponse(status, 'server detail must stay private');
+    mocks.fetch.mockResolvedValue(response);
+
+    await uploadAndSubmit();
+    const alert = await screen.findByRole('alert');
+
+    expect(alert).toHaveTextContent(
+      'This image is too large or uses a format we can’t accept. Choose a smaller image or retake the photo.',
+    );
+    expect(alert).toHaveTextContent(
+      '这张图片过大，或格式不受支持。请选择较小的图片，或重新拍照。',
+    );
+    expect(
+      within(alert).getByRole('button', { name: 'Retake or choose another · 重拍或另选' }),
+    ).toBeInTheDocument();
+    expect(json).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith('capture submission failed', {
+      status,
+      cause: 'image-rejected',
+    });
+  });
+
+  it('classifies a missing canvas Blob as image-rejected instead of leaving the UI stuck', async () => {
+    mocks.downscaleToJpeg.mockResolvedValue(null as unknown as Blob);
+
+    await uploadAndSubmit();
+    const alert = await screen.findByRole('alert');
+
+    expect(alert).toHaveTextContent(
+      'This image is too large or uses a format we can’t accept.',
+    );
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith('capture submission failed', {
+      status: null,
+      cause: 'image-rejected',
+    });
+  });
+
+  it('shows network copy and a retry action when fetch rejects', async () => {
+    mocks.fetch.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    await uploadAndSubmit();
+    const alert = await screen.findByRole('alert');
+
+    expect(alert).toHaveTextContent(
+      'We couldn’t connect to the report-reading service. Check your connection and try again.',
+    );
+    expect(alert).toHaveTextContent(
+      '无法连接到报告读取服务。请检查网络连接后重试。',
+    );
+    expect(
+      within(alert).getByRole('button', { name: 'Try again · 重试' }),
+    ).toBeInTheDocument();
+    expect(alert).not.toHaveTextContent(/Retake|重拍/i);
+    expect(consoleError).toHaveBeenCalledWith('capture submission failed', {
+      status: null,
+      cause: 'network',
+    });
+  });
+
+  it('treats a 200 response that fails the extraction schema as unreadable', async () => {
+    const { json, response } = successfulResponse({
+      data: {
+        rows: [
+          {
+            name: 'GLU',
+            value: '5.5',
+            unit: 'mmol/L',
+            printedRange: null,
+            confidence: 'certain',
+          },
+        ],
+      },
+    });
+    mocks.fetch.mockResolvedValue(response);
+
+    await uploadAndSubmit();
+    const alert = await screen.findByRole('alert');
+
+    expectUnreadablePresentation(alert);
+    expect(json).toHaveBeenCalledTimes(1);
+    expect(consoleError).toHaveBeenCalledWith('capture submission failed', {
+      status: 200,
+      cause: 'unreadable',
+    });
+  });
+
+  it('preserves a quality override when retrying the same photo after a 502', async () => {
+    const { response } = failedResponse(502, 'Could not read the report');
+    mocks.fetch.mockResolvedValue(response);
+    vi.stubGlobal(
+      'createImageBitmap',
+      vi.fn().mockResolvedValue({ width: 3, height: 3 }),
+    );
+    const rgba = new Uint8ClampedArray(3 * 3 * 4).fill(255);
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      drawImage: vi.fn(),
+      getImageData: vi.fn(() => ({ data: rgba })),
+    } as unknown as CanvasRenderingContext2D);
+
+    const { user } = await uploadAndSubmit();
+    const qualityAlert = await screen.findByRole('alert');
+    expect(qualityAlert).toHaveTextContent('This photo may be hard to read clearly.');
+
+    await user.click(
+      within(qualityAlert).getByRole('button', { name: 'Use it anyway · 仍然使用' }),
+    );
+    const serviceAlert = await screen.findByRole('alert');
+    expect(serviceAlert).toHaveTextContent(
+      'The report-reading service is temporarily unavailable.',
+    );
+
+    await user.click(
+      within(serviceAlert).getByRole('button', { name: 'Try again · 重试' }),
+    );
+
+    await waitFor(() => expect(mocks.fetch).toHaveBeenCalledTimes(2));
+    expect(screen.queryByText('This photo may be hard to read clearly.')).not.toBeInTheDocument();
+  });
+});

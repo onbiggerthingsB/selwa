@@ -15,6 +15,76 @@ import type { GroundedNotes, Sex } from '@/lib/types';
 
 type Phase = 'idle' | 'preview' | 'redact' | 'consent' | 'quality' | 'extracting' | 'error';
 
+type FailureCause =
+  | 'server-unavailable'
+  | 'not-permitted'
+  | 'image-rejected'
+  | 'network'
+  | 'unreadable';
+
+type CaptureFailure = {
+  cause: FailureCause;
+  status: number | null;
+  retryWithQualityOverride: boolean;
+};
+
+const FAILURE_PRESENTATION: Record<
+  FailureCause,
+  {
+    en: string;
+    zh: string;
+    action: 'retry' | 'retake' | 'consent';
+    actionEn: string;
+    actionZh: string;
+  }
+> = {
+  'server-unavailable': {
+    en: 'The report-reading service is temporarily unavailable. Please try again in a moment.',
+    zh: '报告读取服务暂时不可用。请稍后重试。',
+    action: 'retry',
+    actionEn: 'Try again',
+    actionZh: '重试',
+  },
+  'not-permitted': {
+    en: 'Please confirm your consent again before the photo is sent for reading.',
+    zh: '发送照片进行读取前，请再次确认您的同意。',
+    action: 'consent',
+    actionEn: 'Review consent',
+    actionZh: '查看同意说明',
+  },
+  'image-rejected': {
+    en: 'This image is too large or uses a format we can’t accept. Choose a smaller image or retake the photo.',
+    zh: '这张图片过大，或格式不受支持。请选择较小的图片，或重新拍照。',
+    action: 'retake',
+    actionEn: 'Retake or choose another',
+    actionZh: '重拍或另选',
+  },
+  network: {
+    en: 'We couldn’t connect to the report-reading service. Check your connection and try again.',
+    zh: '无法连接到报告读取服务。请检查网络连接后重试。',
+    action: 'retry',
+    actionEn: 'Try again',
+    actionZh: '重试',
+  },
+  unreadable: {
+    en: 'We couldn’t read enough text from this photo. Retake it with the report clear and flat.',
+    zh: '我们无法从这张照片中清楚读取足够的文字。请将报告放平、拍清楚后重试。',
+    action: 'retake',
+    actionEn: 'Retake',
+    actionZh: '重拍',
+  },
+};
+
+function failureCauseForStatus(status: number): FailureCause {
+  if (status === 403) return 'not-permitted';
+  if (status === 413 || status === 415) return 'image-rejected';
+  if (status === 422) return 'unreadable';
+  if (status >= 500) return 'server-unavailable';
+  // Unknown HTTP failures are service-side from the browser's perspective. Do
+  // not blame the photo without one of the explicit statuses above.
+  return 'server-unavailable';
+}
+
 // Decode a Blob to a small grayscale image and score its quality on-device. Runs
 // on the POST-downscale image actually sent to Claude. Returns null if decoding
 // fails (never block the user on a decode error).
@@ -48,6 +118,7 @@ export function CaptureCard() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [notesText, setNotesText] = useState('');
   const [quality, setQuality] = useState<QualityVerdict | null>(null);
+  const [failure, setFailure] = useState<CaptureFailure | null>(null);
   // On-device redaction: the user covers their own identifiers before the transfer.
   const redactBoxRef = useRef<HTMLDivElement>(null);
   const [rects, setRects] = useState<Rect[]>([]);
@@ -115,13 +186,23 @@ export function CaptureCard() {
     const f = e.target.files?.[0];
     if (!f) return;
     if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setFailure(null);
     setFile(f);
     setPreviewUrl(URL.createObjectURL(f));
     setPhase('preview');
   }
 
+  function failSubmission(cause: FailureCause, status: number | null, retryWithQualityOverride: boolean) {
+    // Deliberately status-only: response bodies and caught errors may contain
+    // report content, provider payloads, or key material.
+    console.error('capture submission failed', { status, cause });
+    setFailure({ cause, status, retryWithQualityOverride });
+    setPhase(cause === 'not-permitted' ? 'consent' : 'error');
+  }
+
   async function submit(overrideQuality = false) {
     if (!file) return;
+    setFailure(null);
     // Privacy gate: the image is about to be sent to Anthropic (US) for OCR. Require an
     // affirmative opt-in BEFORE anything leaves the device (FTC §5 / WA MHMDA).
     if (!hasConsent()) {
@@ -129,37 +210,78 @@ export function CaptureCard() {
       return;
     }
     setPhase('extracting');
+
+    let small: Blob;
     try {
-      const small = await downscaleToJpeg(file);
+      small = await downscaleToJpeg(file);
+    } catch {
+      failSubmission('image-rejected', null, overrideQuality);
+      return;
+    }
 
-      // H4 pre-gate: score the downscaled image on-device BEFORE it reaches Claude.
-      // A degraded photo makes the model fabricate digits, so prompt a retake unless
-      // the user overrides — and an override escalates every value to the confirm gate.
-      if (!overrideQuality) {
-        const q = await blobQuality(small);
-        if (q && !q.ok) {
-          setQuality(q);
-          setPhase('quality');
-          return;
-        }
+    // H4 pre-gate: score the downscaled image on-device BEFORE it reaches Claude.
+    // A degraded photo makes the model fabricate digits, so prompt a retake unless
+    // the user overrides — and an override escalates every value to the confirm gate.
+    if (!overrideQuality) {
+      const q = await blobQuality(small);
+      if (q && !q.ok) {
+        setQuality(q);
+        setPhase('quality');
+        return;
       }
+    }
 
-      const fd = new FormData();
+    let fd: FormData;
+    try {
+      fd = new FormData();
       fd.append('image', small, 'lab.jpg');
-      // The server re-checks consent at the transfer point (lib/consentGate.ts). This header is
-      // that assertion; without it the route 403s, so a regression that skips the consent phase
-      // fails loudly instead of silently shipping a lab image off-device.
-      const res = await fetch('/api/extract', {
+    } catch {
+      // Canvas conversion can resolve without a Blob on memory-constrained
+      // browsers. Treat that as an image-processing rejection, not a service
+      // or network failure.
+      failSubmission('image-rejected', null, overrideQuality);
+      return;
+    }
+    // The server re-checks consent at the transfer point (lib/consentGate.ts). This header is
+    // that assertion; without it the route 403s, so a regression that skips the consent phase
+    // fails loudly instead of silently shipping a lab image off-device.
+    let res: Response;
+    try {
+      res = await fetch('/api/extract', {
         method: 'POST',
         headers: { [CONSENT_HEADER]: String(CONSENT_VERSION) },
         body: fd,
       });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? 'Could not read the report');
-      }
-      const { data } = await res.json();
-      const extraction = LabExtractionSchema.parse(data);
+    } catch {
+      failSubmission('network', null, overrideQuality);
+      return;
+    }
+
+    if (!res.ok) {
+      failSubmission(failureCauseForStatus(res.status), res.status, overrideQuality);
+      return;
+    }
+
+    let payload: unknown;
+    try {
+      payload = await res.json();
+    } catch {
+      failSubmission('server-unavailable', res.status, overrideQuality);
+      return;
+    }
+
+    const data =
+      typeof payload === 'object' && payload !== null && 'data' in payload
+        ? payload.data
+        : undefined;
+    const parsed = LabExtractionSchema.safeParse(data);
+    if (!parsed.success) {
+      failSubmission('unreadable', res.status, overrideQuality);
+      return;
+    }
+
+    try {
+      const extraction = parsed.data;
       const base = { ...groundExtraction(extraction, sex, age), generatedAt: Date.now() };
       const report = overrideQuality ? escalateConfirm(base) : base;
 
@@ -186,18 +308,35 @@ export function CaptureCard() {
       setPendingReport({ report, ...(notes ? { notes } : {}) });
       router.push('/result');
     } catch {
-      setPhase('error');
+      // A valid extraction that fails during local post-processing is still not
+      // evidence of a bad photo. Keep the selected image available for a retry.
+      failSubmission('server-unavailable', res.status, overrideQuality);
     }
   }
 
   function retake() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setFailure(null);
     setFile(null);
     setPreviewUrl(null);
     setQuality(null);
     setPhase('idle');
     openPicker();
   }
+
+  function handleFailureAction() {
+    if (!failure) return;
+    const presentation = FAILURE_PRESENTATION[failure.cause];
+    if (presentation.action === 'retry') {
+      submit(failure.retryWithQualityOverride);
+    } else if (presentation.action === 'consent') {
+      setPhase('consent');
+    } else {
+      retake();
+    }
+  }
+
+  const failurePresentation = failure ? FAILURE_PRESENTATION[failure.cause] : null;
 
   return (
     <div className="capture">
@@ -345,6 +484,12 @@ export function CaptureCard() {
               <span className="zh" lang="zh">在读取您的化验单之前</span>
             </span>
           </div>
+          {failure?.cause === 'not-permitted' && (
+            <p className="extracting-note" role="alert">
+              {FAILURE_PRESENTATION['not-permitted'].en}
+              <span className="zh" lang="zh">{FAILURE_PRESENTATION['not-permitted'].zh}</span>
+            </p>
+          )}
           <ul className="quality-tips">
             <li>
               Two things are sent to Anthropic (a US company): your photo — including any name, values, or hospital shown on it — so its text can be read; and anything you typed under “What the doctor told you”, so it can be translated.
@@ -355,10 +500,24 @@ export function CaptureCard() {
               <span className="zh" lang="zh">结果的含义在本设备上计算。两者都不会保存在我们的服务器上，也绝不用于广告。Anthropic 不会用它们训练模型，但可能为安全检查短暂保留（最多 30 天）。</span>
             </li>
           </ul>
-          <button className="btn btn-primary btn-block" onClick={() => { grantConsent(); submit(); }}>
+          <button
+            className="btn btn-primary btn-block"
+            onClick={() => {
+              const retryWithQualityOverride =
+                failure?.cause === 'not-permitted' && failure.retryWithQualityOverride;
+              grantConsent();
+              submit(Boolean(retryWithQualityOverride));
+            }}
+          >
             I agree — read my report · 我同意，读取报告
           </button>
-          <button className="btn btn-ghost btn-block" onClick={() => setPhase('preview')}>
+          <button
+            className="btn btn-ghost btn-block"
+            onClick={() => {
+              setFailure(null);
+              setPhase('preview');
+            }}
+          >
             Back · 返回
           </button>
         </div>
@@ -406,17 +565,17 @@ export function CaptureCard() {
         </div>
       )}
 
-      {phase === 'error' && (
+      {phase === 'error' && failure && failurePresentation && (
         <div className="callout-error" role="alert">
           <div className="err-row">
             <CalmAlertGlyph />
             <span>
-              We couldn’t read this photo clearly. Try a brighter, flatter photo.
-              <span className="zh" lang="zh">我们无法清楚读取，请换个更亮、更平整的角度重拍。</span>
+              {failurePresentation.en}
+              <span className="zh" lang="zh">{failurePresentation.zh}</span>
             </span>
           </div>
-          <button className="btn btn-primary btn-block" onClick={retake}>
-            Try again · 重试
+          <button className="btn btn-primary btn-block" onClick={handleFailureAction}>
+            {failurePresentation.actionEn} · {failurePresentation.actionZh}
           </button>
         </div>
       )}
