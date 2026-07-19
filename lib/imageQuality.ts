@@ -57,51 +57,87 @@ export function contrastStdDev(img: GrayImage): number {
   return Math.sqrt(variance(a));
 }
 
+// How dark a pixel must be, RELATIVE to this frame's own paper level, to count as ink.
+// Relative rather than absolute so the check survives dim light (paper at 120) and bright
+// light (paper at 250) alike — an absolute cutoff mis-reads one end or the other.
+const INK_RATIO = 0.6;
+
 /**
- * Fraction of pixels that are neither near-black nor near-white — a proxy for a
- * flat, evenly-lit document with text vs a blank / over- or under-exposed frame.
+ * Fraction of pixels dark enough to be printed text, measured against the frame's own
+ * paper level. This is the "is there actually a document here?" check: a blank wall, a
+ * finger over the lens, or an out-of-frame report all yield ~0.
+ *
+ * REPLACES a midtone-coverage metric that was INVERTED for documents. That version counted
+ * pixels in [30,225] as good, reasoning they indicated "a flat, evenly-lit document with
+ * text". But a well-lit lab report is BIMODAL — white paper above 225, black ink below 30,
+ * almost nothing between — so a crisp photo scored ~0.02 and was rejected as "poor
+ * coverage", while a blurry one whose text had smeared into grey scored 1.00 and passed.
+ * Measured on synthetic frames: good report 0.018 (FAIL), smeared report 1.000 (PASS). The
+ * sharper the photo, the more likely it was refused — the user-reported false positive.
+ * Raising the old threshold would only have disabled the check; the metric had to change.
  */
-export function midtoneCoverage(img: GrayImage): number {
+export function inkCoverage(img: GrayImage): number {
   const { data } = img;
   const n = (data as ArrayLike<number>).length;
   if (n === 0) return 0;
-  let c = 0;
+  // Histogram rather than a sort: O(n) and allocation-free on a low-end phone.
+  const hist = new Array<number>(256).fill(0);
   for (let i = 0; i < n; i++) {
     const v = data[i];
-    if (v >= 30 && v <= 225) c += 1;
+    hist[v < 0 ? 0 : v > 255 ? 255 : Math.round(v)] += 1;
   }
-  return c / n;
+  // The 95th percentile stands in for the paper/background level. Using the max instead
+  // would let a single specular highlight (glare off a phone flash) define "paper" and
+  // drag the ink threshold up with it.
+  const target = n * 0.95;
+  let seen = 0;
+  let paper = 255;
+  for (let v = 0; v < 256; v++) {
+    seen += hist[v];
+    if (seen >= target) {
+      paper = v;
+      break;
+    }
+  }
+  const cutoff = paper * INK_RATIO;
+  let ink = 0;
+  for (let v = 0; v < 256 && v < cutoff; v++) ink += hist[v];
+  return ink / n;
 }
 
-export type QualityReason = 'blurry' | 'low-contrast' | 'poor-coverage';
+export type QualityReason = 'blurry' | 'low-contrast' | 'no-text-found';
 
 export interface QualityVerdict {
   ok: boolean;
   blur: number;
   contrast: number;
-  coverage: number;
+  ink: number;
   reasons: QualityReason[];
 }
 
 export interface QualityThresholds {
   blur: number;
   contrast: number;
-  coverage: number;
+  ink: number;
 }
 
-// Heuristic defaults — MUST be tuned against real phone photos of lab reports
-// (H4 caveat). Set to catch obviously-degraded frames without over-rejecting.
-export const QUALITY_THRESHOLDS: QualityThresholds = { blur: 100, contrast: 18, coverage: 0.2 };
+// Heuristic defaults — still to be tuned against a corpus of real phone photos (H4 caveat).
+// `ink` is deliberately LOW. Its job is to catch "there is no document in this frame at all"
+// (blank wall, finger over the lens, report out of shot), which scores exactly 0; it is not
+// meant to judge how much text a report has, since a short report is legitimately sparse.
+// Blur and contrast do the work of catching a degraded-but-present document, and they are
+// unchanged — the user-reported false positive came only from the coverage check.
+export const QUALITY_THRESHOLDS: QualityThresholds = { blur: 100, contrast: 18, ink: 0.005 };
 
 export function assessQuality(img: GrayImage, t: QualityThresholds = QUALITY_THRESHOLDS): QualityVerdict {
   const blur = laplacianVariance(img);
   const contrast = contrastStdDev(img);
-  const coverage = midtoneCoverage(img);
+  const ink = inkCoverage(img);
   const reasons: QualityReason[] = [];
   if (blur < t.blur) reasons.push('blurry');
   if (contrast < t.contrast) reasons.push('low-contrast');
-  if (coverage < t.coverage) reasons.push('poor-coverage');
-  return { ok: reasons.length === 0, blur, contrast, coverage, reasons };
+  if (ink < t.ink) reasons.push('no-text-found');
+  return { ok: reasons.length === 0, blur, contrast, ink, reasons };
 }
 
 /** Specific, actionable retake guidance per failed check (EN + ZH). */
@@ -114,9 +150,12 @@ export const RETAKE_GUIDANCE: Record<QualityReason, { en: string; zh: string }> 
     en: 'The photo looks washed out — reduce glare and use even, bright light.',
     zh: '照片对比度过低——请减少反光，使用均匀明亮的光线。',
   },
-  'poor-coverage': {
-    en: 'Move closer so the report fills the frame and lies flat.',
-    zh: '请靠近一些，让报告铺满画面并保持平整。',
+  // Reworded with the metric: the old copy ("move closer so the report fills the frame") was
+  // advice for a framing problem, but the check now fires only when NO printed text is found
+  // at all — so the useful instruction is to point the camera at the report, not to zoom in.
+  'no-text-found': {
+    en: 'We couldn’t find printed text — make sure the report is in the frame and in focus.',
+    zh: '未能识别到打印文字——请确保报告在画面内并已对焦。',
   },
 };
 

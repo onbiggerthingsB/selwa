@@ -3,7 +3,7 @@ import {
   toGray,
   laplacianVariance,
   contrastStdDev,
-  midtoneCoverage,
+  inkCoverage,
   assessQuality,
   escalateConfirm,
   type GrayImage,
@@ -45,9 +45,38 @@ describe('imageQuality', () => {
     expect(contrastStdDev(midtoneCheckerboard(10, 10))).toBeGreaterThan(30);
   });
 
-  it('midtoneCoverage: uniform midtone = 1, pure B/W checkerboard = 0', () => {
-    expect(midtoneCoverage(uniform(10, 10, 128))).toBe(1);
-    expect(midtoneCoverage(bwCheckerboard(10, 10))).toBe(0);
+  // THE REGRESSION THIS FILE USED TO LOCK IN. The old midtoneCoverage counted pixels in
+  // [30,225] as "good coverage", so this same pair asserted the exact inverse: featureless
+  // grey scored 1 and a max-contrast black/white checkerboard — which is what crisp text on
+  // paper looks like — scored 0. A real lab-report photo scored 0.018 and was refused with
+  // "Move closer so the report fills the frame", while a photo blurry enough to smear its
+  // text into grey sailed through. Ink coverage inverts both.
+  it('inkCoverage: text-like B/W checkerboard is high, featureless grey is 0', () => {
+    expect(inkCoverage(bwCheckerboard(10, 10))).toBeGreaterThan(0.4);
+    expect(inkCoverage(uniform(10, 10, 128))).toBe(0);
+  });
+
+  it('inkCoverage is relative to the frame’s own paper level, so lighting does not decide it', () => {
+    // The same document photographed dim (paper 120) and bright (paper 250) must score alike.
+    // An absolute cutoff — which is what the old metric effectively used — cannot do this.
+    const doc = (paper: number, ink: number) => {
+      const w = 20, h = 20;
+      const d = new Array(w * h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) d[y * w + x] = y % 5 === 0 ? ink : paper;
+      return { data: d, width: w, height: h };
+    };
+    expect(inkCoverage(doc(250, 20))).toBeCloseTo(0.2, 5);
+    expect(inkCoverage(doc(120, 10))).toBeCloseTo(0.2, 5);
+  });
+
+  it('inkCoverage ignores a single specular highlight when picking the paper level', () => {
+    // Glare off a phone flash must not define "paper" and drag the ink cutoff up with it;
+    // that is why the paper level is the 95th percentile rather than the max.
+    const w = 20, h = 20;
+    const d = new Array(w * h).fill(200);
+    for (let y = 0; y < h; y++) for (let x = 0; x < 4; x++) d[y * w + x] = 20;  // 20% ink
+    d[0] = 255;                                                                 // one blown-out pixel
+    expect(inkCoverage({ data: d, width: w, height: h })).toBeGreaterThan(0.15);
   });
 
   it('assessQuality flags a blank/blurry frame with specific reasons', () => {
@@ -57,10 +86,49 @@ describe('imageQuality', () => {
     expect(v.reasons).toContain('low-contrast');
   });
 
-  it('assessQuality passes a sharp, contrasty, well-covered image', () => {
+  it('assessQuality passes a sharp, contrasty image with ink on it', () => {
     const v = assessQuality(midtoneCheckerboard(30, 30));
     expect(v.ok).toBe(true);
     expect(v.reasons).toHaveLength(0);
+  });
+
+  // THE USER-REPORTED BUG, as a test. A well-lit lab report is bimodal — white paper, black
+  // ink, little between — and the old gate refused exactly that.
+  it('assessQuality PASSES a realistic well-lit lab report (was the false positive)', () => {
+    const w = 200, h = 150;
+    const d = new Array(w * h);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const textRow = y % 20 < 4;
+        d[y * w + x] = textRow && (x * 7 + y) % 11 < 6 ? 18 : 246;
+      }
+    const v = assessQuality({ data: d, width: w, height: h });
+    expect(v.reasons, `a crisp report must not be refused (ink=${v.ink})`).toHaveLength(0);
+    expect(v.ok).toBe(true);
+  });
+
+  it('assessQuality still refuses a frame with no document in it', () => {
+    // The check's real job: blank wall, finger over the lens, report out of shot.
+    const blank = assessQuality(uniform(30, 30, 250));
+    expect(blank.ok).toBe(false);
+    expect(blank.reasons).toContain('no-text-found');
+  });
+
+  // END-TO-END from the byte layout the browser actually supplies. In the app the input is a
+  // Uint8ClampedArray of RGBA from canvas getImageData, and toGray emits FLOATS (luma), not the
+  // integers the other tests hand-build — so this exercises the real types through to a verdict.
+  it('a canvas-shaped RGBA lab report survives toGray → assessQuality', () => {
+    const w = 200, h = 150;
+    const rgba = new Uint8ClampedArray(w * h * 4);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const textRow = y % 20 < 4;
+        const v = textRow && (x * 7 + y) % 11 < 6 ? 18 : 246;
+        const i = (y * w + x) * 4;
+        rgba[i] = v; rgba[i + 1] = v; rgba[i + 2] = v; rgba[i + 3] = 255;
+      }
+    const v = assessQuality(toGray(rgba, w, h));
+    expect(v.ok, `crisp report refused: ${v.reasons.join(',')} (ink=${v.ink})`).toBe(true);
   });
 
   it('escalateConfirm routes every emitted row to confirm with a low-quality flag', () => {
