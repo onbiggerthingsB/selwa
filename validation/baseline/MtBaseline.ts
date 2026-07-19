@@ -6,13 +6,15 @@
 // or an unguarded Claude translate (key-gated) that isolates the safety delta of
 // the guard alone.
 
-export type Lang = 'zh' | 'en';
+import type { SourceLang } from '@/lib/i18n';
+
+export type { SourceLang } from '@/lib/i18n';
 
 export interface MtBaseline {
   /** Stable id used in the report (e.g. 'offline', 'google', 'unguarded-llm'). */
   id: string;
   /** Translate `text` from `from` into `to`. Throws on a misconfigured key-gated adapter. */
-  translate(text: string, from: Lang, to: Lang): Promise<string>;
+  translate(text: string, from: SourceLang, to: SourceLang): Promise<string>;
 }
 
 // The exact string the offline adapter returns. Exported so the runner can

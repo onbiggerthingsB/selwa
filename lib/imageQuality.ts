@@ -6,6 +6,8 @@
 // starting points and need tuning against real phone photos (see H4 caveats).
 
 import type { GroundedReport, GuardFlag } from '@/lib/types';
+import type { LocalizedText } from '@/lib/i18n';
+import { defineText, fallback, reviewed } from '@/lib/i18n';
 
 export interface GrayImage {
   data: ArrayLike<number>; // grayscale 0-255, row-major, length width*height
@@ -162,26 +164,35 @@ export function assessQuality(img: GrayImage, t: QualityThresholds = QUALITY_THR
   return { ok: reasons.length === 0, blur, ink, reasons };
 }
 
-/** Specific, actionable retake guidance per failed check (EN + ZH). */
-export const RETAKE_GUIDANCE: Record<QualityReason, { en: string; zh: string }> = {
-  blurry: {
-    en: 'The photo looks blurry — hold the phone steady and tap the report to focus.',
-    zh: '照片有点模糊——请拿稳手机，点击报告对焦。',
-  },
+/** Specific, actionable retake guidance in every supported display language. */
+export const RETAKE_GUIDANCE: Record<QualityReason, LocalizedText> = {
+  blurry: defineText({
+    en: reviewed('The photo looks blurry — hold the phone steady and tap the report to focus.'),
+    zh: reviewed('照片有点模糊——请拿稳手机，点击报告对焦。'),
+    bo: fallback('zh'),
+  }),
   // Reworded with the metric: the old copy ("move closer so the report fills the frame") was
   // advice for a framing problem, but the check now fires only when NO printed text is found
   // at all — so the useful instruction is to point the camera at the report, not to zoom in.
-  'no-text-found': {
-    en: 'We couldn’t find printed text — make sure the report is in the frame and in focus.',
-    zh: '未能识别到打印文字——请确保报告在画面内并已对焦。',
-  },
+  'no-text-found': defineText({
+    en: reviewed(
+      'We couldn’t find printed text — make sure the report is in the frame and in focus.',
+    ),
+    zh: reviewed('未能识别到打印文字——请确保报告在画面内并已对焦。'),
+    bo: fallback('zh'),
+  }),
 };
 
 export const LOW_QUALITY_FLAG: GuardFlag = {
   id: 'H4-LOW-QUALITY-OVERRIDE',
   severity: 'caution',
-  messageEn: 'This photo was hard to read, so please double-check every value against your report.',
-  messageZh: '这张照片不太清晰，请逐一核对每个数值与您的报告是否一致。',
+  message: defineText({
+    en: reviewed(
+      'This photo was hard to read, so please double-check every value against your report.',
+    ),
+    zh: reviewed('这张照片不太清晰，请逐一核对每个数值与您的报告是否一致。'),
+    bo: fallback('zh'),
+  }),
 };
 
 /**

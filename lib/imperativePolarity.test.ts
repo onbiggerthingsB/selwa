@@ -3,9 +3,10 @@ import { detectImmutables } from './notesDetect';
 import { groundNotes } from './notesGrounding';
 import type { NotesTranslation } from './notesSchema';
 import type { Immutable } from './types';
+import type { SourceLang } from './i18n';
 
 const FLIP = 'N-IMPERATIVE-FLIP';
-const imps = (text: string, lang: 'en' | 'zh'): Immutable[] =>
+const imps = (text: string, lang: SourceLang): Immutable[] =>
   detectImmutables(text, lang).filter((i) => i.type === 'imperative');
 
 // --- Detector ---------------------------------------------------------------

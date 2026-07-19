@@ -1,6 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { toGray, laplacianVariance, inkCoverage, assessQuality, escalateConfirm, QUALITY_THRESHOLDS, type GrayImage } from './imageQuality';
+import {
+  toGray,
+  laplacianVariance,
+  inkCoverage,
+  assessQuality,
+  escalateConfirm,
+  QUALITY_THRESHOLDS,
+  RETAKE_GUIDANCE,
+  LOW_QUALITY_FLAG,
+  type GrayImage,
+} from './imageQuality';
 import { groundExtraction } from './grounding';
+import { resolveText } from '@/lib/i18n';
 
 function uniform(w: number, h: number, v: number): GrayImage {
   return { data: new Array(w * h).fill(v), width: w, height: h };
@@ -71,6 +82,26 @@ describe('imageQuality', () => {
     expect(v.ok).toBe(false);
     expect(v.reasons).toContain('blurry');
     expect(v.reasons).toContain('no-text-found'); // no pixel is dark enough to count as ink either
+  });
+
+  it('keeps reviewed EN/ZH retake copy and explicitly falls Tibetan back to unverified Chinese', () => {
+    expect(resolveText(RETAKE_GUIDANCE.blurry, 'en')).toMatchObject({
+      text: 'The photo looks blurry — hold the phone steady and tap the report to focus.',
+      review: 'reviewed',
+    });
+    expect(resolveText(RETAKE_GUIDANCE.blurry, 'zh')).toMatchObject({
+      text: '照片有点模糊——请拿稳手机，点击报告对焦。',
+      review: 'reviewed',
+    });
+    expect(resolveText(RETAKE_GUIDANCE.blurry, 'bo')).toMatchObject({
+      text: '照片有点模糊——请拿稳手机，点击报告对焦。',
+      resolvedLang: 'zh',
+      review: 'unverified',
+      usedFallback: true,
+    });
+    expect(resolveText(LOW_QUALITY_FLAG.message, 'bo').text).toBe(
+      resolveText(LOW_QUALITY_FLAG.message, 'zh').text,
+    );
   });
 
   it('assessQuality passes a sharp, contrasty image with ink on it', () => {

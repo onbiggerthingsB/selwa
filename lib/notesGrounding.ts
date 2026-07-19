@@ -2,6 +2,7 @@ import { evaluateSegment } from '@/lib/notesGuard';
 import { detectImmutables } from '@/lib/notesDetect';
 import type { GroundedNotes, GroundedSegment, GuardFlag, Immutable, SegmentAction } from '@/lib/types';
 import type { NotesTranslation } from '@/lib/notesSchema';
+import { defineText, fallback, reviewed, type SourceLang } from '@/lib/i18n';
 
 // --- R7b imperative-polarity reconciliation ---------------------------------
 const N_IMPERATIVE_FLIP = 'N-IMPERATIVE-FLIP';
@@ -9,9 +10,15 @@ function imperativeFlipFlag(): GuardFlag {
   return {
     id: N_IMPERATIVE_FLIP,
     severity: 'urgent',
-    messageEn:
-      'A medication instruction (whether to stop, keep taking, or change the dose) may not have carried over correctly, so your notes are shown exactly as written. Please confirm this with your clinician.',
-    messageZh: '用药指示（停药、继续服用或调整剂量）可能未被正确传达，已按原文显示。请务必与您的医生确认。',
+    message: defineText({
+      en: reviewed(
+        'A medication instruction (whether to stop, keep taking, or change the dose) may not have carried over correctly, so your notes are shown exactly as written. Please confirm this with your clinician.',
+      ),
+      zh: reviewed(
+        '用药指示（停药、继续服用或调整剂量）可能未被正确传达，已按原文显示。请务必与您的医生确认。',
+      ),
+      bo: fallback('zh'),
+    }),
   };
 }
 
@@ -75,14 +82,18 @@ function completenessDropFlag(severity: GuardFlag['severity']): GuardFlag {
   return {
     id: N_COMPLETENESS_DROP,
     severity,
-    messageEn:
-      "Some of your notes couldn't be safely matched, so they're shown exactly as written. Please confirm this with your clinician.",
-    messageZh: '部分内容无法安全匹配，已按原文显示。请与您的医生确认。',
+    message: defineText({
+      en: reviewed(
+        "Some of your notes couldn't be safely matched, so they're shown exactly as written. Please confirm this with your clinician.",
+      ),
+      zh: reviewed('部分内容无法安全匹配，已按原文显示。请与您的医生确认。'),
+      bo: fallback('zh'),
+    }),
   };
 }
 
 // Infer the note language by Chinese-character presence (mirrors notesGuard).
-function inferLang(text: string): 'en' | 'zh' {
+function inferLang(text: string): SourceLang {
   return /[一-鿿]/u.test(text) ? 'zh' : 'en';
 }
 

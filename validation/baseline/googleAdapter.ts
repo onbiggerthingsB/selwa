@@ -5,7 +5,7 @@
 // error rather than silently degrading — the harness defaults to the offline
 // adapter, and this adapter is only selected when a key is explicitly provided.
 
-import type { Lang, MtBaseline } from './MtBaseline';
+import type { SourceLang, MtBaseline } from './MtBaseline';
 
 const ENDPOINT = 'https://translation.googleapis.com/language/translate/v2';
 
@@ -17,7 +17,7 @@ interface GoogleTranslateResponse {
 
 export const googleAdapter: MtBaseline = {
   id: 'google',
-  async translate(text: string, from: Lang, to: Lang): Promise<string> {
+  async translate(text: string, from: SourceLang, to: SourceLang): Promise<string> {
     const apiKey = process.env.GOOGLE_TRANSLATE_API_KEY;
     if (!apiKey) {
       throw new Error(

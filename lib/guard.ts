@@ -16,6 +16,8 @@ import {
   type PrintedRange,
 } from '@/lib/reference';
 import { classifyAgainstBounds } from '@/lib/classify';
+import type { LocalizedText } from '@/lib/i18n';
+import { defineText, fallback, reviewed } from '@/lib/i18n';
 
 const CONFIRM_CLINICIAN_EN = 'Confirm this with your clinician.';
 const CONFIRM_CLINICIAN_ZH = '请与您的医生确认。';
@@ -23,10 +25,9 @@ const CONFIRM_CLINICIAN_ZH = '请与您的医生确认。';
 function flag(
   id: string,
   severity: GuardFlag['severity'],
-  messageEn: string,
-  messageZh: string,
+  message: LocalizedText,
 ): GuardFlag {
-  return { id, severity, messageEn, messageZh };
+  return { id, severity, message };
 }
 
 export interface GuardOutcome {
@@ -144,9 +145,17 @@ export function evaluateRow(
         // the report, never applying a range to the patient's number. "reference set"/"参考资料"
         // deliberately avoid "our reference range"/"我们的参考范围", which the leakage gate bans
         // because that phrasing implies we judged this value against our band.
-        'This test is not in our reference set, so we are not interpreting it — anything shown here comes from your report itself. ' +
-          CONFIRM_CLINICIAN_EN,
-        '该项目不在我们的参考资料中，因此我们不作解读——此处显示的内容均来自您的报告本身。' + CONFIRM_CLINICIAN_ZH,
+        defineText({
+          en: reviewed(
+            'This test is not in our reference set, so we are not interpreting it — anything shown here comes from your report itself. ' +
+              CONFIRM_CLINICIAN_EN,
+          ),
+          zh: reviewed(
+            '该项目不在我们的参考资料中，因此我们不作解读——此处显示的内容均来自您的报告本身。' +
+              CONFIRM_CLINICIAN_ZH,
+          ),
+          bo: fallback('zh'),
+        }),
       ),
     );
     return { action: 'abstain', needsConfirm: false, flags };
@@ -188,8 +197,15 @@ export function evaluateRow(
       flag(
         'R18-SPECIMEN-MATCH-UNCORROBORATED',
         'caution',
-        'We could not corroborate the specimen label we read with the reference details printed on your report, so we are not interpreting this test. Please check the specimen, range, and unit on your report.',
-        '我们无法用报告上打印的参考信息确认所读取的样本类型，因此不解读此项目。请核对报告上的样本类型、范围和单位。',
+        defineText({
+          en: reviewed(
+            'We could not corroborate the specimen label we read with the reference details printed on your report, so we are not interpreting this test. Please check the specimen, range, and unit on your report.',
+          ),
+          zh: reviewed(
+            '我们无法用报告上打印的参考信息确认所读取的样本类型，因此不解读此项目。请核对报告上的样本类型、范围和单位。',
+          ),
+          bo: fallback('zh'),
+        }),
       ),
     );
     // The existing confirmation screen can edit only value and unit. Sending an
@@ -209,8 +225,11 @@ export function evaluateRow(
         flag(
           'R5-LOW-OCR-CONFIDENCE-NUMERIC',
           'caution',
-          'We may have misread this result. Please check it against your report.',
-          '我们可能读错了这项结果，请与您的报告核对。',
+          defineText({
+            en: reviewed('We may have misread this result. Please check it against your report.'),
+            zh: reviewed('我们可能读错了这项结果，请与您的报告核对。'),
+            bo: fallback('zh'),
+          }),
         ),
       );
       return { action: 'classify', needsConfirm: true, flags };
@@ -224,8 +243,17 @@ export function evaluateRow(
       flag(
         'R2-UNIT-MISMATCH',
         'caution',
-        `The unit on your report differs from our reference (we expect ${entry.unit}). ` + CONFIRM_CLINICIAN_EN,
-        `报告上的单位与我们的参考单位不同（我们使用 ${entry.unit}）。` + CONFIRM_CLINICIAN_ZH,
+        defineText({
+          en: reviewed(
+            `The unit on your report differs from our reference (we expect ${entry.unit}). ` +
+              CONFIRM_CLINICIAN_EN,
+          ),
+          zh: reviewed(
+            `报告上的单位与我们的参考单位不同（我们使用 ${entry.unit}）。` +
+              CONFIRM_CLINICIAN_ZH,
+          ),
+          bo: fallback('zh'),
+        }),
       ),
     );
     // needsConfirm for a HIGH-STAKES analyte: R2 returns before R6 can fire, so without this a
@@ -243,8 +271,13 @@ export function evaluateRow(
       flag(
         'R13-IMPLAUSIBLE-VALUE',
         'caution',
-        'This value looks unusually far outside the physically possible range, so we may have misread it. Please check the number against your report.',
-        '该数值远超生理可能范围，我们可能读错了，请与您的报告核对该数字。',
+        defineText({
+          en: reviewed(
+            'This value looks unusually far outside the physically possible range, so we may have misread it. Please check the number against your report.',
+          ),
+          zh: reviewed('该数值远超生理可能范围，我们可能读错了，请与您的报告核对该数字。'),
+          bo: fallback('zh'),
+        }),
       ),
     );
     return { action: 'abstain', needsConfirm: true, flags };
@@ -259,8 +292,14 @@ export function evaluateRow(
       flag(
         'R3-CRITICAL-PANIC-RANGE',
         'urgent',
-        'This value is in a critical range that can be serious. Please seek medical advice promptly. ' + CONFIRM_CLINICIAN_EN,
-        '该数值处于可能严重的危急范围，请尽快就医并' + CONFIRM_CLINICIAN_ZH,
+        defineText({
+          en: reviewed(
+            'This value is in a critical range that can be serious. Please seek medical advice promptly. ' +
+              CONFIRM_CLINICIAN_EN,
+          ),
+          zh: reviewed('该数值处于可能严重的危急范围，请尽快就医并' + CONFIRM_CLINICIAN_ZH),
+          bo: fallback('zh'),
+        }),
       ),
     );
   }
@@ -271,8 +310,14 @@ export function evaluateRow(
       flag(
         'R4-HIGH-STAKES-ANY-ABNORMAL',
         'caution',
-        'This is an important test and your value is outside the usual range. ' + CONFIRM_CLINICIAN_EN,
-        '这是一项重要指标，您的数值超出常规范围。' + CONFIRM_CLINICIAN_ZH,
+        defineText({
+          en: reviewed(
+            'This is an important test and your value is outside the usual range. ' +
+              CONFIRM_CLINICIAN_EN,
+          ),
+          zh: reviewed('这是一项重要指标，您的数值超出常规范围。' + CONFIRM_CLINICIAN_ZH),
+          bo: fallback('zh'),
+        }),
       ),
     );
   }
@@ -287,8 +332,11 @@ export function evaluateRow(
       flag(
         'R5-LOW-OCR-CONFIDENCE-NUMERIC',
         'caution',
-        'We may have misread this number. Please check it against your report.',
-        '我们可能读错了这个数字，请与您的报告核对。',
+        defineText({
+          en: reviewed('We may have misread this number. Please check it against your report.'),
+          zh: reviewed('我们可能读错了这个数字，请与您的报告核对。'),
+          bo: fallback('zh'),
+        }),
       ),
     );
   }
@@ -300,8 +348,11 @@ export function evaluateRow(
       flag(
         'R6-HIGH-STAKES-MANDATORY-CONFIRM',
         'info',
-        'Because this test matters, please confirm the value we read.',
-        '由于该指标很重要，请确认我们读取的数值。',
+        defineText({
+          en: reviewed('Because this test matters, please confirm the value we read.'),
+          zh: reviewed('由于该指标很重要，请确认我们读取的数值。'),
+          bo: fallback('zh'),
+        }),
       ),
     );
   }
@@ -325,9 +376,17 @@ export function evaluateRow(
       flag(
         'R16-PRINTED-RANGE-UNIT-SUSPECT',
         'caution',
-        'The reference range on your report doesn’t appear to use the same units as the value, so we can’t compare them. Please check the range against your report. ' +
-          CONFIRM_CLINICIAN_EN,
-        '您报告上的参考范围似乎与数值使用的单位不同，因此我们无法进行比较。请核对报告上的范围。' + CONFIRM_CLINICIAN_ZH,
+        defineText({
+          en: reviewed(
+            'The reference range on your report doesn’t appear to use the same units as the value, so we can’t compare them. Please check the range against your report. ' +
+              CONFIRM_CLINICIAN_EN,
+          ),
+          zh: reviewed(
+            '您报告上的参考范围似乎与数值使用的单位不同，因此我们无法进行比较。请核对报告上的范围。' +
+              CONFIRM_CLINICIAN_ZH,
+          ),
+          bo: fallback('zh'),
+        }),
       ),
     );
   }
@@ -373,8 +432,15 @@ export function evaluateRow(
           // INTERNAL (not in SURFACING_FLAGS): it drives suppression + the confirm gate. Its
           // user-visible effect is the ABSENCE of a misleading "Typical range", which needs no
           // new sentence. Surfacing a message here is a deliberate follow-up, not an oversight.
-          'Our reference band for this test does not overlap the range printed on your report, so we are not showing a typical range for it.',
-          '我们对该项目的参考区间与您报告上打印的范围完全不重叠，因此不显示一般范围。',
+          defineText({
+            en: reviewed(
+              'Our reference band for this test does not overlap the range printed on your report, so we are not showing a typical range for it.',
+            ),
+            zh: reviewed(
+              '我们对该项目的参考区间与您报告上打印的范围完全不重叠，因此不显示一般范围。',
+            ),
+            bo: fallback('zh'),
+          }),
         ),
       );
     }
@@ -384,13 +450,21 @@ export function evaluateRow(
         flag(
           'R11-RANGE-DISAGREEMENT',
           valueFlips ? 'caution' : 'info',
-          valueFlips
-            ? 'Your report’s reference range differs from ours in a way that could change whether this value is in range. ' +
-              CONFIRM_CLINICIAN_EN
-            : 'Your report’s own reference range differs slightly from ours; ranges vary between labs.',
-          valueFlips
-            ? '您报告上的参考范围与我们的不同，这可能影响该数值是否属于正常范围。' + CONFIRM_CLINICIAN_ZH
-            : '您报告上的参考范围与我们的略有不同；不同实验室的范围会有差异。',
+          defineText({
+            en: reviewed(
+              valueFlips
+                ? 'Your report’s reference range differs from ours in a way that could change whether this value is in range. ' +
+                    CONFIRM_CLINICIAN_EN
+                : 'Your report’s own reference range differs slightly from ours; ranges vary between labs.',
+            ),
+            zh: reviewed(
+              valueFlips
+                ? '您报告上的参考范围与我们的不同，这可能影响该数值是否属于正常范围。' +
+                    CONFIRM_CLINICIAN_ZH
+                : '您报告上的参考范围与我们的略有不同；不同实验室的范围会有差异。',
+            ),
+            bo: fallback('zh'),
+          }),
         ),
       );
     }
@@ -402,8 +476,17 @@ export function evaluateRow(
       flag(
         'R12-POPULATION-SENSITIVE',
         'info',
-        'The normal range for this test depends on sex/age, which we don’t have, so we used a wider range. ' + CONFIRM_CLINICIAN_EN,
-        '该指标的正常范围与性别/年龄有关，我们缺少这些信息，因此使用了较宽的范围。' + CONFIRM_CLINICIAN_ZH,
+        defineText({
+          en: reviewed(
+            'The normal range for this test depends on sex/age, which we don’t have, so we used a wider range. ' +
+              CONFIRM_CLINICIAN_EN,
+          ),
+          zh: reviewed(
+            '该指标的正常范围与性别/年龄有关，我们缺少这些信息，因此使用了较宽的范围。' +
+              CONFIRM_CLINICIAN_ZH,
+          ),
+          bo: fallback('zh'),
+        }),
       ),
     );
   }

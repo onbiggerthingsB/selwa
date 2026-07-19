@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { groundExtraction } from './grounding';
 import { applyCrossRowChecks } from './crossRowChecks';
 import type { LabExtraction } from '@/lib/extractionSchema';
+import { resolveText } from '@/lib/i18n';
 
 const R15 = 'R15-CROSS-ROW-INCONSISTENCY';
 
@@ -28,6 +29,18 @@ describe('applyCrossRowChecks — bilirubin direct ≤ total', () => {
     expect(direct.flags.map((f) => f.id)).toContain(R15);
     // total_bilirubin is not high-stakes → would NOT otherwise confirm; the check escalates it.
     expect(total.needsConfirm).toBe(true);
+    const message = total.flags.find((f) => f.id === R15)!.message;
+    expect(resolveText(message, 'en').text).toBe(
+      'Two related values on this report don’t line up (the bilirubin values are inconsistent with each other), so we may have misread a number or a unit. Please check them against your report.',
+    );
+    expect(resolveText(message, 'zh').text).toBe(
+      '这份报告上两个相关数值不一致（胆红素各项彼此矛盾），我们可能读错了某个数字或单位。请与您的报告核对这些项目。',
+    );
+    expect(resolveText(message, 'bo')).toMatchObject({
+      text: resolveText(message, 'zh').text,
+      resolvedLang: 'zh',
+      review: 'unverified',
+    });
   });
 
   it('does not flag when direct is a normal fraction of total', () => {

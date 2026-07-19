@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { groundNotes } from './notesGrounding';
 import type { NotesTranslation } from './notesSchema';
+import { resolveText } from '@/lib/i18n';
 
 describe('groundNotes', () => {
   it('renders a clean segment with its translation kept and preserved immutables', () => {
@@ -90,6 +91,19 @@ describe('groundNotes — original-text reconciliation (completeness)', () => {
     expect(s.translated).toBe(''); // never a silent empty render
     expect(s.action).toBe('abstain');
     expect(s.flags.map((f) => f.id)).toContain(N_DROP);
+    const message = s.flags.find((f) => f.id === N_DROP)!.message;
+    expect(resolveText(message, 'en').text).toBe(
+      "Some of your notes couldn't be safely matched, so they're shown exactly as written. Please confirm this with your clinician.",
+    );
+    expect(resolveText(message, 'zh').text).toBe(
+      '部分内容无法安全匹配，已按原文显示。请与您的医生确认。',
+    );
+    expect(resolveText(message, 'bo')).toMatchObject({
+      text: resolveText(message, 'zh').text,
+      resolvedLang: 'zh',
+      review: 'unverified',
+      usedFallback: true,
+    });
   });
 
   it('total drop where every segment has empty sourceText → still abstain fallback with original', () => {

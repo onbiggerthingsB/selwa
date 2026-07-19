@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildSummary } from './summary';
 import { groundExtraction } from './grounding';
+import { resolveText } from './i18n';
 import type { LabExtraction } from '@/lib/extractionSchema';
 
 const extraction: LabExtraction = {
@@ -21,26 +22,33 @@ describe('buildSummary', () => {
   it('B1: the chip reproduces the REPORT’S OWN range (not our verdict), plus both languages, value, plain meaning, ranges', () => {
     const { sections } = buildSummary(report, 'en');
     const glu = sections.find((s) => s.key === 'fasting_glucose')!;
-    expect(glu.nameEn).toContain('Fasting plasma glucose');
-    expect(glu.nameZh).toContain('空腹血糖');
+    expect(resolveText(glu.name, 'en').text).toContain('Fasting plasma glucose');
+    expect(resolveText(glu.name, 'zh').text).toContain('空腹血糖');
     expect(glu.valueText).toBe('7.8 mmol/L');
     // 7.8 is above the report's printed 3.9-6.1 → the chip reproduces the report, not an
     // independent "High" verdict from our table.
-    expect(glu.chipEn).toMatch(/above your report/i);
-    expect(glu.chipZh).toBe('高于报告所列范围');
+    expect(resolveText(glu.chip, 'en').text).toMatch(/above your report/i);
+    expect(resolveText(glu.chip, 'zh').text).toBe('高于报告所列范围');
     // TONE IS NEUTRAL even though the value is out of range: colour would assert OUR judgment
     // that this is bad — wrong for HDL/HBsAb/eGFR where out-of-range is good. The chip text
     // carries the (reproduced) position; the tint does not editorialise it.
     expect(glu.tone).toBe('report'); // neutral gray — never the semantic green 'normal'
-    expect(glu.plainEn).toMatch(/blood sugar/i);
-    expect(glu.plainZh).toMatch(/血糖/);
+    expect(resolveText(glu.plain, 'en').text).toMatch(/blood sugar/i);
+    expect(resolveText(glu.plain, 'zh').text).toMatch(/血糖/);
     expect(glu.reportRange).toBe('3.9-6.1'); // the report's own range, verbatim
     expect(glu.typicalRange).toMatch(/3\.9–6\.1 mmol\/L/); // ours, shown as general context
     expect(glu.flags.length).toBeGreaterThan(0); // high-stakes → R6 routing flag
-    expect(glu.flags.every((f) => f.messageEn.length > 0 && f.messageZh.length > 0)).toBe(true);
+    expect(glu.flags.every((f) =>
+      resolveText(f.message, 'en').text.length > 0
+      && resolveText(f.message, 'zh').text.length > 0
+    )).toBe(true);
     // B1: the surfaced flag may only talk about OUR READING — never a verdict on the value.
-    expect(glu.flags.every((f) => /confirm the value we read|misread/i.test(f.messageEn))).toBe(true);
-    expect(glu.flags.some((f) => /outside the usual range|critical range/i.test(f.messageEn))).toBe(false);
+    expect(glu.flags.every((f) =>
+      /confirm the value we read|misread/i.test(resolveText(f.message, 'en').text)
+    )).toBe(true);
+    expect(glu.flags.some((f) =>
+      /outside the usual range|critical range/i.test(resolveText(f.message, 'en').text)
+    )).toBe(false);
   });
 
   it('a classified value WITHIN the report’s range defers, not "in range" as a verdict', () => {
@@ -49,7 +57,7 @@ describe('buildSummary', () => {
       'unknown',
     );
     const s = buildSummary(r, 'en').sections[0];
-    expect(s.chipEn).toMatch(/within your report/i);
+    expect(resolveText(s.chip, 'en').text).toMatch(/within your report/i);
     expect(s.tone).toBe('report'); // neutral gray, NOT semantic green
   });
 
@@ -59,7 +67,7 @@ describe('buildSummary', () => {
       'unknown',
     );
     const s = buildSummary(r, 'en').sections[0];
-    expect(s.chipEn).toMatch(/clinician/i); // "Ask your clinician to interpret"
+    expect(resolveText(s.chip, 'en').text).toMatch(/clinician/i); // "Ask your clinician to interpret"
     expect(s.reportRange).toBe(''); // nothing to reproduce
   });
 
@@ -69,12 +77,12 @@ describe('buildSummary', () => {
     // own information, faithfully translated. Gating this on recognition threw away ~28 points
     // of coverage on the US beachhead for no safety gain.
     const { sections } = buildSummary(report, 'en');
-    const cer = sections.find((s) => s.nameEn === 'ceruloplasmin')!;
-    expect(cer.chipEn).toBe('Within your report’s range'); // reproduced, not invented
+    const cer = sections.find((s) => resolveText(s.name, 'en').text === 'ceruloplasmin')!;
+    expect(resolveText(cer.chip, 'en').text).toBe('Within your report’s range'); // reproduced, not invented
     expect(cer.reportRange).toBe('5-15'); // the report's own range — their info, surfaced
     expect(cer.tone).toBe('report'); // neutral gray: colour never editorialises
     // But we know nothing about this analyte, so we add nothing of our own:
-    expect(cer.plainEn).toBe(''); // no invented meaning
+    expect(resolveText(cer.plain, 'en').text).toBe(''); // no invented meaning
     expect(cer.typicalRange).toBe(''); // no curated range to offer as context
   });
 
@@ -99,13 +107,13 @@ describe('buildSummary', () => {
 
     expect(row.entry?.interpretation).toBe('report-only');
     expect(row.action).toBe('classify');
-    expect(section.nameEn).toBe('Urine Nitrite (Dipstick)');
-    expect(section.chipEn).toBe('Within your report’s range');
-    expect(section.plainEn).toMatch(/urine dipstick test/i);
-    expect(section.plainZh).toContain('尿液');
+    expect(resolveText(section.name, 'en').text).toBe('Urine Nitrite (Dipstick)');
+    expect(resolveText(section.chip, 'en').text).toBe('Within your report’s range');
+    expect(resolveText(section.plain, 'en').text).toMatch(/urine dipstick test/i);
+    expect(resolveText(section.plain, 'zh').text).toContain('尿液');
     expect(section.typicalRange).toBe('');
     expect(section.source).toBe('');
-    expect(section.flags.map((f) => f.messageEn).join(' ')).not.toMatch(/not in our reference set/i);
+    expect(section.flags.map((f) => resolveText(f.message, 'en').text).join(' ')).not.toMatch(/not in our reference set/i);
   });
 
   it.each([
@@ -131,7 +139,7 @@ describe('buildSummary', () => {
     );
     const section = buildSummary(report, 'en').sections[0];
 
-    expect(section.chipEn).toBe(chip);
+    expect(resolveText(section.chip, 'en').text).toBe(chip);
     expect(section.tone).toBe('report');
   });
 
@@ -159,7 +167,7 @@ describe('buildSummary', () => {
     );
     const section = buildSummary(report, 'en').sections[0];
 
-    expect(section.chipEn).toBe(chip);
+    expect(resolveText(section.chip, 'en').text).toBe(chip);
     if (chip === 'Ask your clinician to interpret') {
       expect(section.reportRange).toBe('');
     } else {
@@ -178,9 +186,11 @@ describe('R13 suppression rendering', () => {
     );
     const s = buildSummary(report, 'en').sections[0];
     expect(s.tone).toBe('unclassified'); // NOT classified as critical
-    expect(s.chipEn.toLowerCase()).toContain('not assessed');
-    expect(s.plainEn).toBe(''); // no plain-language clinical meaning rendered
+    expect(resolveText(s.chip, 'en').text.toLowerCase()).toContain('not assessed');
+    expect(resolveText(s.plain, 'en').text).toBe(''); // no plain-language clinical meaning rendered
     expect(s.valueText).toContain('40'); // raw value still shown for the user to check
-    expect(s.flags.some((f) => /misread|check the number/i.test(f.messageEn))).toBe(true);
+    expect(s.flags.some((f) =>
+      /misread|check the number/i.test(resolveText(f.message, 'en').text)
+    )).toBe(true);
   });
 });

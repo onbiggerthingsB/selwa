@@ -18,12 +18,13 @@
 import { describe, it, expect } from 'vitest';
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary } from '@/lib/summary';
+import { resolveText } from '@/lib/i18n';
 import { MIMIC_US_SAMPLE } from './real-corpus/us-sample';
 import { MEDREPBENCH_SAMPLE } from './real-corpus/sample';
 
 function chipFor(name: string, value: string, unit: string | null, range: string | null): string {
   const rep = groundExtraction({ rows: [{ name, value, unit, printedRange: range, confidence: 'high' }] }, 'unknown');
-  return buildSummary(rep, 'en').sections[0].chipEn;
+  return resolveText(buildSummary(rep, 'en').sections[0].chip, 'en').text;
 }
 
 // AN ACTUALLY INDEPENDENT ORACLE.
@@ -46,7 +47,7 @@ function expectedChip(value: string, range: string): string | null {
   const NUM = String.raw`[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?`;
 
   // one-sided, strictness respected
-  let m = r.match(new RegExp(`^([<>≤≥])(=?)(${NUM})$`));
+  const m = r.match(new RegExp(`^([<>≤≥])(=?)(${NUM})$`));
   if (m) {
     const b = Number(m[3]);
     const inclusive = m[2] === '=' || m[1] === '≤' || m[1] === '≥';

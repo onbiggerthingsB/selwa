@@ -12,6 +12,13 @@ import { NotesTranslationSchema } from '@/lib/notesSchema';
 import { groundNotes } from '@/lib/notesGrounding';
 import { setPendingReport } from '@/lib/session';
 import type { GroundedNotes, Sex } from '@/lib/types';
+import {
+  defineText,
+  fallback,
+  resolveText,
+  reviewed,
+  type LocalizedText,
+} from '@/lib/i18n';
 
 type Phase = 'idle' | 'preview' | 'redact' | 'consent' | 'quality' | 'extracting' | 'error';
 
@@ -32,54 +39,88 @@ type CaptureFailure = {
 const FAILURE_PRESENTATION: Record<
   FailureCause,
   {
-    en: string;
-    zh: string;
+    message: LocalizedText;
     action: 'retry' | 'retake' | 'consent';
-    actionEn: string;
-    actionZh: string;
+    actionLabel: LocalizedText;
   }
 > = {
   'server-unavailable': {
-    en: 'The report-reading service is temporarily unavailable. Please try again in a moment.',
-    zh: '报告读取服务暂时不可用。请稍后重试。',
+    message: defineText({
+      en: reviewed('The report-reading service is temporarily unavailable. Please try again in a moment.'),
+      zh: reviewed('报告读取服务暂时不可用。请稍后重试。'),
+      bo: fallback('zh'),
+    }),
     action: 'retry',
-    actionEn: 'Try again',
-    actionZh: '重试',
+    actionLabel: defineText({
+      en: reviewed('Try again'),
+      zh: reviewed('重试'),
+      bo: fallback('zh'),
+    }),
   },
   'rate-limited': {
-    en: 'Too many report-reading requests have been made from this network. Please wait and try again later.',
-    zh: '当前网络的报告读取请求次数过多。请稍后重试。',
+    message: defineText({
+      en: reviewed('Too many report-reading requests have been made from this network. Please wait and try again later.'),
+      zh: reviewed('当前网络的报告读取请求次数过多。请稍后重试。'),
+      bo: fallback('zh'),
+    }),
     action: 'retry',
-    actionEn: 'Try again later',
-    actionZh: '稍后重试',
+    actionLabel: defineText({
+      en: reviewed('Try again later'),
+      zh: reviewed('稍后重试'),
+      bo: fallback('zh'),
+    }),
   },
   'not-permitted': {
-    en: 'Please confirm your consent again before the photo is sent for reading.',
-    zh: '发送照片进行读取前，请再次确认您的同意。',
+    message: defineText({
+      en: reviewed('Please confirm your consent again before the photo is sent for reading.'),
+      zh: reviewed('发送照片进行读取前，请再次确认您的同意。'),
+      bo: fallback('zh'),
+    }),
     action: 'consent',
-    actionEn: 'Review consent',
-    actionZh: '查看同意说明',
+    actionLabel: defineText({
+      en: reviewed('Review consent'),
+      zh: reviewed('查看同意说明'),
+      bo: fallback('zh'),
+    }),
   },
   'image-rejected': {
-    en: 'This image is too large or uses a format we can’t accept. Choose a smaller image or retake the photo.',
-    zh: '这张图片过大，或格式不受支持。请选择较小的图片，或重新拍照。',
+    message: defineText({
+      en: reviewed('This image is too large or uses a format we can’t accept. Choose a smaller image or retake the photo.'),
+      zh: reviewed('这张图片过大，或格式不受支持。请选择较小的图片，或重新拍照。'),
+      bo: fallback('zh'),
+    }),
     action: 'retake',
-    actionEn: 'Retake or choose another',
-    actionZh: '重拍或另选',
+    actionLabel: defineText({
+      en: reviewed('Retake or choose another'),
+      zh: reviewed('重拍或另选'),
+      bo: fallback('zh'),
+    }),
   },
   network: {
-    en: 'We couldn’t connect to the report-reading service. Check your connection and try again.',
-    zh: '无法连接到报告读取服务。请检查网络连接后重试。',
+    message: defineText({
+      en: reviewed('We couldn’t connect to the report-reading service. Check your connection and try again.'),
+      zh: reviewed('无法连接到报告读取服务。请检查网络连接后重试。'),
+      bo: fallback('zh'),
+    }),
     action: 'retry',
-    actionEn: 'Try again',
-    actionZh: '重试',
+    actionLabel: defineText({
+      en: reviewed('Try again'),
+      zh: reviewed('重试'),
+      bo: fallback('zh'),
+    }),
   },
   unreadable: {
-    en: 'We couldn’t read enough text from this photo. Retake it with the report clear and flat.',
-    zh: '我们无法从这张照片中清楚读取足够的文字。请将报告放平、拍清楚后重试。',
+    message: defineText({
+      en: reviewed('We couldn’t read enough text from this photo. Retake it with the report clear and flat.'),
+      zh: reviewed('我们无法从这张照片中清楚读取足够的文字。请将报告放平、拍清楚后重试。'),
+      bo: fallback('zh'),
+    }),
     action: 'retake',
-    actionEn: 'Retake',
-    actionZh: '重拍',
+    actionLabel: defineText({
+      en: reviewed('Retake'),
+      zh: reviewed('重拍'),
+      bo: fallback('zh'),
+    }),
   },
 };
 
@@ -495,8 +536,10 @@ export function CaptureCard() {
           </div>
           {failure?.cause === 'not-permitted' && (
             <p className="extracting-note" role="alert">
-              {FAILURE_PRESENTATION['not-permitted'].en}
-              <span className="zh" lang="zh">{FAILURE_PRESENTATION['not-permitted'].zh}</span>
+              {resolveText(FAILURE_PRESENTATION['not-permitted'].message, 'en').text}
+              <span className="zh" lang="zh">
+                {resolveText(FAILURE_PRESENTATION['not-permitted'].message, 'zh').text}
+              </span>
             </p>
           )}
           <ul className="quality-tips">
@@ -544,7 +587,10 @@ export function CaptureCard() {
           <ul className="quality-tips">
             {quality.reasons.map((r) => (
               <li key={r}>
-                {RETAKE_GUIDANCE[r].en} <span className="zh" lang="zh">{RETAKE_GUIDANCE[r].zh}</span>
+                {resolveText(RETAKE_GUIDANCE[r], 'en').text}{' '}
+                <span className="zh" lang="zh">
+                  {resolveText(RETAKE_GUIDANCE[r], 'zh').text}
+                </span>
               </li>
             ))}
           </ul>
@@ -579,12 +625,15 @@ export function CaptureCard() {
           <div className="err-row">
             <CalmAlertGlyph />
             <span>
-              {failurePresentation.en}
-              <span className="zh" lang="zh">{failurePresentation.zh}</span>
+              {resolveText(failurePresentation.message, 'en').text}
+              <span className="zh" lang="zh">
+                {resolveText(failurePresentation.message, 'zh').text}
+              </span>
             </span>
           </div>
           <button className="btn btn-primary btn-block" onClick={handleFailureAction}>
-            {failurePresentation.actionEn} · {failurePresentation.actionZh}
+            {resolveText(failurePresentation.actionLabel, 'en').text} ·{' '}
+            {resolveText(failurePresentation.actionLabel, 'zh').text}
           </button>
         </div>
       )}

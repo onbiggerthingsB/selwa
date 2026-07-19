@@ -1,6 +1,14 @@
 'use client';
 import type { GroundedReport } from '@/lib/types';
 import { buildSummary, type Lang, type SummaryFlag, type SummarySection } from '@/lib/summary';
+import {
+  LANGUAGE_CONFIG,
+  resolvePrimarySecondary,
+  resolveText,
+} from '@/lib/i18n';
+import { LocalizedText } from '@/components/LocalizedText';
+import { DISCLAIMER_TEXTS } from '@/lib/disclaimers';
+import { UI_COPY } from '@/lib/uiCopy';
 
 function FlagIcon({ severity }: { severity: string }) {
   const common = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, className: 'flag-icon', 'aria-hidden': true };
@@ -32,24 +40,23 @@ function FlagIcon({ severity }: { severity: string }) {
 }
 
 function Section({ s, lang }: { s: SummarySection; lang: Lang }) {
-  const en = lang === 'en';
-  const namePrimary = en ? s.nameEn : s.nameZh;
-  const nameSecondary = en ? s.nameZh : s.nameEn;
-  const labelPrimary = en ? s.chipEn : s.chipZh;
-  const labelSecondary = en ? s.chipZh : s.chipEn;
-  const plainPrimary = en ? s.plainEn : s.plainZh;
-  const plainSecondary = en ? s.plainZh : s.plainEn;
+  const name = resolvePrimarySecondary(s.name, lang);
+  const chip = resolvePrimarySecondary(s.chip, lang);
+  const plain = resolvePrimarySecondary(s.plain, lang);
+  const secondaryLang = LANGUAGE_CONFIG[lang].secondary;
 
   return (
     <li className={`row status-${s.tone}`}>
       <div className="row-head">
         <div className="row-name">
-          <div className={`name-primary ${en ? '' : 'zh'}`} lang={en ? 'en' : 'zh'}>
-            {namePrimary}
+          <div className={`name-primary ${name.primary.resolvedLang === 'zh' ? 'zh' : ''}`}>
+            <LocalizedText value={s.name} lang={lang} />
           </div>
-          {nameSecondary !== namePrimary && (
-            <div className={`name-secondary ${en ? 'zh' : ''}`} lang={en ? 'zh' : 'en'}>
-              {nameSecondary}
+          {name.secondary.text !== name.primary.text && (
+            <div
+              className={`name-secondary ${name.secondary.resolvedLang === 'zh' ? 'zh' : ''}`}
+            >
+              <LocalizedText value={s.name} lang={secondaryLang} />
             </div>
           )}
         </div>
@@ -61,18 +68,23 @@ function Section({ s, lang }: { s: SummarySection; lang: Lang }) {
 
       <span className="chip">
         <span className="dot" aria-hidden />
-        <span>{labelPrimary}</span>
-        <span className="zh" aria-hidden>
-          · {labelSecondary}
-        </span>
+        <LocalizedText value={s.chip} lang={lang} />
+        {chip.secondary.text !== chip.primary.text && (
+          <span className={chip.secondary.resolvedLang === 'zh' ? 'zh' : undefined} aria-hidden>
+            {'· '}
+            <LocalizedText value={s.chip} lang={secondaryLang} />
+          </span>
+        )}
       </span>
 
-      {plainPrimary && (
+      {plain.primary.text && (
         <p className="row-plain">
-          {plainPrimary}
-          {plainSecondary && plainSecondary !== plainPrimary && (
-            <span className={`plain-secondary ${en ? 'zh' : ''}`} lang={en ? 'zh' : 'en'}>
-              {plainSecondary}
+          <LocalizedText value={s.plain} lang={lang} />
+          {plain.secondary.text && plain.secondary.text !== plain.primary.text && (
+            <span
+              className={`plain-secondary ${plain.secondary.resolvedLang === 'zh' ? 'zh' : ''}`}
+            >
+              <LocalizedText value={s.plain} lang={secondaryLang} />
             </span>
           )}
         </p>
@@ -83,9 +95,7 @@ function Section({ s, lang }: { s: SummarySection; lang: Lang }) {
           {s.flags.map((f: SummaryFlag, i) => (
             <div key={i} className={`flag flag-${f.severity}`}>
               <FlagIcon severity={f.severity} />
-              <span lang={en ? 'en' : 'zh'} className={en ? '' : 'zh'}>
-                {en ? f.messageEn : f.messageZh}
-              </span>
+              <LocalizedText value={f.message} lang={lang} />
             </div>
           ))}
         </div>
@@ -95,19 +105,19 @@ function Section({ s, lang }: { s: SummarySection; lang: Lang }) {
         <div className="row-foot">
           {s.reportRange && (
             <span className="ref num">
-              {en ? 'Your report’s range ' : '报告所列范围 '}
+              <LocalizedText value={UI_COPY.reportRange} lang={lang} />
               {s.reportRange}
             </span>
           )}
           {s.typicalRange && (
             <span className="ref num">
-              {en ? 'Typical range, varies by lab ' : '一般范围（各实验室不同） '}
+              <LocalizedText value={UI_COPY.typicalRange} lang={lang} />
               {s.typicalRange}
             </span>
           )}
           {s.source && (
             <span className="src">
-              {en ? 'Source: ' : '来源：'}
+              <LocalizedText value={UI_COPY.source} lang={lang} />
               {s.source}
             </span>
           )}
@@ -118,9 +128,8 @@ function Section({ s, lang }: { s: SummarySection; lang: Lang }) {
 }
 
 export function SummaryView({ report, lang }: { report: GroundedReport; lang: Lang }) {
-  const { sections, disclaimers } = buildSummary(report, lang);
-  const en = lang === 'en';
-  const [lead, ...rest] = disclaimers;
+  const { sections } = buildSummary(report, lang);
+  const [lead, ...rest] = DISCLAIMER_TEXTS;
   return (
     <div className="summary">
       <ul className="rows">
@@ -128,15 +137,23 @@ export function SummaryView({ report, lang }: { report: GroundedReport; lang: La
           <Section key={s.key} s={s} lang={lang} />
         ))}
       </ul>
-      <section className="disclaimers" aria-label={en ? 'About this summary' : '关于本摘要'}>
-        <p className={`disc-lead ${en ? '' : 'zh'}`} lang={en ? 'en' : 'zh'}>
+      <section
+        className="disclaimers"
+        aria-label={resolveText(UI_COPY.aboutSummary, lang).text}
+      >
+        <p
+          className={`disc-lead ${resolveText(lead, lang).resolvedLang === 'zh' ? 'zh' : ''}`}
+        >
           <FlagIcon severity="info" />
-          <span>{lead}</span>
+          <LocalizedText value={lead} lang={lang} />
         </p>
         <ul>
           {rest.map((d, i) => (
-            <li key={i} className={en ? '' : 'zh'} lang={en ? 'en' : 'zh'}>
-              {d}
+            <li
+              key={i}
+              className={resolveText(d, lang).resolvedLang === 'zh' ? 'zh' : undefined}
+            >
+              <LocalizedText value={d} lang={lang} />
             </li>
           ))}
         </ul>

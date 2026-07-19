@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { groundExtraction } from './grounding';
 import type { LabExtraction } from '@/lib/extractionSchema';
+import { resolveText } from '@/lib/i18n';
 
 const extraction: LabExtraction = {
   rows: [
@@ -56,6 +57,18 @@ describe('groundExtraction', () => {
     expect(glu.valueNum).toBeCloseTo(5.49, 1);
     expect(glu.flags.map((f) => f.id)).toContain('R2b-UNIT-CONVERTED');
     expect(glu.action).toBe('classify');
+    const message = glu.flags.find((f) => f.id === 'R2b-UNIT-CONVERTED')!.message;
+    expect(resolveText(message, 'en').text).toBe(
+      'We converted 99 mg/dL to 5.49 mmol/L to compare with our reference range.',
+    );
+    expect(resolveText(message, 'zh').text).toBe(
+      '我们已将 99 mg/dL 换算为 5.49 mmol/L 以便与参考范围比较。',
+    );
+    expect(resolveText(message, 'bo')).toMatchObject({
+      text: resolveText(message, 'zh').text,
+      resolvedLang: 'zh',
+      review: 'unverified',
+    });
   });
 
   it('still abstains when no safe conversion exists (urea mg/dL)', () => {
@@ -77,7 +90,7 @@ describe('groundExtraction', () => {
     expect(rows[0].flags.map((f) => f.id)).not.toContain('R11-RANGE-DISAGREEMENT');
   });
 
-  // H1.5 — d-dimer FEU/DDU basis ambiguity. FEU and DDU units differ ~2× (the plainEn
+  // H1.5 — d-dimer FEU/DDU basis ambiguity. FEU and DDU units differ ~2× (the fuller
   // even warns of this), so a bare 'mg/L' with no basis qualifier must NOT be silently
   // read as our canonical FEU value — abstain (matches the urea/calcium abstain-traps).
   it('abstains on an unqualified d-dimer unit (bare mg/L is FEU/DDU-ambiguous)', () => {

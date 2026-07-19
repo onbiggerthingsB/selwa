@@ -6,11 +6,11 @@
 // translation), which keeps the comparison honest: an unconfigured baseline
 // contributes no fidelity and no abstention, never a fake 1.0.
 
-import { BASELINE_UNAVAILABLE, type Lang, type MtBaseline } from './MtBaseline';
+import { BASELINE_UNAVAILABLE, type SourceLang, type MtBaseline } from './MtBaseline';
 
 export const offlineAdapter: MtBaseline = {
   id: 'offline',
-  async translate(_text: string, _from: Lang, _to: Lang): Promise<string> {
+  async translate(_text: string, _from: SourceLang, _to: SourceLang): Promise<string> {
     return BASELINE_UNAVAILABLE;
   },
 };

@@ -35,6 +35,7 @@
 
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary } from '@/lib/summary';
+import { resolveText } from '@/lib/i18n';
 import { confirmBurden, type ConfirmRow } from '@/validation/confirmBurden';
 import { goldFor } from './gold-labels';
 import type { RealReport } from './sample';
@@ -180,7 +181,7 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
       if (row.entry) recognized += 1;
 
       // B1: score the VISIBLE chip, and whether high-stakes rows reach the confirm gate.
-      const chip = buildSummary(report, 'en').sections[0].chipEn;
+      const chip = resolveText(buildSummary(report, 'en').sections[0].chip, 'en').text;
       const asserted = /your report’s range/.test(chip);
       if (asserted) chipReproduced += 1;
       else chipDeferred += 1;

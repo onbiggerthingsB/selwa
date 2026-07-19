@@ -85,4 +85,32 @@ describe('ConfirmValues result-shape input', () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText('请逐字核对报告上打印的结果和符号。')).toHaveLength(2);
   });
+
+  it('uses marked Chinese fallback as the bo primary and keeps English secondary', () => {
+    const { container } = render(
+      <ConfirmValues
+        report={report}
+        lang="bo"
+        onConfirmed={vi.fn()}
+      />,
+    );
+
+    const firstName = container.querySelector('.confirm-name');
+    expect(firstName).not.toBeNull();
+    const localizedNames = firstName!.querySelectorAll('[data-requested-lang]');
+
+    expect(localizedNames).toHaveLength(2);
+    expect(localizedNames[0]).toHaveAttribute('data-requested-lang', 'bo');
+    expect(localizedNames[0]).toHaveAttribute('data-resolved-lang', 'zh');
+    expect(localizedNames[0]).toHaveTextContent('空腹血糖翻译未经审核');
+    expect(localizedNames[1]).toHaveAttribute('data-requested-lang', 'en');
+    expect(localizedNames[1]).toHaveAttribute('data-resolved-lang', 'en');
+    expect(localizedNames[1]).toHaveTextContent(/^Fasting plasma glucose$/);
+
+    expect(screen.getByText('请核对这些结果')).toBeInTheDocument();
+    expect(screen.getByLabelText('结果 0')).toBeInTheDocument();
+    const markers = screen.getAllByText('翻译未经审核');
+    expect(markers.length).toBeGreaterThan(0);
+    expect(markers.every((marker) => marker.getAttribute('lang') === 'zh')).toBe(true);
+  });
 });

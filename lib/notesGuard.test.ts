@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { evaluateSegment } from './notesGuard';
 import type { SegmentKind } from './types';
+import { resolveText } from '@/lib/i18n';
 
 function seg(source: string, translated: string, kind: SegmentKind = 'finding') {
   return evaluateSegment({ sourceText: source, translatedText: translated, kind });
@@ -17,6 +18,19 @@ describe('notesGuard — R7/R8/R9 (18 red-team failure modes)', () => {
     expect(o.action).toBe('flag');
     expect(ids(o)).toContain('R7-NEGATION-POLARITY-MISMATCH');
     expect(ids(o)).toContain('R9-HIGH-RISK-PAIR');
+    const message = o.flags.find((f) => f.id === 'R9-HIGH-RISK-PAIR')!.message;
+    expect(resolveText(message, 'en').text).toBe(
+      'This note contains a high-stakes term (e.g. benign/malignant, positive/negative). Please confirm this with your clinician.',
+    );
+    expect(resolveText(message, 'zh').text).toBe(
+      '该记录包含高风险术语（如良性/恶性、阳性/阴性）。请与您的医生确认。',
+    );
+    expect(resolveText(message, 'bo')).toMatchObject({
+      text: resolveText(message, 'zh').text,
+      resolvedLang: 'zh',
+      review: 'unverified',
+      usedFallback: true,
+    });
   });
 
   it('FM-02 negation reversal (asserted → negated) → abstain', () => {

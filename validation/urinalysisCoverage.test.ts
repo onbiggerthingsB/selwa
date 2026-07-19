@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary } from '@/lib/summary';
+import { resolveText } from '@/lib/i18n';
 import type { LabExtraction } from '@/lib/extractionSchema';
 
 // The spec preserves the exact cells below for the acceptance-critical rows.
@@ -70,8 +71,8 @@ describe('19-row Aster urinalysis acceptance fixture', () => {
       expect(row.flags.map((flag) => flag.id), name).not.toContain(
         'R5-LOW-OCR-CONFIDENCE-NUMERIC',
       );
-      expect(section.plainEn.length, name).toBeGreaterThan(0);
-      expect(section.plainZh.length, name).toBeGreaterThan(0);
+      expect(resolveText(section.plain, 'en').text.length, name).toBeGreaterThan(0);
+      expect(resolveText(section.plain, 'zh').text.length, name).toBeGreaterThan(0);
     }
   });
 
@@ -81,7 +82,7 @@ describe('19-row Aster urinalysis acceptance fixture', () => {
       const section = sections.find((item) => item.key === row.entry?.key)!;
       expect(row.entry?.interpretation, name).toBe('report-only');
       expect(row.action, name).toBe('classify');
-      expect(section.chipEn, name).toBe('Within your report’s range');
+      expect(resolveText(section.chip, 'en').text, name).toBe('Within your report’s range');
       expect(section.typicalRange, name).toBe('');
       expect(section.source, name).toBe('');
     }
@@ -95,7 +96,7 @@ describe('19-row Aster urinalysis acceptance fixture', () => {
       expect(row.entry?.interpretation, name).toBe('report-only');
       expect(row.entry?.key, name).not.toMatch(/^(rbc|wbc)_count$/);
       expect(row.action, name).toBe('classify');
-      expect(section.chipEn, name).toBe('Within your report’s range');
+      expect(resolveText(section.chip, 'en').text, name).toBe('Within your report’s range');
       expect(section.typicalRange, name).toBe('');
       expect(section.source, name).toBe('');
     }

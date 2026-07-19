@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { REFERENCE_LABS } from './reference-labs';
 import { findEntry } from '@/lib/reference';
+import { LANGS, resolveText } from '@/lib/i18n';
 
 describe('reference table integrity', () => {
   it('has at least 25 analytes', () => {
@@ -38,7 +39,7 @@ describe('reference table integrity', () => {
   it('every alias is unique across the whole table (no analyte collisions)', () => {
     const seen = new Map<string, string>();
     for (const e of REFERENCE_LABS) {
-      for (const a of [e.nameZh, ...e.aliases]) {
+      for (const a of [resolveText(e.name, 'zh').text, ...e.aliases]) {
         const key = a.trim().toLowerCase();
         if (seen.has(key) && seen.get(key) !== e.key) {
           throw new Error(`alias "${a}" maps to both ${seen.get(key)} and ${e.key}`);
@@ -93,11 +94,15 @@ describe('reference table integrity', () => {
       expect(['ours', 'report-only']).toContain(e.interpretation);
       expect(e.unit.length).toBeGreaterThan(0);
       expect(e.allowedUnits).toContain(e.unit);
-      expect(e.plainEn.length).toBeGreaterThan(0);
-      expect(e.plainZh.length).toBeGreaterThan(0);
+      for (const lang of LANGS) {
+        expect(resolveText(e.name, lang).text.length).toBeGreaterThan(0);
+        expect(resolveText(e.plain, lang).text.length).toBeGreaterThan(0);
+        expect(resolveText(e.definition, lang).text.length).toBeGreaterThan(0);
+      }
+      expect(e.name.bo).toEqual({ fallback: 'zh' });
+      expect(e.plain.bo).toEqual({ fallback: 'zh' });
+      expect(e.definition.bo).toEqual({ fallback: 'zh' });
       // B1 card definition (Codex blocker #2): every entry carries a direction-neutral definition.
-      expect(e.definitionEn.length).toBeGreaterThan(0);
-      expect(e.definitionZh.length).toBeGreaterThan(0);
       if (e.interpretation === 'ours') {
         expect(e.source.length).toBeGreaterThan(0);
         expect(e.refLow !== null || e.refHigh !== null).toBe(true);

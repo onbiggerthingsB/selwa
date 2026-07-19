@@ -4,6 +4,9 @@ import { useRouter } from 'next/navigation';
 import { saveVisit } from '@/lib/db';
 import { clearPendingReport } from '@/lib/session';
 import type { GroundedReport, GroundedNotes } from '@/lib/types';
+import type { Lang } from '@/lib/i18n';
+import { UI_COPY } from '@/lib/uiCopy';
+import { LocalizedText } from '@/components/LocalizedText';
 
 export function SaveVisitButton({
   report,
@@ -12,11 +15,10 @@ export function SaveVisitButton({
 }: {
   report: GroundedReport;
   notes?: GroundedNotes;
-  lang: 'en' | 'zh';
+  lang: Lang;
 }) {
   const router = useRouter();
   const [saved, setSaved] = useState(false);
-  const t = (en: string, zh: string) => (lang === 'zh' ? zh : en);
 
   async function onSave() {
     await saveVisit(report, notes);
@@ -27,7 +29,7 @@ export function SaveVisitButton({
 
   return (
     <button className="btn btn-primary btn-block save" onClick={onSave} disabled={saved}>
-      {saved ? t('Saved', '已保存') : t('Keep this report on my device', '保存到本机')}
+      <LocalizedText value={saved ? UI_COPY.saved : UI_COPY.saveOnDevice} lang={lang} />
     </button>
   );
 }

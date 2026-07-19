@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { CaptureCard } from '@/components/CaptureCard';
 import { SavedVisits } from '@/components/SavedVisits';
 import { InstallPrompt } from '@/components/InstallPrompt';
+import type { Lang } from '@/lib/i18n';
 
 export default function Home() {
-  const [lang] = useState<'en' | 'zh'>('en');
+  const [lang] = useState<Lang>('en');
   return (
     <main className="home">
       <header>

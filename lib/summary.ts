@@ -10,35 +10,37 @@ import {
   statusRangeAgainstPrinted,
 } from '@/lib/reference';
 import { disclaimers } from '@/lib/disclaimers';
+import {
+  defineText,
+  fallback,
+  reviewed,
+  type Lang,
+  type LocalizedText,
+} from '@/lib/i18n';
 
-export type Lang = 'en' | 'zh';
+export type { Lang } from '@/lib/i18n';
 export type ReportStatus = 'below' | 'within' | 'above' | 'outside' | 'none';
 
 export interface SummaryFlag {
   severity: string;
-  messageEn: string;
-  messageZh: string;
+  message: LocalizedText;
 }
 
 export interface SummarySection {
   key: string;
-  nameEn: string;
-  nameZh: string;
+  name: LocalizedText;
   valueText: string; // "7.8 mmol/L" or the raw printed value
   tone: string; // CSS/color tone (low|normal|high|unclassified|critical) — see note below
-  chipEn: string; // the status chip label
-  chipZh: string;
-  // CARD education text: a DIRECTION-NEUTRAL definition of what the test is (entry.definitionEn/Zh).
+  chip: LocalizedText; // the status chip label
+  // CARD education text: a DIRECTION-NEUTRAL definition of what the test is (entry.definition).
   // It renders directly beneath the report-relative chip, so it must NEVER state what a high/low
   // value means — that composition is a patient-specific verdict (Codex blocker #2). '' when
   // unclassified / abstained. Policed by validation/b1VerdictLeakage.test.ts.
-  plainEn: string;
-  plainZh: string;
-  // GLOSSARY text: the fuller description (entry.plainEn/Zh) carrying directional/reference nuance.
+  plain: LocalizedText;
+  // GLOSSARY text: the fuller description (entry.plain) carrying directional/reference nuance.
   // Reserved for a separate glossary one tap away from the patient's number — NOT rendered beneath
   // the chip. '' when unclassified / abstained.
-  glossaryEn: string;
-  glossaryZh: string;
+  glossary: LocalizedText;
   flags: SummaryFlag[];
   reportRange: string; // the range PRINTED ON THE REPORT (verbatim), '' when none
   typicalRange: string; // our curated range, shown as GENERAL context (varies by lab), '' when no entry
@@ -51,25 +53,59 @@ export interface SummarySection {
 // of the report's own information); our own low/normal/high classification stays INTERNAL and
 // only drives the safety guards / flags. When the report prints no range, we do not assert a
 // verdict — we defer to the clinician.
-const REPORT_STATUS_LABEL: Record<ReportStatus, { en: string; zh: string }> = {
-  below: { en: 'Below your report’s range', zh: '低于报告所列范围' },
-  within: { en: 'Within your report’s range', zh: '在报告所列范围内' },
-  above: { en: 'Above your report’s range', zh: '高于报告所列范围' },
-  outside: { en: 'Outside your report’s range', zh: '不在报告所列范围内' },
-  none: { en: 'Ask your clinician to interpret', zh: '请由医生解读' },
+const REPORT_STATUS_LABEL: Record<ReportStatus, LocalizedText> = {
+  below: defineText({
+    en: reviewed('Below your report’s range'),
+    zh: reviewed('低于报告所列范围'),
+    bo: fallback('zh'),
+  }),
+  within: defineText({
+    en: reviewed('Within your report’s range'),
+    zh: reviewed('在报告所列范围内'),
+    bo: fallback('zh'),
+  }),
+  above: defineText({
+    en: reviewed('Above your report’s range'),
+    zh: reviewed('高于报告所列范围'),
+    bo: fallback('zh'),
+  }),
+  outside: defineText({
+    en: reviewed('Outside your report’s range'),
+    zh: reviewed('不在报告所列范围内'),
+    bo: fallback('zh'),
+  }),
+  none: defineText({
+    en: reviewed('Ask your clinician to interpret'),
+    zh: reviewed('请由医生解读'),
+    bo: fallback('zh'),
+  }),
 };
 
 // Abstained rows never assert a comparison (the value itself is uncertain / unrecognized) —
 // so they never carry a verdict chip. low/normal/high map to "Not assessed" defensively: an
 // abstained row should always be 'unclassified', but if any future guard path abstains while
 // leaving a classification set, this must not leak "Low"/"High" as a verdict (B1 gate).
-const ABSTAIN_LABEL: Record<Classification, { en: string; zh: string }> = {
-  low: { en: 'Not assessed', zh: '未评估' },
-  normal: { en: 'Not assessed', zh: '未评估' },
-  high: { en: 'Not assessed', zh: '未评估' },
-  critical: { en: 'Ask your clinician to interpret', zh: '请由医生解读' },
-  unclassified: { en: 'Not assessed', zh: '未评估' },
+const NOT_ASSESSED = defineText({
+  en: reviewed('Not assessed'),
+  zh: reviewed('未评估'),
+  bo: fallback('zh'),
+});
+
+const ABSTAIN_LABEL: Record<Classification, LocalizedText> = {
+  low: NOT_ASSESSED,
+  normal: NOT_ASSESSED,
+  high: NOT_ASSESSED,
+  critical: REPORT_STATUS_LABEL.none,
+  unclassified: NOT_ASSESSED,
 };
+
+function emptyText(): LocalizedText {
+  return defineText({
+    en: reviewed(''),
+    zh: reviewed(''),
+    bo: fallback('zh'),
+  });
+}
 
 // B1 RULE (see validation/b1VerdictLeakage.test.ts): a user-visible message may describe only
 // (a) our confidence in the READING, or (b) the REPORT'S OWN information — never a conclusion
@@ -196,39 +232,37 @@ export function buildSummary(
     const bandNotComparable = row.flags.some((f) => f.id === 'R17-BAND-NOT-COMPARABLE');
 
     let tone: string;
-    let chipEn: string;
-    let chipZh: string;
+    let chip: LocalizedText;
     if (!defer) {
       tone = REPORT_TONE[rs];
-      chipEn = REPORT_STATUS_LABEL[rs].en;
-      chipZh = REPORT_STATUS_LABEL[rs].zh;
+      chip = REPORT_STATUS_LABEL[rs];
     } else if (handled) {
       tone = REPORT_TONE.none;
-      chipEn = REPORT_STATUS_LABEL.none.en; // "Ask your clinician to interpret"
-      chipZh = REPORT_STATUS_LABEL.none.zh;
+      chip = REPORT_STATUS_LABEL.none; // "Ask your clinician to interpret"
     } else {
       tone = row.classification; // abstained/unknown rows keep the neutral abstain framing
-      chipEn = ABSTAIN_LABEL[row.classification].en;
-      chipZh = ABSTAIN_LABEL[row.classification].zh;
+      chip = ABSTAIN_LABEL[row.classification];
     }
 
     return {
       key: entry?.key ?? `row-${i}`,
-      nameEn: entry ? entry.nameEn : row.extracted.name,
-      nameZh: entry ? entry.nameZh : row.extracted.name,
+      name: entry
+        ? entry.name
+        : defineText({
+            en: reviewed(row.extracted.name),
+            zh: reviewed(row.extracted.name),
+            bo: fallback('zh'),
+          }),
       valueText: valueText(row),
       tone,
-      chipEn,
-      chipZh,
-      // CARD: the direction-neutral definition (never the directional plainEn — that is glossary-only).
-      plainEn: handled ? entry!.definitionEn : '',
-      plainZh: handled ? entry!.definitionZh : '',
+      chip,
+      // CARD: the direction-neutral definition (never the directional plain — that is glossary-only).
+      plain: handled ? entry!.definition : emptyText(),
       // GLOSSARY: the fuller description, surfaced separately (not beneath the chip).
-      glossaryEn: handled ? entry!.plainEn : '',
-      glossaryZh: handled ? entry!.plainZh : '',
+      glossary: handled ? entry!.plain : emptyText(),
       flags: row.flags
         .filter((f) => SURFACING_FLAGS.has(f.id))
-        .map((f) => ({ severity: f.severity, messageEn: f.messageEn, messageZh: f.messageZh })),
+        .map((f) => ({ severity: f.severity, message: f.message })),
       // The report's OWN range is the report's information — it surfaces whenever we reproduced
       // a comparison from it, known analyte or not (decoupled). Our curated range + the plain
       // education below DO need the table, so they stay gated on recognition.

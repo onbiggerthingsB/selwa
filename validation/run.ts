@@ -22,7 +22,11 @@ import {
   type GoldCase,
 } from './metrics';
 import { countMatchedImmutables } from './score';
-import { BASELINE_UNAVAILABLE, type Lang, type MtBaseline } from './baseline/MtBaseline';
+import {
+  BASELINE_UNAVAILABLE,
+  type SourceLang,
+  type MtBaseline,
+} from './baseline/MtBaseline';
 import { offlineAdapter } from './baseline/offlineAdapter';
 
 import { groundNotes } from '@/lib/notesGrounding';
@@ -117,7 +121,7 @@ function runOursOnCase(c: CorpusCase): OursRun {
 
 // --- BASELINE: translate the source, score the raw output (never abstains) ---
 async function runBaselineOnCase(c: CorpusCase, baseline: MtBaseline): Promise<CaseResult> {
-  const to: Lang = c.lang === 'zh' ? 'en' : 'zh';
+  const to: SourceLang = c.lang === 'zh' ? 'en' : 'zh';
   let translation: string;
   try {
     translation = await baseline.translate(c.sourceText, c.lang, to);

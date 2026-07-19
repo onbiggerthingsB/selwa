@@ -7,13 +7,17 @@ import { ConfirmValues } from '@/components/ConfirmValues';
 import { SummaryView } from '@/components/SummaryView';
 import { NotesSection } from '@/components/NotesSection';
 import { SaveVisitButton } from '@/components/SaveVisitButton';
+import { LocalizedText } from '@/components/LocalizedText';
+import { TibetanText, TIBETAN_TYPOGRAPHY_SAMPLE } from '@/components/TibetanText';
+import { resolveText, type Lang } from '@/lib/i18n';
+import { UI_COPY } from '@/lib/uiCopy';
 
 export default function ResultPage() {
   const router = useRouter();
   const [report, setReport] = useState<GroundedReport | null>(null);
   const [notes, setNotes] = useState<GroundedNotes | undefined>(undefined);
   const [confirmed, setConfirmed] = useState<GroundedReport | null>(null);
-  const [lang, setLang] = useState<'en' | 'zh'>('en');
+  const [lang, setLang] = useState<Lang>('en');
 
   useEffect(() => {
     // Mount-time load of the in-progress report from sessionStorage (browser-only).
@@ -30,24 +34,53 @@ export default function ResultPage() {
 
   if (!report) return null;
 
-  const t = (en: string, zh: string) => (lang === 'zh' ? zh : en);
-
   return (
     <main className="result">
       <div className="result-head">
         <div>
-          <p className="eyebrow">{t('Your results', '您的结果')}</p>
-          <h2>{t('Lab report', '化验单')}</h2>
+          <p className="eyebrow">
+            <LocalizedText value={UI_COPY.resultEyebrow} lang={lang} />
+          </p>
+          <h2>
+            <LocalizedText value={UI_COPY.labReport} lang={lang} />
+          </h2>
         </div>
-        <div className="lang-toggle" role="group" aria-label={t('Language', '语言')}>
+        <div
+          className="lang-toggle"
+          role="group"
+          aria-label={resolveText(UI_COPY.language, lang).text}
+        >
           <button aria-pressed={lang === 'en'} onClick={() => setLang('en')}>
             EN
           </button>
           <button aria-pressed={lang === 'zh'} onClick={() => setLang('zh')}>
             中文
           </button>
+          <button aria-pressed={lang === 'bo'} onClick={() => setLang('bo')}>
+            TB
+          </button>
         </div>
       </div>
+
+      {lang === 'bo' && (
+        <aside className="tibetan-availability" data-testid="tibetan-availability">
+          <p>
+            <LocalizedText value={UI_COPY.tibetanUnavailable} lang={lang} />
+          </p>
+          <div
+            className="tibetan-typography-probe"
+            aria-label={resolveText(UI_COPY.typographySample, lang).text}
+          >
+            <LocalizedText value={UI_COPY.typographySample} lang={lang} />
+            <TibetanText
+              className="tibetan-glyph-sample"
+              data-testid="tibetan-typography-sample"
+            >
+              {TIBETAN_TYPOGRAPHY_SAMPLE}
+            </TibetanText>
+          </div>
+        </aside>
+      )}
 
       {!confirmed ? (
         <ConfirmValues report={report} lang={lang} onConfirmed={setConfirmed} />

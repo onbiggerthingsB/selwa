@@ -3,6 +3,7 @@ import { evaluateRow } from './guard';
 import { findEntry } from './reference';
 import { parseValue, classify } from './classify';
 import type { ExtractedRow } from '@/lib/types';
+import { resolveText } from '@/lib/i18n';
 
 function row(p: Partial<ExtractedRow>): ExtractedRow {
   return { name: '', value: null, unit: null, printedRange: null, confidence: 'high', ...p };
@@ -17,6 +18,20 @@ describe('evaluateRow', () => {
     const out = evaluateRow(ex, null, null, 'unclassified', 'unknown');
     expect(out.action).toBe('abstain');
     expect(ids(out.flags)).toContain('R1-UNKNOWN-ANALYTE');
+
+    const message = out.flags.find((f) => f.id === 'R1-UNKNOWN-ANALYTE')!.message;
+    expect(resolveText(message, 'en').text).toBe(
+      'This test is not in our reference set, so we are not interpreting it — anything shown here comes from your report itself. Confirm this with your clinician.',
+    );
+    expect(resolveText(message, 'zh').text).toBe(
+      '该项目不在我们的参考资料中，因此我们不作解读——此处显示的内容均来自您的报告本身。请与您的医生确认。',
+    );
+    expect(resolveText(message, 'bo')).toMatchObject({
+      text: resolveText(message, 'zh').text,
+      resolvedLang: 'zh',
+      review: 'unverified',
+      usedFallback: true,
+    });
   });
 
   it('R2: known analyte but mismatched unit → abstain', () => {

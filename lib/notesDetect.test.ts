@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { detectImmutables, splitClauses } from './notesDetect';
 
+if (false) {
+  // Tibetan is a display-language scaffold only; widening SourceLang must make
+  // this expected error fail compilation instead of silently enabling parsing.
+  // @ts-expect-error the clinical detector intentionally accepts EN/ZH source text only
+  detectImmutables('', 'bo');
+}
+
 describe('detectImmutables', () => {
   it('extracts a ZH prefix negation scoping the finding to its right', () => {
     const im = detectImmutables('未见肝内占位', 'zh');

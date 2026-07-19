@@ -55,4 +55,31 @@ describe('SummaryView', () => {
     expect(screen.getAllByText(/高于报告所列范围/).length).toBeGreaterThan(0); // zh "above report's range" chip
     expect(screen.getByText('Fasting plasma glucose')).toBeInTheDocument(); // EN still present
   });
+
+  it('shows explicit Chinese fallback as the bo primary and English as secondary', () => {
+    const { container } = render(<SummaryView report={report} lang="bo" />);
+
+    const firstRow = container.querySelector('.rows > .row');
+    expect(firstRow).not.toBeNull();
+
+    const primary = firstRow!.querySelector('.name-primary');
+    const secondary = firstRow!.querySelector('.name-secondary');
+    expect(primary).toHaveTextContent('空腹血糖翻译未经审核');
+    expect(secondary).toHaveTextContent(/^Fasting plasma glucose$/);
+    expect(
+      primary!.querySelector('[data-requested-lang="bo"][data-resolved-lang="zh"]'),
+    ).not.toBeNull();
+    expect(
+      secondary!.querySelector('[data-requested-lang="en"][data-resolved-lang="en"]'),
+    ).not.toBeNull();
+
+    const markers = screen.getAllByText('翻译未经审核');
+    expect(markers.length).toBeGreaterThan(0);
+    expect(markers.every((marker) => marker.getAttribute('lang') === 'zh')).toBe(true);
+    expect(
+      screen.getAllByText(/高于报告所列范围/).some((node) =>
+        node.closest('[data-requested-lang="bo"][data-resolved-lang="zh"]'),
+      ),
+    ).toBe(true);
+  });
 });

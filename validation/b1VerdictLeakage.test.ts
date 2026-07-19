@@ -13,16 +13,16 @@
 // If a future change reintroduces a verdict into user-visible text, this fails.
 //
 // NOTE: `typicalRange` (our curated range shown as GENERAL context) and the GLOSSARY text
-// (SummarySection.glossaryEn/Zh, sourced from entry.plainEn/Zh) are deliberately NOT policed —
+// (SummarySection.glossary, sourced from entry.plain) are deliberately NOT policed —
 // FDA's own "not a device" examples permit reference material and translations of medical terms,
 // and the glossary lives one tap away from the patient's number, never beneath the chip.
 //
-// WHAT CHANGED (Codex blocker #2): the app used to render the fuller plainEn/plainZh — which say
+// WHAT CHANGED (Codex blocker #2): the app used to render the fuller descriptions — which say
 // what a HIGH/LOW value MEANS ("high values can indicate diabetes", troponin's "any value above
 // the 99th-percentile cutoff is abnormal and... needs urgent assessment") — DIRECTLY BENEATH the
 // report-relative chip. Under a chip that already says "Above your report's range", that clause
 // composes into a patient-specific verdict: the FDA bright line. The fix splits the field. The
-// CARD now renders a DIRECTION-NEUTRAL definition (entry.definitionEn/Zh, → SummarySection.plainEn/Zh)
+// CARD now renders a DIRECTION-NEUTRAL definition (entry.definition → SummarySection.plain)
 // and this gate POLICES it — with BANNED plus CARD_BANNED (directional-implication / threshold /
 // triage patterns). The fuller text moved to the un-policed glossary. So the line held is still
 // "don't apply our range to THIS number", now enforced on the education text too, not just chips.
@@ -31,6 +31,12 @@ import { describe, it, expect } from 'vitest';
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary, type SummarySection } from '@/lib/summary';
 import { REFERENCE_LABS } from '@/data/reference-labs';
+import {
+  LANGS,
+  resolveText,
+  type Lang,
+  type LocalizedText,
+} from '@/lib/i18n';
 import { MIMIC_US_SAMPLE } from './real-corpus/us-sample';
 import { MEDREPBENCH_SAMPLE } from './real-corpus/sample';
 
@@ -53,8 +59,8 @@ const BANNED: { re: RegExp; why: string }[] = [
 // and flags: a leaked definition doesn't say "critical range", it says "high values can indicate
 // diabetes". These patterns catch that shape — a direction word bound to an implication, a
 // threshold verdict, or a triage cue — in EN and ZH. Validated to trip 0/89 shipped definitions
-// while catching 37/89 EN + 25/89 ZH of the ORIGINAL directional strings (the fuller plainEn/Zh),
-// so re-pointing the card back at plainEn, or re-adding a directional clause to a definition,
+// while catching 37/89 EN + 25/89 ZH of the ORIGINAL directional strings (the fuller descriptions),
+// so re-pointing the card back at entry.plain, or re-adding a directional clause to a definition,
 // fails this gate. Applied ONLY to card education text — never to chips (fixed, allow-listed
 // below) nor the glossary (permitted reference material).
 const CARD_BANNED: { re: RegExp; why: string }[] = [
@@ -69,17 +75,110 @@ const CARD_BANNED: { re: RegExp; why: string }[] = [
 ];
 
 // The ONLY chips the user may see: the report's own position, a deferral, or "not assessed".
-const ALLOWED_CHIPS_EN = new Set([
-  'Below your report’s range',
-  'Within your report’s range',
-  'Above your report’s range',
-  'Outside your report’s range',
-  'Ask your clinician to interpret',
-  'Not assessed',
-]);
+const ALLOWED_CHIPS = {
+  en: new Set([
+    'Below your report’s range',
+    'Within your report’s range',
+    'Above your report’s range',
+    'Outside your report’s range',
+    'Ask your clinician to interpret',
+    'Not assessed',
+  ]),
+  zh: new Set([
+    '低于报告所列范围',
+    '在报告所列范围内',
+    '高于报告所列范围',
+    '不在报告所列范围内',
+    '请由医生解读',
+    '未评估',
+  ]),
+} as const;
 
-function visibleStrings(s: SummarySection): string[] {
-  return [s.chipEn, s.chipZh, ...s.flags.flatMap((f) => [f.messageEn, f.messageZh])];
+interface NamedCopy {
+  context: string;
+  copy: LocalizedText;
+}
+
+function visibleCopies(s: SummarySection): NamedCopy[] {
+  return [
+    { context: 'chip', copy: s.chip },
+    ...s.flags.map((f, i) => ({ context: `flag ${i}`, copy: f.message })),
+  ];
+}
+
+/**
+ * Temporary, enforceable bo policy:
+ *
+ * There is deliberately no Tibetan clinical copy yet. A bo request resolves the
+ * existing Chinese copy, so this gate can and does scan the text the user sees.
+ * Merely adding bo to a loop would be unsafe: the EN/ZH regular expressions cannot
+ * police future Tibetan prose. The direct-bo tripwire below therefore MUST fail on
+ * the first direct clinical string. That change may land only together with
+ * medically-literate Tibetan review and Tibetan-specific leakage rules.
+ *
+ * Availability/verification chrome is non-clinical and is rendered and tested by
+ * the localization component tests. It is not an exemption from this clinical gate.
+ */
+function expectSafeLocalizedCopies(
+  copies: NamedCopy[],
+  rules: { re: RegExp; why: string }[],
+  gateName: string,
+): void {
+  const counts: Record<Lang, number> = { en: 0, zh: 0, bo: 0 };
+  const empty: string[] = [];
+  const directBo: string[] = [];
+  const badBoFallback: string[] = [];
+  const violations: string[] = [];
+
+  for (const { context, copy } of copies) {
+    const boVariant = copy.bo;
+    if (!('fallback' in boVariant)) {
+      directBo.push(context);
+    } else if (boVariant.fallback !== 'zh') {
+      badBoFallback.push(`${context} → ${boVariant.fallback}`);
+    }
+
+    for (const lang of LANGS) {
+      const resolved = resolveText(copy, lang);
+      counts[lang] += 1;
+      if (resolved.text.trim().length === 0) empty.push(`${context} ${lang}`);
+
+      if (
+        lang === 'bo'
+        && (
+          !resolved.usedFallback
+          || resolved.resolvedLang !== 'zh'
+          || resolved.path.join('→') !== 'bo→zh'
+        )
+      ) {
+        badBoFallback.push(
+          `${context} → resolved=${resolved.resolvedLang}, path=${resolved.path.join('→')}`,
+        );
+      }
+
+      for (const rule of rules) {
+        if (rule.re.test(resolved.text)) {
+          violations.push(
+            `${context} ${lang}/${resolved.resolvedLang} → "${resolved.text.slice(0, 70)}" [${rule.why}]`,
+          );
+        }
+      }
+    }
+  }
+
+  expect(counts.en, `${gateName}: the gate must inspect real visible copy`).toBeGreaterThan(0);
+  expect(counts.zh, `${gateName}: ZH coverage must equal EN coverage`).toBe(counts.en);
+  expect(counts.bo, `${gateName}: bo fallback coverage must equal EN coverage`).toBe(counts.en);
+  expect(empty, `${gateName}: a localized clinical string resolved empty`).toEqual([]);
+  expect(
+    directBo,
+    `${gateName}: direct bo clinical copy exists. Add Tibetan-specific leakage rules and medically-literate review before removing this tripwire.`,
+  ).toEqual([]);
+  expect(
+    badBoFallback,
+    `${gateName}: bo clinical copy must explicitly resolve through the tested zh fallback`,
+  ).toEqual([]);
+  expect(violations, `${gateName}:\n${violations.join('\n')}`).toEqual([]);
 }
 
 function sectionsFor(name: string, value: string, unit: string | null, range: string | null): SummarySection[] {
@@ -104,17 +203,18 @@ const FORCING_ROWS: [string, string, string | null, string | null][] = [
 
 describe('B1 gate — no user-visible verdict about the patient’s own value', () => {
   it('guard-forcing rows surface no banned verdict/triage text', () => {
-    const violations: string[] = [];
+    const copies: NamedCopy[] = [];
     for (const [n, v, u, r] of FORCING_ROWS) {
       for (const s of sectionsFor(n, v, u, r)) {
-        for (const text of visibleStrings(s)) {
-          for (const b of BANNED) {
-            if (b.re.test(text)) violations.push(`${n} ${v}${u ?? ''} → "${text.slice(0, 70)}" [${b.why}]`);
-          }
-        }
+        copies.push(
+          ...visibleCopies(s).map(({ context, copy }) => ({
+            context: `${n} ${v}${u ?? ''} ${context}`,
+            copy,
+          })),
+        );
       }
     }
-    expect(violations, `B1 verdict leakage:\n${violations.join('\n')}`).toEqual([]);
+    expectSafeLocalizedCopies(copies, BANNED, 'B1 verdict leakage');
   });
 
   it('R18 explains an uncorroborated specimen match without making a clinical claim', () => {
@@ -134,67 +234,85 @@ describe('B1 gate — no user-visible verdict about the patient’s own value', 
       'unknown',
     );
     const [section] = buildSummary(report, 'en').sections;
-    const visible = visibleStrings(section);
-    const violations: string[] = [];
+    const copies = visibleCopies(section).map(({ context, copy }) => ({
+      context: `R18 ${context}`,
+      copy,
+    }));
+    const visibleEn = copies.map(({ copy }) => resolveText(copy, 'en').text);
+    const visibleZh = copies.map(({ copy }) => resolveText(copy, 'zh').text);
+    const visibleBo = copies.map(({ copy }) => resolveText(copy, 'bo').text);
 
     expect(report.rows[0].flags.map((f) => f.id)).toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
-    expect(visible.join(' ')).toMatch(/could not corroborate the specimen/i);
-    for (const text of visible) {
-      for (const b of BANNED) {
-        if (b.re.test(text)) violations.push(`"${text}" [${b.why}]`);
-      }
-    }
-    expect(violations, `R18 B1 verdict leakage:\n${violations.join('\n')}`).toEqual([]);
+    expect(visibleEn.join(' ')).toMatch(/could not corroborate the specimen/i);
+    expect(visibleZh.join(' ')).toMatch(/无法用报告上打印的参考信息确认/);
+    expect(visibleBo, 'bo must show the exact tested Chinese R18 disclosure').toEqual(visibleZh);
+    expectSafeLocalizedCopies(copies, BANNED, 'R18 B1 verdict leakage');
   });
 
   it('real corpora surface no banned verdict/triage text', () => {
-    const violations: string[] = [];
+    const copies: NamedCopy[] = [];
     for (const corpus of [MIMIC_US_SAMPLE, MEDREPBENCH_SAMPLE]) {
       for (const rep of corpus) {
         for (const it of rep.items) {
           for (const s of sectionsFor(it.item_name, it.item_value, it.item_unit || null, it.item_range || null)) {
-            for (const text of visibleStrings(s)) {
-              for (const b of BANNED) if (b.re.test(text)) violations.push(`${it.item_name.trim()} → "${text.slice(0, 60)}" [${b.why}]`);
-            }
+            copies.push(
+              ...visibleCopies(s).map(({ context, copy }) => ({
+                context: `${it.item_name.trim()} ${context}`,
+                copy,
+              })),
+            );
           }
         }
       }
     }
-    expect([...new Set(violations)], `B1 verdict leakage on real data:\n${[...new Set(violations)].join('\n')}`).toEqual([]);
+    expectSafeLocalizedCopies(copies, BANNED, 'B1 verdict leakage on real data');
   });
 
   it('the chip is only ever the report’s own position, a deferral, or "not assessed"', () => {
     const bad: string[] = [];
+    const copies: NamedCopy[] = [];
+    const counts: Record<Lang, number> = { en: 0, zh: 0, bo: 0 };
     for (const [n, v, u, r] of FORCING_ROWS) {
       for (const s of sectionsFor(n, v, u, r)) {
-        if (!ALLOWED_CHIPS_EN.has(s.chipEn)) bad.push(`${n} ${v} → chip "${s.chipEn}"`);
+        copies.push({ context: `${n} ${v}${u ?? ''} chip`, copy: s.chip });
+        for (const lang of LANGS) {
+          const chip = resolveText(s.chip, lang);
+          counts[lang] += 1;
+          if (
+            (chip.resolvedLang !== 'en' && chip.resolvedLang !== 'zh')
+            || !ALLOWED_CHIPS[chip.resolvedLang].has(chip.text)
+          ) {
+            bad.push(`${n} ${v} ${lang}/${chip.resolvedLang} → chip "${chip.text}"`);
+          }
+        }
       }
     }
+    expectSafeLocalizedCopies(copies, [], 'B1 chip allow-list coverage');
+    expect(counts.en).toBeGreaterThan(0);
+    expect(counts).toEqual({ en: counts.en, zh: counts.en, bo: counts.en });
     // ABSTAIN_LABEL maps low→"Low"/high→"High": a verdict chip if ever reachable.
     expect(bad, `verdict chips:\n${bad.join('\n')}`).toEqual([]);
   });
 
-  // EXHAUSTIVE: the card renders entry.definitionEn/Zh verbatim, so policing the source field
+  // EXHAUSTIVE: the card renders entry.definition verbatim, so policing the source field
   // covers every entry — not only the analytes that happen to appear in the corpora.
   it('every reference definition (the card education text) leaks no verdict or triage', () => {
-    const violations: string[] = [];
     const CARD_RULES = [...BANNED, ...CARD_BANNED];
-    for (const e of REFERENCE_LABS) {
-      for (const [lang, text] of [['EN', e.definitionEn], ['ZH', e.definitionZh]] as const) {
-        for (const b of CARD_RULES) {
-          if (b.re.test(text)) violations.push(`${e.key} ${lang} → "${text.slice(0, 70)}" [${b.why}]`);
-        }
-      }
-    }
-    expect(violations, `card definition leakage:\n${violations.join('\n')}`).toEqual([]);
+    const copies = REFERENCE_LABS.map((entry) => ({
+      context: `${entry.key} card definition`,
+      copy: entry.definition,
+    }));
+    expect(copies).toHaveLength(REFERENCE_LABS.length);
+    expectSafeLocalizedCopies(copies, CARD_RULES, 'card definition leakage');
   });
 
-  // WIRING: the card education text (SummarySection.plainEn/Zh) must be the DEFINITION, not the
-  // fuller directional plainEn/Zh. If a future change re-points summary.ts back at entry.plainEn,
-  // the rendered card text stops matching entry.definitionEn and this fails — before the directional
+  // WIRING: the card education text (SummarySection.plain) must be the DEFINITION, not the
+  // fuller directional entry.plain. If a future change re-points summary.ts back at entry.plain,
+  // the rendered card text stops matching entry.definition and this fails — before the directional
   // string can reach a patient beneath the chip.
   it('the rendered card text is the direction-neutral definition, not the fuller description', () => {
     const mismatches: string[] = [];
+    const renderedCopies: NamedCopy[] = [];
     // Recognised, in-range values so the row classifies and the card education text is emitted.
     const CASES: [string, string, string, string][] = [
       ['Troponin I', '5', 'ng/L', 'troponin_i'],
@@ -205,11 +323,27 @@ describe('B1 gate — no user-visible verdict about the patient’s own value', 
     for (const [name, value, unit, key] of CASES) {
       const entry = REFERENCE_LABS.find((e) => e.key === key)!;
       const [s] = sectionsFor(name, value, unit, null);
-      if (s.plainEn !== entry.definitionEn) mismatches.push(`${key}: card EN "${s.plainEn.slice(0, 50)}" ≠ definitionEn`);
-      if (s.plainZh !== entry.definitionZh) mismatches.push(`${key}: card ZH "${s.plainZh.slice(0, 30)}" ≠ definitionZh`);
-      // and the fuller description must NOT be the card text
-      if (s.plainEn === entry.plainEn && entry.plainEn !== entry.definitionEn) mismatches.push(`${key}: card is rendering the fuller plainEn`);
+      renderedCopies.push({ context: `${key} rendered card definition`, copy: s.plain });
+      for (const lang of LANGS) {
+        const card = resolveText(s.plain, lang).text;
+        const definition = resolveText(entry.definition, lang).text;
+        const fuller = resolveText(entry.plain, lang).text;
+        if (card !== definition) {
+          mismatches.push(
+            `${key} ${lang}: card "${card.slice(0, 50)}" ≠ definition`,
+          );
+        }
+        // and the fuller description must NOT be the card text
+        if (card === fuller && fuller !== definition) {
+          mismatches.push(`${key} ${lang}: card is rendering the fuller description`);
+        }
+      }
     }
+    expectSafeLocalizedCopies(
+      renderedCopies,
+      [...BANNED, ...CARD_BANNED],
+      'rendered card definition leakage',
+    );
     expect(mismatches, `card wiring:\n${mismatches.join('\n')}`).toEqual([]);
   });
 });

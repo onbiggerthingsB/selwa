@@ -6,6 +6,7 @@
 // LLM-is-OCR-only / meaning-is-deterministic invariant is preserved).
 
 import type { GroundedReport, GroundedRow, GuardFlag } from '@/lib/types';
+import { defineText, fallback, reviewed } from '@/lib/i18n';
 
 // direct/conjugated bilirubin is a fraction of total, so direct ≤ total. Fire only
 // when direct exceeds total by BOTH a relative margin AND an absolute floor: direct
@@ -23,10 +24,15 @@ function crossRowFlag(): GuardFlag {
   return {
     id: 'R15-CROSS-ROW-INCONSISTENCY',
     severity: 'caution',
-    messageEn:
-      'Two related values on this report don’t line up (the bilirubin values are inconsistent with each other), so we may have misread a number or a unit. Please check them against your report.',
-    messageZh:
-      '这份报告上两个相关数值不一致（胆红素各项彼此矛盾），我们可能读错了某个数字或单位。请与您的报告核对这些项目。',
+    message: defineText({
+      en: reviewed(
+        'Two related values on this report don’t line up (the bilirubin values are inconsistent with each other), so we may have misread a number or a unit. Please check them against your report.',
+      ),
+      zh: reviewed(
+        '这份报告上两个相关数值不一致（胆红素各项彼此矛盾），我们可能读错了某个数字或单位。请与您的报告核对这些项目。',
+      ),
+      bo: fallback('zh'),
+    }),
   };
 }
 

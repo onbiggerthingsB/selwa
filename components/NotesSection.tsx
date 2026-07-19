@@ -2,6 +2,9 @@
 import type { GroundedNotes } from '@/lib/types';
 import { buildNotesView, type NotesViewFlag, type NotesViewRow } from '@/lib/notesSummary';
 import type { Lang } from '@/lib/summary';
+import { LocalizedText } from '@/components/LocalizedText';
+import { resolveText } from '@/lib/i18n';
+import { UI_COPY } from '@/lib/uiCopy';
 
 function FlagIcon({ severity }: { severity: string }) {
   const common = {
@@ -36,11 +39,12 @@ function FlagIcon({ severity }: { severity: string }) {
 }
 
 function NoteCard({ r, lang }: { r: NotesViewRow; lang: Lang }) {
-  const en = lang === 'en';
   return (
     <li className={`row note-row${r.abstained ? ' note-held' : ''}`}>
       <div className="note-head">
-        <span className="note-kind">{r.kindLabel}</span>
+        <span className="note-kind">
+          <LocalizedText value={r.kindLabel} lang={lang} />
+        </span>
       </div>
 
       {/* The source clause is ALWAYS shown, verbatim. */}
@@ -51,20 +55,21 @@ function NoteCard({ r, lang }: { r: NotesViewRow; lang: Lang }) {
       {r.abstained ? (
         <p className="note-held-note">
           <FlagIcon severity="urgent" />
-          <span lang={en ? 'en' : 'zh'} className={en ? '' : 'zh'}>
-            {r.abstainNote}
-          </span>
+          {r.abstainNote && <LocalizedText value={r.abstainNote} lang={lang} />}
         </p>
       ) : (
         r.translation && (
-          <p className="note-translation" lang={en ? 'en' : 'zh'}>
+          <p className="note-translation" lang="auto">
             {r.translation}
           </p>
         )
       )}
 
       {r.chips.length > 0 && (
-        <div className="note-chips" aria-label={en ? 'Kept exactly as written' : '保持原文不变'}>
+        <div
+          className="note-chips"
+          aria-label={resolveText(UI_COPY.keptExactly, lang).text}
+        >
           {r.chips.map((c, i) => (
             <span key={i} className={`note-chip note-chip-${c.type}`}>
               {c.label}
@@ -78,9 +83,7 @@ function NoteCard({ r, lang }: { r: NotesViewRow; lang: Lang }) {
           {r.flags.map((f: NotesViewFlag, i) => (
             <div key={i} className={`flag flag-${f.severity}`}>
               <FlagIcon severity={f.severity} />
-              <span lang={en ? 'en' : 'zh'} className={en ? '' : 'zh'}>
-                {f.message}
-              </span>
+              <LocalizedText value={f.message} lang={lang} />
             </div>
           ))}
         </div>
@@ -90,18 +93,20 @@ function NoteCard({ r, lang }: { r: NotesViewRow; lang: Lang }) {
 }
 
 export function NotesSection({ notes, lang }: { notes: GroundedNotes; lang: Lang }) {
-  const view = buildNotesView(notes, lang);
+  const view = buildNotesView(notes);
   if (view.rows.length === 0) return null;
-  const en = lang === 'en';
 
   return (
-    <section className="notes-section" aria-label={en ? 'What the doctor told you' : '医生说了什么'}>
+    <section
+      className="notes-section"
+      aria-label={resolveText(UI_COPY.doctorNotes, lang).text}
+    >
       <div className="notes-head">
-        <p className="eyebrow">{en ? "What the doctor told you" : '医生说了什么'}</p>
+        <p className="eyebrow">
+          <LocalizedText value={UI_COPY.doctorNotes} lang={lang} />
+        </p>
         <p className="notes-sub">
-          {en
-            ? 'In plain words. Numbers, doses, and key terms are kept exactly as written.'
-            : '用大白话解释。数字、剂量和关键术语均保持原文不变。'}
+          <LocalizedText value={UI_COPY.doctorNotesSummary} lang={lang} />
         </p>
       </div>
       <ul className="rows">

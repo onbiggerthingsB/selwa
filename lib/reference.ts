@@ -1,5 +1,6 @@
 import type { Bound, ReferenceEntry, Sex } from '@/lib/types';
 import { REFERENCE_LABS } from '@/data/reference-labs';
+import { LANGS, resolveText } from '@/lib/i18n';
 
 function normName(s: string): string {
   return s
@@ -12,7 +13,8 @@ function normName(s: string): string {
 const INDEX: Map<string, ReferenceEntry> = (() => {
   const m = new Map<string, ReferenceEntry>();
   for (const e of REFERENCE_LABS) {
-    for (const token of [e.key, e.nameEn, e.nameZh, ...e.aliases]) {
+    const localizedNames = LANGS.map((lang) => resolveText(e.name, lang).text);
+    for (const token of [e.key, ...localizedNames, ...e.aliases]) {
       m.set(normName(token), e);
     }
   }

@@ -1,11 +1,12 @@
+import type { LocalizedText } from '@/lib/i18n';
+
 export type Sex = 'male' | 'female' | 'unknown';
 
 export type Bound = number | { male: number; female: number };
 
 export interface ReferenceEntry {
   key: string; // stable id, e.g. 'fasting_glucose'
-  nameEn: string;
-  nameZh: string;
+  name: LocalizedText;
   aliases: string[]; // EN abbreviations + ZH names/synonyms, matched case-insensitively
   specimen: 'blood' | 'urine'; // required: known context must never cross specimen frames
   /**
@@ -37,16 +38,14 @@ export interface ReferenceEntry {
   highStakes: boolean; // any abnormal value always flagged for clinician
   populationSensitive: boolean; // range depends on sex/age/fasting/pregnancy
   ageBands?: AgeBand[];
-  // B1 (Codex blocker #2): the CARD renders `definitionEn/definitionZh` — a DIRECTION-NEUTRAL
+  // B1 (Codex blocker #2): the CARD renders `definition` — a DIRECTION-NEUTRAL
   // definition of what the test IS (no "high means X", no thresholds, no triage), so it cannot
-  // compose with the report-relative chip into a patient-specific verdict. `plainEn/plainZh` is
+  // compose with the report-relative chip into a patient-specific verdict. `plain` is
   // the FULLER description (carries directional/reference nuance) and is reserved for a separate
   // glossary one tap away from the patient's number — never rendered beneath the chip. See
   // lib/summary.ts and validation/b1VerdictLeakage.test.ts.
-  definitionEn: string;
-  definitionZh: string;
-  plainEn: string;
-  plainZh: string;
+  definition: LocalizedText;
+  plain: LocalizedText;
   source: string;
 }
 
@@ -61,8 +60,7 @@ export type FlagSeverity = 'info' | 'caution' | 'urgent';
 export interface GuardFlag {
   id: string; // rule id, e.g. 'R4-HIGH-STAKES-ANY-ABNORMAL'
   severity: FlagSeverity;
-  messageEn: string;
-  messageZh: string;
+  message: LocalizedText;
 }
 
 export interface ExtractedRow {

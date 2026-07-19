@@ -9,6 +9,7 @@
 // lives in notesGuard.
 
 import type { Immutable, ImperativePolarity } from './types';
+import type { SourceLang } from './i18n';
 import {
   NEGATION_MARKERS,
   DOSE_UNITS,
@@ -45,7 +46,7 @@ const ZH_SUFFIX_HEDGES = new Set(['待排', '待排除', '待查', '不除外', 
 
 // Markers sorted longest-first so '不能除外' beats '不', 'no evidence of' beats
 // 'no', '未见明显' beats '未见'.
-function markersForLang(lang: 'en' | 'zh'): NegationMarker[] {
+function markersForLang(lang: SourceLang): NegationMarker[] {
   return NEGATION_MARKERS.filter((m) => m.lang === lang).sort(
     (a, b) => b.marker.length - a.marker.length,
   );
@@ -57,7 +58,7 @@ function cleanFinding(s: string): string {
   return s.replace(/^[\s,，、的]+/u, '').replace(/[\s,，、的]+$/u, '').trim();
 }
 
-function detectNegations(clause: string, lang: 'en' | 'zh'): Immutable[] {
+function detectNegations(clause: string, lang: SourceLang): Immutable[] {
   const out: Immutable[] = [];
   const markers = markersForLang(lang);
   // Track spans already consumed by a marker match to avoid double-counting
@@ -170,7 +171,7 @@ const DOSE_RE = new RegExp(
 // Frequency tokens sorted longest-first for greedy matching within a clause.
 const FREQ_SORTED = [...FREQUENCY_TOKENS].sort((a, b) => b.length - a.length);
 
-function findFrequency(clause: string, lang: 'en' | 'zh'): string | undefined {
+function findFrequency(clause: string, lang: SourceLang): string | undefined {
   for (const f of FREQ_SORTED) {
     if (lang === 'en') {
       // Word-boundary match for ASCII frequency codes (QD, BID…).
@@ -187,7 +188,7 @@ function findFrequency(clause: string, lang: 'en' | 'zh'): string | undefined {
   return undefined;
 }
 
-function detectDoses(clause: string, lang: 'en' | 'zh'): { doses: Immutable[]; spans: Array<[number, number]> } {
+function detectDoses(clause: string, lang: SourceLang): { doses: Immutable[]; spans: Array<[number, number]> } {
   const doses: Immutable[] = [];
   const spans: Array<[number, number]> = [];
   const freq = findFrequency(clause, lang);
@@ -224,7 +225,7 @@ const ZH_DRUG_SUFFIX = /(唑|平|林|汀|坦|普利|胺|酮|砜|单抗|霉素|�
 
 function detectDrugs(
   clause: string,
-  lang: 'en' | 'zh',
+  lang: SourceLang,
   doseSpans: Array<[number, number]>,
 ): Immutable[] {
   const out: Immutable[] = [];
@@ -334,7 +335,7 @@ function invertPolarity(p: ImperativePolarity): ImperativePolarity {
 // not a window scan — so 别的 (别 inside "other"), 不得不 (不得 inside "had to"), and EN
 // 'nevertheless' (never) can't spuriously flip a HOLD into a CONTINUE (the unsafe
 // direction: a real hold rendered as keep-taking).
-function precededByInversion(clause: string, idx: number, lang: 'en' | 'zh'): boolean {
+function precededByInversion(clause: string, idx: number, lang: SourceLang): boolean {
   const raw = (lang === 'en' ? clause.toLowerCase() : clause).slice(0, idx);
   const prefix = lang === 'en' ? raw.replace(/\s+$/u, '') : raw;
   return IMPERATIVE_INVERSION_MARKERS.filter((m) => m.lang === lang).some((m) => {
@@ -359,7 +360,7 @@ function nearestDrugId(clause: string, idx: number, drugs: Immutable[]): string 
   return best ? best.id : null;
 }
 
-function clauseHasMedAnaphor(clause: string, lang: 'en' | 'zh'): boolean {
+function clauseHasMedAnaphor(clause: string, lang: SourceLang): boolean {
   const hay = lang === 'en' ? clause.toLowerCase() : clause;
   if (IMPERATIVE_MED_ANAPHORS.filter((a) => a.lang === lang).some((a) => hay.includes(lang === 'en' ? a.token.toLowerCase() : a.token))) {
     return true;
@@ -380,7 +381,7 @@ const ZH_STOP_MED_RE = /停[一-龥]{1,8}?药/gu;
 // EN "cut … in half" (halve) even when a drug/object sits between the words.
 const EN_CUT_HALF_RE = /\bcut\b[a-z0-9\s'-]*\bin half\b/gi;
 
-function detectImperatives(clause: string, lang: 'en' | 'zh', drugs: Immutable[]): Immutable[] {
+function detectImperatives(clause: string, lang: SourceLang, drugs: Immutable[]): Immutable[] {
   const out: Immutable[] = [];
   const consumed: Array<[number, number]> = [];
   const overlaps = (start: number, end: number) => consumed.some(([s, e]) => start < e && end > s);
@@ -491,7 +492,7 @@ function detectBareNumbers(
 }
 
 // --- Public entry point -----------------------------------------------------
-export function detectImmutables(text: string, lang: 'en' | 'zh'): Immutable[] {
+export function detectImmutables(text: string, lang: SourceLang): Immutable[] {
   const result: Immutable[] = [];
   for (const clause of splitClauses(text)) {
     result.push(...detectNegations(clause, lang));

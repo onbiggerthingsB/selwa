@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Fraunces, Newsreader } from 'next/font/google';
+import { Fraunces, Newsreader, Noto_Serif_Tibetan } from 'next/font/google';
 import { DisclaimerBanner } from '@/components/DisclaimerBanner';
 import './globals.css';
 
@@ -16,6 +16,13 @@ const newsreader = Newsreader({
   variable: '--font-newsreader',
 });
 
+const notoSerifTibetan = Noto_Serif_Tibetan({
+  subsets: ['tibetan'],
+  display: 'swap',
+  weight: 'variable',
+  variable: '--font-noto-serif-tibetan',
+});
+
 export const metadata: Metadata = {
   title: 'Health Translator',
   description: 'Plain-language, safety-guarded summaries of your lab reports (Mandarin ↔ English).',
@@ -26,7 +33,10 @@ export const viewport: Viewport = { themeColor: '#F4EFE7', width: 'device-width'
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${newsreader.variable}`}>
+    <html
+      lang="en"
+      className={`${fraunces.variable} ${newsreader.variable} ${notoSerifTibetan.variable}`}
+    >
       <body>
         <DisclaimerBanner />
         {children}

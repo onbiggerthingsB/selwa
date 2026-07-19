@@ -5,9 +5,11 @@
 // LLM never decides what a negation/dose/drug *means*; meaning is read off these
 // tables. Edit with the same care as a drug-dosing chart.
 
+import type { SourceLang } from '@/lib/i18n';
+
 export interface NegationMarker {
   marker: string;
-  lang: 'en' | 'zh';
+  lang: SourceLang;
   polarity: 'absent' | 'uncertain';
   // Hedge ladder rank: higher = more certain/assertive toward the finding.
   // Used by the guard to detect a lost hedge rung (考虑→assertion) or a
@@ -148,7 +150,7 @@ const RAW_MARKERS_ZH: RawMarker[] = [
   { marker: '建议复查', kind: 'uncertainty', strength: 'follow-up-advised' },
 ];
 
-function buildMarkers(raw: RawMarker[], lang: 'en' | 'zh'): NegationMarker[] {
+function buildMarkers(raw: RawMarker[], lang: SourceLang): NegationMarker[] {
   return raw.map((m) => ({
     marker: m.marker,
     lang,
@@ -300,7 +302,7 @@ export const KNOWN_DRUGS: KnownDrug[] = RAW_DRUGS.map((d) => {
 // and are medication directives on their own.
 export interface ImperativeMarker {
   marker: string;
-  lang: 'en' | 'zh';
+  lang: SourceLang;
   polarity: 'hold' | 'continue' | 'dose-change';
   doseDir?: 'up' | 'down' | 'unknown';
   requiresDrugScope?: boolean;
@@ -315,7 +317,7 @@ export const IMPERATIVE_MONITORING_OBJECTS: string[] = ['观察', '随访', '监
 // named drug in its clause but refers to one of these, it is still a medication order —
 // emit it (so a flip on "继续这个药" / "keep taking this medication" is caught) rather
 // than silently skip. Multi-char only (no bare "it"/"them") to avoid substring noise.
-export const IMPERATIVE_MED_ANAPHORS: { lang: 'en' | 'zh'; token: string }[] = [
+export const IMPERATIVE_MED_ANAPHORS: { lang: SourceLang; token: string }[] = [
   { lang: 'zh', token: '这个药' }, { lang: 'zh', token: '该药' }, { lang: 'zh', token: '此药' },
   { lang: 'zh', token: '这药' }, { lang: 'zh', token: '这些药' }, { lang: 'zh', token: '这种药' },
   { lang: 'zh', token: '该药物' }, { lang: 'zh', token: '原药' },
@@ -352,7 +354,7 @@ export const EN_MED_CLASS_ANCHORS: string[] = [
 // explicit directive negators ("不要停药" = do not stop). Bare 不 is deliberately EXCLUDED:
 // it would make 不得不停用 ("had to stop" = a real HOLD) wrongly invert to continue (the
 // 不 tail of 不得不) — the dangerous direction. Real "don't stop" orders use 不要/不可/不能/别.
-export const IMPERATIVE_INVERSION_MARKERS: { lang: 'en' | 'zh'; marker: string }[] = [
+export const IMPERATIVE_INVERSION_MARKERS: { lang: SourceLang; marker: string }[] = [
   { lang: 'zh', marker: '不要' }, { lang: 'zh', marker: '不可' }, { lang: 'zh', marker: '不能' },
   { lang: 'zh', marker: '勿' }, { lang: 'zh', marker: '切勿' }, { lang: 'zh', marker: '别' },
   { lang: 'zh', marker: '无需' }, { lang: 'zh', marker: '不用' }, { lang: 'zh', marker: '不得' },

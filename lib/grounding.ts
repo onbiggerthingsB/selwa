@@ -5,6 +5,7 @@ import { parseValue, classify } from '@/lib/classify';
 import { evaluateRow } from '@/lib/guard';
 import { convertValue } from '@/lib/convert';
 import { applyCrossRowChecks } from '@/lib/crossRowChecks';
+import { defineText, fallback, reviewed } from '@/lib/i18n';
 
 export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: number): GroundedReport {
   const rows: GroundedRow[] = extraction.rows.map((extracted) => {
@@ -76,8 +77,13 @@ export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: numb
       outcome.flags.unshift({
         id: 'R2b-UNIT-CONVERTED',
         severity: 'info',
-        messageEn: `We converted ${converted.from} to ${converted.to} to compare with our reference range.`,
-        messageZh: `我们已将 ${converted.from} 换算为 ${converted.to} 以便与参考范围比较。`,
+        message: defineText({
+          en: reviewed(
+            `We converted ${converted.from} to ${converted.to} to compare with our reference range.`,
+          ),
+          zh: reviewed(`我们已将 ${converted.from} 换算为 ${converted.to} 以便与参考范围比较。`),
+          bo: fallback('zh'),
+        }),
       });
     }
 

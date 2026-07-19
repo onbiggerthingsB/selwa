@@ -12,14 +12,14 @@
 // a clear error; tests mock the SDK.
 
 import Anthropic from '@anthropic-ai/sdk';
-import type { Lang, MtBaseline } from './MtBaseline';
+import type { SourceLang, MtBaseline } from './MtBaseline';
 
 const TRANSLATE_PROMPT = [
   'Translate the following clinical text into the target language for a patient.',
   'Return ONLY the translation, with no preamble, notes, or formatting.',
 ].join(' ');
 
-const LANG_NAME: Record<Lang, string> = { zh: 'Chinese', en: 'English' };
+const LANG_NAME: Record<SourceLang, string> = { zh: 'Chinese', en: 'English' };
 
 // Injectable for tests; defaults to a real client built from the env key.
 export interface AnthropicLike {
@@ -46,7 +46,7 @@ function defaultClient(): AnthropicLike {
 export function makeUnguardedLlmAdapter(client?: AnthropicLike): MtBaseline {
   return {
     id: 'unguarded-llm',
-    async translate(text: string, _from: Lang, to: Lang): Promise<string> {
+    async translate(text: string, _from: SourceLang, to: SourceLang): Promise<string> {
       const c = client ?? defaultClient();
       const message = await c.messages.create({
         model: 'claude-opus-4-8',

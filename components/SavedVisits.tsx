@@ -3,11 +3,13 @@ import { useEffect, useState } from 'react';
 import { listVisits, deleteVisit, type VisitRecord } from '@/lib/db';
 import { SummaryView } from '@/components/SummaryView';
 import { NotesSection } from '@/components/NotesSection';
+import { LocalizedText } from '@/components/LocalizedText';
+import type { Lang } from '@/lib/i18n';
+import { UI_COPY } from '@/lib/uiCopy';
 
-export function SavedVisits({ lang }: { lang: 'en' | 'zh' }) {
+export function SavedVisits({ lang }: { lang: Lang }) {
   const [visits, setVisits] = useState<VisitRecord[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
-  const t = (en: string, zh: string) => (lang === 'zh' ? zh : en);
 
   useEffect(() => {
     listVisits().then(setVisits);
@@ -17,7 +19,9 @@ export function SavedVisits({ lang }: { lang: 'en' | 'zh' }) {
 
   return (
     <section className="saved">
-      <h2>{t('Saved reports', '已保存的报告')}</h2>
+      <h2>
+        <LocalizedText value={UI_COPY.savedReports} lang={lang} />
+      </h2>
       <ul className="saved-list">
         {visits.map((v) => (
           <li key={v.id} className="saved-item">
@@ -25,7 +29,8 @@ export function SavedVisits({ lang }: { lang: 'en' | 'zh' }) {
               <button className="saved-open" onClick={() => setOpenId(openId === v.id ? null : v.id)}>
                 {new Date(v.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                 <span className="saved-meta">
-                  {v.report.rows.length} {t('values · on this device', '项 · 保存在本机')}
+                  {v.report.rows.length}{' '}
+                  <LocalizedText value={UI_COPY.valuesOnDevice} lang={lang} />
                 </span>
               </button>
               <button
@@ -35,7 +40,7 @@ export function SavedVisits({ lang }: { lang: 'en' | 'zh' }) {
                   setVisits(await listVisits());
                 }}
               >
-                {t('Delete', '删除')}
+                <LocalizedText value={UI_COPY.delete} lang={lang} />
               </button>
             </div>
             {openId === v.id && (

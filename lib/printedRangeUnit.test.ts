@@ -44,12 +44,13 @@
 import { describe, it, expect } from 'vitest';
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary } from '@/lib/summary';
+import { resolveText } from '@/lib/i18n';
 
 function evaluate(name: string, value: string, unit: string, range: string) {
   const rep = groundExtraction({ rows: [{ name, value, unit, printedRange: range, confidence: 'high' }] }, 'unknown');
   const row = rep.rows[0];
   return {
-    chip: buildSummary(rep, 'en').sections[0].chipEn,
+    chip: resolveText(buildSummary(rep, 'en').sections[0].chip, 'en').text,
     needsConfirm: row.needsConfirm,
     flagIds: row.flags.map((f) => f.id),
   };

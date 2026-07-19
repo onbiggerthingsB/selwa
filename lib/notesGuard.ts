@@ -14,6 +14,8 @@
 import type { GuardFlag, Immutable, SegmentAction, SegmentKind } from './types';
 import { detectImmutables, splitClauses } from './notesDetect';
 import { HIGH_RISK_PAIRS } from '@/data/medical-lexicon';
+import type { LocalizedText, SourceLang } from '@/lib/i18n';
+import { defineText, fallback, reviewed } from '@/lib/i18n';
 
 const CONFIRM_EN = 'Please confirm this with your clinician.';
 const CONFIRM_ZH = '请与您的医生确认。';
@@ -23,17 +25,16 @@ const SHOWN_AS_WRITTEN_ZH = '按原文显示；这一部分我们无法安全地
 function flag(
   id: string,
   severity: GuardFlag['severity'],
-  messageEn: string,
-  messageZh: string,
+  message: LocalizedText,
 ): GuardFlag {
-  return { id, severity, messageEn, messageZh };
+  return { id, severity, message };
 }
 
 // --- Language inference ------------------------------------------------------
 function hasChinese(text: string): boolean {
   return /[一-鿿]/u.test(text);
 }
-function inferLang(text: string): 'en' | 'zh' {
+function inferLang(text: string): SourceLang {
   return hasChinese(text) ? 'zh' : 'en';
 }
 
@@ -64,7 +65,7 @@ const FINDING_SYNONYMS: FindingSynonym[] = [
 const ANATOMICAL_LOCATORS_ZH = ['肝内', '肺内', '颅内', '腹腔', '盆腔', '纵隔', '胸腔', '腹内'];
 const ANATOMICAL_LOCATORS_EN = ['intrahepatic', 'intrapulmonary', 'intracranial', 'intra-abdominal'];
 
-function canonicalFinding(finding: string, lang: 'en' | 'zh'): FindingSynonym | null {
+function canonicalFinding(finding: string, lang: SourceLang): FindingSynonym | null {
   const hay = lang === 'en' ? finding.toLowerCase() : finding;
   for (const syn of FINDING_SYNONYMS) {
     const terms = lang === 'en' ? syn.en : syn.zh;
@@ -74,13 +75,13 @@ function canonicalFinding(finding: string, lang: 'en' | 'zh'): FindingSynonym | 
 }
 
 // Does `text` (in `lang`) contain any synonym of the canonical finding?
-function textMentionsFinding(text: string, syn: FindingSynonym, lang: 'en' | 'zh'): boolean {
+function textMentionsFinding(text: string, syn: FindingSynonym, lang: SourceLang): boolean {
   const hay = lang === 'en' ? text.toLowerCase() : text;
   const terms = lang === 'en' ? syn.en : syn.zh;
   return terms.some((t) => hay.includes(t));
 }
 
-function hasAnatomicalLocator(finding: string, lang: 'en' | 'zh'): boolean {
+function hasAnatomicalLocator(finding: string, lang: SourceLang): boolean {
   const hay = lang === 'en' ? finding.toLowerCase() : finding;
   const locs = lang === 'en' ? ANATOMICAL_LOCATORS_EN : ANATOMICAL_LOCATORS_ZH;
   return locs.some((l) => hay.includes(l));
@@ -112,12 +113,12 @@ const EXCLUDED_EN = ['excluded', 'ruled out', 'no evidence of', 'no evidence', '
 // into a HEDGE rather than a definite exclusion. Stripped before bare-排除 test.
 const ZH_CANNOT_EXCLUDE_SPANS = ['不能排除', '不排除', '未能排除', '未排除', '难以排除'];
 
-function mentionsCannotExclude(text: string, lang: 'en' | 'zh'): boolean {
+function mentionsCannotExclude(text: string, lang: SourceLang): boolean {
   const hay = lang === 'en' ? text.toLowerCase() : text;
   const list = lang === 'en' ? CANNOT_EXCLUDE_EN : CANNOT_EXCLUDE_ZH;
   return list.some((p) => hay.includes(p));
 }
-function mentionsExcluded(text: string, lang: 'en' | 'zh'): boolean {
+function mentionsExcluded(text: string, lang: SourceLang): boolean {
   if (lang === 'en') {
     const hay = text.toLowerCase();
     return EXCLUDED_EN.some((p) => hay.includes(p));
@@ -173,7 +174,7 @@ const SUPPLEMENTAL_DRUGS: SuppDrug[] = [
   { id: 'trastuzumab', zh: ['曲妥珠单抗'], en: ['trastuzumab'] },
 ];
 
-function detectSupplementalDrugs(text: string, lang: 'en' | 'zh'): string[] {
+function detectSupplementalDrugs(text: string, lang: SourceLang): string[] {
   const hay = lang === 'en' ? text.toLowerCase() : text;
   const ids: string[] = [];
   for (const d of SUPPLEMENTAL_DRUGS) {
@@ -210,7 +211,7 @@ const FREQUENCY_CONCEPTS: Array<{ concept: string; zh: string[]; en: string[] }>
   { concept: 'qhs', zh: ['睡前', '每晚'], en: ['at bedtime', 'nightly', 'qhs', 'at night'] },
 ];
 
-function frequencyConcept(text: string, lang: 'en' | 'zh'): string | null {
+function frequencyConcept(text: string, lang: SourceLang): string | null {
   const hay = lang === 'en' ? text.toLowerCase() : text;
   // Longest-form ZH tokens are checked first within each concept; concept order
   // is fine because the lists are disjoint.
@@ -286,8 +287,14 @@ export function evaluateSegment(segment: {
       flag(
         'R9-HIGH-RISK-PAIR',
         'info',
-        'This note contains a high-stakes term (e.g. benign/malignant, positive/negative). ' + CONFIRM_EN,
-        '该记录包含高风险术语（如良性/恶性、阳性/阴性）。' + CONFIRM_ZH,
+        defineText({
+          en: reviewed(
+            'This note contains a high-stakes term (e.g. benign/malignant, positive/negative). ' +
+              CONFIRM_EN,
+          ),
+          zh: reviewed('该记录包含高风险术语（如良性/恶性、阳性/阴性）。' + CONFIRM_ZH),
+          bo: fallback('zh'),
+        }),
       ),
       'render', // info: does not escalate on its own
     );
@@ -300,8 +307,14 @@ export function evaluateSegment(segment: {
       flag(
         'R8-DOSE-SOURCE-UNPARSEABLE',
         'urgent',
-        'The dose in the original could not be read clearly, so we are not simplifying it. ' + SHOWN_AS_WRITTEN_EN,
-        '原文中的剂量无法清晰识别，因此我们不作简化。' + SHOWN_AS_WRITTEN_ZH,
+        defineText({
+          en: reviewed(
+            'The dose in the original could not be read clearly, so we are not simplifying it. ' +
+              SHOWN_AS_WRITTEN_EN,
+          ),
+          zh: reviewed('原文中的剂量无法清晰识别，因此我们不作简化。' + SHOWN_AS_WRITTEN_ZH),
+          bo: fallback('zh'),
+        }),
       ),
       'abstain',
     );
@@ -336,8 +349,8 @@ function evaluateNegations(
   outIm: Immutable[],
   sourceText: string,
   translatedText: string,
-  srcLang: 'en' | 'zh',
-  outLang: 'en' | 'zh',
+  srcLang: SourceLang,
+  outLang: SourceLang,
   add: (f: GuardFlag, raiseTo: SegmentAction) => void,
 ): void {
   const srcNegs = srcIm.filter((i) => i.type === 'negation');
@@ -356,9 +369,17 @@ function evaluateNegations(
       flag(
         'R7-HEDGE-STRENGTH-WEAKENED',
         'urgent',
-        'The original keeps this finding as a possibility ("cannot exclude"); the translation states it is excluded. ' +
-          SHOWN_AS_WRITTEN_EN,
-        '原文将该发现保留为一种可能（“不能排除”），而译文却称其已被排除。' + SHOWN_AS_WRITTEN_ZH,
+        defineText({
+          en: reviewed(
+            'The original keeps this finding as a possibility ("cannot exclude"); the translation states it is excluded. ' +
+              SHOWN_AS_WRITTEN_EN,
+          ),
+          zh: reviewed(
+            '原文将该发现保留为一种可能（“不能排除”），而译文却称其已被排除。' +
+              SHOWN_AS_WRITTEN_ZH,
+          ),
+          bo: fallback('zh'),
+        }),
       ),
       'abstain',
     );
@@ -367,8 +388,16 @@ function evaluateNegations(
       flag(
         'R7-NEGATION-POLARITY-MISMATCH',
         'urgent',
-        'The yes/no meaning of this finding differs between the original and the translation. ' + SHOWN_AS_WRITTEN_EN,
-        '该发现在原文与译文之间的肯定/否定含义不一致。' + SHOWN_AS_WRITTEN_ZH,
+        defineText({
+          en: reviewed(
+            'The yes/no meaning of this finding differs between the original and the translation. ' +
+              SHOWN_AS_WRITTEN_EN,
+          ),
+          zh: reviewed(
+            '该发现在原文与译文之间的肯定/否定含义不一致。' + SHOWN_AS_WRITTEN_ZH,
+          ),
+          bo: fallback('zh'),
+        }),
       ),
       'abstain',
     );
@@ -416,10 +445,17 @@ function evaluateNegations(
           flag(
             'R7-NEGATION-POLARITY-MISMATCH',
             syn.highRisk ? 'urgent' : 'caution',
-            'The original keeps this finding open, but the translation states it is absent. ' +
-              (syn.highRisk ? SHOWN_AS_WRITTEN_EN : CONFIRM_EN),
-            '原文将该发现保留为可能，但译文却称其不存在。' +
-              (syn.highRisk ? SHOWN_AS_WRITTEN_ZH : CONFIRM_ZH),
+            defineText({
+              en: reviewed(
+                'The original keeps this finding open, but the translation states it is absent. ' +
+                  (syn.highRisk ? SHOWN_AS_WRITTEN_EN : CONFIRM_EN),
+              ),
+              zh: reviewed(
+                '原文将该发现保留为可能，但译文却称其不存在。' +
+                  (syn.highRisk ? SHOWN_AS_WRITTEN_ZH : CONFIRM_ZH),
+              ),
+              bo: fallback('zh'),
+            }),
           ),
           syn.highRisk ? 'abstain' : 'flag',
         );
@@ -430,8 +466,14 @@ function evaluateNegations(
           flag(
             'R7-NEGATION-POLARITY-MISMATCH',
             'caution',
-            'The certainty of this finding differs between the original and the translation. ' + CONFIRM_EN,
-            '该发现的确定程度在原文与译文之间不一致。' + CONFIRM_ZH,
+            defineText({
+              en: reviewed(
+                'The certainty of this finding differs between the original and the translation. ' +
+                  CONFIRM_EN,
+              ),
+              zh: reviewed('该发现的确定程度在原文与译文之间不一致。' + CONFIRM_ZH),
+              bo: fallback('zh'),
+            }),
           ),
           'flag',
         );
@@ -446,8 +488,14 @@ function evaluateNegations(
         flag(
           'R7-NEGATION-RETARGETED',
           'caution',
-          'A negation in the original appears to attach to a different finding in the translation. ' + CONFIRM_EN,
-          '原文中的否定在译文中似乎指向了不同的发现。' + CONFIRM_ZH,
+          defineText({
+            en: reviewed(
+              'A negation in the original appears to attach to a different finding in the translation. ' +
+                CONFIRM_EN,
+            ),
+            zh: reviewed('原文中的否定在译文中似乎指向了不同的发现。' + CONFIRM_ZH),
+            bo: fallback('zh'),
+          }),
         ),
         'flag',
       );
@@ -463,9 +511,17 @@ function evaluateNegations(
           flag(
             'R7-NEGATION-SCOPE-BROKEN',
             'urgent',
-            'A "not seen" finding in the original is asserted in the translation, and its scope was lost. ' +
-              SHOWN_AS_WRITTEN_EN,
-            '原文中“未见”的发现在译文中被陈述为存在，且其范围信息丢失。' + SHOWN_AS_WRITTEN_ZH,
+            defineText({
+              en: reviewed(
+                'A "not seen" finding in the original is asserted in the translation, and its scope was lost. ' +
+                  SHOWN_AS_WRITTEN_EN,
+              ),
+              zh: reviewed(
+                '原文中“未见”的发现在译文中被陈述为存在，且其范围信息丢失。' +
+                  SHOWN_AS_WRITTEN_ZH,
+              ),
+              bo: fallback('zh'),
+            }),
           ),
           'abstain',
         );
@@ -481,8 +537,14 @@ function evaluateNegations(
           flag(
             'R7-NEGATION-POLARITY-MISMATCH',
             'caution',
-            'The original rules this finding out, but the translation states it is present. ' + CONFIRM_EN,
-            '原文排除了该发现，但译文却称其存在。' + CONFIRM_ZH,
+            defineText({
+              en: reviewed(
+                'The original rules this finding out, but the translation states it is present. ' +
+                  CONFIRM_EN,
+              ),
+              zh: reviewed('原文排除了该发现，但译文却称其存在。' + CONFIRM_ZH),
+              bo: fallback('zh'),
+            }),
           ),
           'flag',
         );
@@ -492,8 +554,14 @@ function evaluateNegations(
           flag(
             'R7-NEGATION-POLARITY-MISMATCH',
             'caution',
-            'The original is uncertain about this finding, but the translation asserts it. ' + CONFIRM_EN,
-            '原文对该发现并不确定，但译文却予以肯定。' + CONFIRM_ZH,
+            defineText({
+              en: reviewed(
+                'The original is uncertain about this finding, but the translation asserts it. ' +
+                  CONFIRM_EN,
+              ),
+              zh: reviewed('原文对该发现并不确定，但译文却予以肯定。' + CONFIRM_ZH),
+              bo: fallback('zh'),
+            }),
           ),
           'flag',
         );
@@ -527,10 +595,17 @@ function evaluateNegations(
         flag(
           'R7-NEGATION-POLARITY-MISMATCH',
           onSyn.highRisk ? 'urgent' : 'caution',
-          'The original asserts (or leaves open) this finding, but the translation denies it. ' +
-            (onSyn.highRisk ? SHOWN_AS_WRITTEN_EN : CONFIRM_EN),
-          '原文肯定（或保留）了该发现，但译文却予以否定。' +
-            (onSyn.highRisk ? SHOWN_AS_WRITTEN_ZH : CONFIRM_ZH),
+          defineText({
+            en: reviewed(
+              'The original asserts (or leaves open) this finding, but the translation denies it. ' +
+                (onSyn.highRisk ? SHOWN_AS_WRITTEN_EN : CONFIRM_EN),
+            ),
+            zh: reviewed(
+              '原文肯定（或保留）了该发现，但译文却予以否定。' +
+                (onSyn.highRisk ? SHOWN_AS_WRITTEN_ZH : CONFIRM_ZH),
+            ),
+            bo: fallback('zh'),
+          }),
         ),
         severity,
       );
@@ -551,7 +626,7 @@ function evaluateNegations(
   const srcHasHedge = mentionsCannotExclude(sourceText, srcLang);
   const outHasHedge = mentionsCannotExclude(translatedText, outLang);
   if (!srcHasHedge && !outHasHedge) {
-    const unmapped = (negs: Immutable[], lang: 'en' | 'zh') =>
+    const unmapped = (negs: Immutable[], lang: SourceLang) =>
       negs.filter(
         (n) => canonicalFinding(n.finding ?? '', lang) === null && !consumedOut.has(n),
       );
@@ -577,8 +652,16 @@ function evaluateNegations(
           flag(
             'R7-NEGATION-POLARITY-MISMATCH',
             'urgent',
-            'The translation states a finding is absent that the original does not. ' + SHOWN_AS_WRITTEN_EN,
-            '译文称某一发现不存在，而原文并未如此表述。' + SHOWN_AS_WRITTEN_ZH,
+            defineText({
+              en: reviewed(
+                'The translation states a finding is absent that the original does not. ' +
+                  SHOWN_AS_WRITTEN_EN,
+              ),
+              zh: reviewed(
+                '译文称某一发现不存在，而原文并未如此表述。' + SHOWN_AS_WRITTEN_ZH,
+              ),
+              bo: fallback('zh'),
+            }),
           ),
           'abstain',
         );
@@ -589,8 +672,13 @@ function evaluateNegations(
           flag(
             'R7-NEGATION-POLARITY-MISMATCH',
             'caution',
-            'A negation from the original is missing in the translation. ' + CONFIRM_EN,
-            '译文中遗漏了原文中的否定表述。' + CONFIRM_ZH,
+            defineText({
+              en: reviewed(
+                'A negation from the original is missing in the translation. ' + CONFIRM_EN,
+              ),
+              zh: reviewed('译文中遗漏了原文中的否定表述。' + CONFIRM_ZH),
+              bo: fallback('zh'),
+            }),
           ),
           'flag',
         );
@@ -609,8 +697,8 @@ function evaluateDoses(
   outIm: Immutable[],
   sourceText: string,
   translatedText: string,
-  srcLang: 'en' | 'zh',
-  outLang: 'en' | 'zh',
+  srcLang: SourceLang,
+  outLang: SourceLang,
   add: (f: GuardFlag, raiseTo: SegmentAction) => void,
 ): void {
   const srcDoses = srcIm.filter((i) => i.type === 'dosage');
@@ -649,8 +737,14 @@ function evaluateDoses(
           flag(
             'R8-DOSE-RANGE-INCOMPLETE',
             'caution',
-            `The dose range was collapsed to a single value (original: ${sd.raw}). ` + CONFIRM_EN,
-            `剂量范围被压缩为单一数值（原文：${sd.raw}）。` + CONFIRM_ZH,
+            defineText({
+              en: reviewed(
+                `The dose range was collapsed to a single value (original: ${sd.raw}). ` +
+                  CONFIRM_EN,
+              ),
+              zh: reviewed(`剂量范围被压缩为单一数值（原文：${sd.raw}）。` + CONFIRM_ZH),
+              bo: fallback('zh'),
+            }),
           ),
           'flag',
         );
@@ -687,8 +781,17 @@ function evaluateDoses(
           flag(
             'R8-DOSE-MAGNITUDE-DIVERGENCE',
             'urgent',
-            `The dose changed by ${ratio.toFixed(1)}× in translation (original: ${sd.raw}). ` + SHOWN_AS_WRITTEN_EN,
-            `译文中剂量变化达 ${ratio.toFixed(1)} 倍（原文：${sd.raw}）。` + SHOWN_AS_WRITTEN_ZH,
+            defineText({
+              en: reviewed(
+                `The dose changed by ${ratio.toFixed(1)}× in translation (original: ${sd.raw}). ` +
+                  SHOWN_AS_WRITTEN_EN,
+              ),
+              zh: reviewed(
+                `译文中剂量变化达 ${ratio.toFixed(1)} 倍（原文：${sd.raw}）。` +
+                  SHOWN_AS_WRITTEN_ZH,
+              ),
+              bo: fallback('zh'),
+            }),
           ),
           'abstain',
         );
@@ -709,9 +812,17 @@ function evaluateDoses(
           flag(
             'R8-DOSE-FREQUENCY-DROPPED',
             'caution',
-            `The dosing frequency was lost in translation (original: ${sd.raw}, ${srcFreq.toUpperCase()}). ` +
-              CONFIRM_EN,
-            `译文中遗漏了服药频次（原文：${sd.raw}，${srcFreq.toUpperCase()}）。` + CONFIRM_ZH,
+            defineText({
+              en: reviewed(
+                `The dosing frequency was lost in translation (original: ${sd.raw}, ${srcFreq.toUpperCase()}). ` +
+                  CONFIRM_EN,
+              ),
+              zh: reviewed(
+                `译文中遗漏了服药频次（原文：${sd.raw}，${srcFreq.toUpperCase()}）。` +
+                  CONFIRM_ZH,
+              ),
+              bo: fallback('zh'),
+            }),
           ),
           'flag',
         );
@@ -724,8 +835,11 @@ function doseNotPreservedFlag(raw: string): GuardFlag {
   return flag(
     'R8-DOSE-NOT-PRESERVED',
     'caution',
-    `The dose amount differs from the original (${raw}). ` + CONFIRM_EN,
-    `剂量与原文不一致（原文：${raw}）。` + CONFIRM_ZH,
+    defineText({
+      en: reviewed(`The dose amount differs from the original (${raw}). ` + CONFIRM_EN),
+      zh: reviewed(`剂量与原文不一致（原文：${raw}）。` + CONFIRM_ZH),
+      bo: fallback('zh'),
+    }),
   );
 }
 
@@ -733,9 +847,17 @@ function unitDimensionMismatchFlag(raw: string): GuardFlag {
   return flag(
     'R8-DOSE-UNIT-DIMENSION-MISMATCH',
     'urgent',
-    `The dose unit changed in translation (original: ${raw}). This can be a large dosing error. ` +
-      SHOWN_AS_WRITTEN_EN,
-    `译文中剂量单位发生了改变（原文：${raw}）。这可能是严重的剂量错误。` + SHOWN_AS_WRITTEN_ZH,
+    defineText({
+      en: reviewed(
+        `The dose unit changed in translation (original: ${raw}). This can be a large dosing error. ` +
+          SHOWN_AS_WRITTEN_EN,
+      ),
+      zh: reviewed(
+        `译文中剂量单位发生了改变（原文：${raw}）。这可能是严重的剂量错误。` +
+          SHOWN_AS_WRITTEN_ZH,
+      ),
+      bo: fallback('zh'),
+    }),
   );
 }
 
@@ -763,8 +885,14 @@ function evaluateBareNumbers(
         flag(
           'R8-NUMBER-NOT-PRESERVED',
           'caution',
-          `A number from the original is missing or altered in the translation (${n}). ` + CONFIRM_EN,
-          `译文中遗漏或改动了原文中的数字（${n}）。` + CONFIRM_ZH,
+          defineText({
+            en: reviewed(
+              `A number from the original is missing or altered in the translation (${n}). ` +
+                CONFIRM_EN,
+            ),
+            zh: reviewed(`译文中遗漏或改动了原文中的数字（${n}）。` + CONFIRM_ZH),
+            bo: fallback('zh'),
+          }),
         ),
         'flag',
       );
@@ -780,8 +908,8 @@ function evaluateDrugs(
   outIm: Immutable[],
   sourceText: string,
   translatedText: string,
-  srcLang: 'en' | 'zh',
-  outLang: 'en' | 'zh',
+  srcLang: SourceLang,
+  outLang: SourceLang,
   add: (f: GuardFlag, raiseTo: SegmentAction) => void,
 ): void {
   // Known drug ids from the detector, augmented with the supplemental list.
@@ -815,8 +943,14 @@ function evaluateDrugs(
       flag(
         'R9-DRUG-SUBSTITUTED',
         'urgent',
-        'The medication named in the original was not preserved in the translation. ' + SHOWN_AS_WRITTEN_EN,
-        '译文未能保留原文中的药品名称。' + SHOWN_AS_WRITTEN_ZH,
+        defineText({
+          en: reviewed(
+            'The medication named in the original was not preserved in the translation. ' +
+              SHOWN_AS_WRITTEN_EN,
+          ),
+          zh: reviewed('译文未能保留原文中的药品名称。' + SHOWN_AS_WRITTEN_ZH),
+          bo: fallback('zh'),
+        }),
       ),
       'abstain',
     );
@@ -838,8 +972,14 @@ function evaluateDrugs(
         flag(
           'R9-UNKNOWN-DRUG-ALTERED',
           'urgent',
-          'The original names a medication we cannot verify, and the translation changed it. ' + SHOWN_AS_WRITTEN_EN,
-          '原文中的药品我们无法核验，而译文对其作了改动。' + SHOWN_AS_WRITTEN_ZH,
+          defineText({
+            en: reviewed(
+              'The original names a medication we cannot verify, and the translation changed it. ' +
+                SHOWN_AS_WRITTEN_EN,
+            ),
+            zh: reviewed('原文中的药品我们无法核验，而译文对其作了改动。' + SHOWN_AS_WRITTEN_ZH),
+            bo: fallback('zh'),
+          }),
         ),
         'abstain',
       );
@@ -862,8 +1002,14 @@ function evaluateDrugs(
         flag(
           'R9-DRUG-QUALIFIER-DROPPED',
           'caution',
-          'A salt or extended-release form from the original drug name is missing in the translation. ' + CONFIRM_EN,
-          '译文中遗漏了原文药名中的盐型或缓释剂型信息。' + CONFIRM_ZH,
+          defineText({
+            en: reviewed(
+              'A salt or extended-release form from the original drug name is missing in the translation. ' +
+                CONFIRM_EN,
+            ),
+            zh: reviewed('译文中遗漏了原文药名中的盐型或缓释剂型信息。' + CONFIRM_ZH),
+            bo: fallback('zh'),
+          }),
         ),
         'flag',
       );
@@ -886,8 +1032,13 @@ function evaluateResultPolarity(
       flag(
         'R9-RESULT-POLARITY-FLIP',
         'urgent',
-        'A positive/negative test result was flipped in translation. ' + SHOWN_AS_WRITTEN_EN,
-        '译文中检验结果的阳性/阴性发生了颠倒。' + SHOWN_AS_WRITTEN_ZH,
+        defineText({
+          en: reviewed(
+            'A positive/negative test result was flipped in translation. ' + SHOWN_AS_WRITTEN_EN,
+          ),
+          zh: reviewed('译文中检验结果的阳性/阴性发生了颠倒。' + SHOWN_AS_WRITTEN_ZH),
+          bo: fallback('zh'),
+        }),
       ),
       'abstain',
     );
