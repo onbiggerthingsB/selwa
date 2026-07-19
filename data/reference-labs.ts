@@ -94,7 +94,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'total_cholesterol', nameEn: 'Total cholesterol', nameZh: '总胆固醇',
-    aliases: ['TC', 'CHOL', '胆固醇', '总胆固醇'],
+    aliases: ['TC', 'CHOL', '胆固醇', '总胆固醇', 'Cholesterol, Total'],
     unit: 'mmol/L', allowedUnits: ['mmol/L'],
     refLow: null, refHigh: 5.2, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
     absoluteLow: 0.3, absoluteHigh: 50,
@@ -106,7 +106,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'ldl_cholesterol', nameEn: 'LDL cholesterol', nameZh: '低密度脂蛋白胆固醇',
-    aliases: ['LDL-C', 'LDL', '低密度脂蛋白', '低密度脂蛋白胆固醇'],
+    aliases: ['LDL-C', 'LDL', '低密度脂蛋白', '低密度脂蛋白胆固醇', 'Cholesterol, LDL, Calculated'],
     unit: 'mmol/L', allowedUnits: ['mmol/L'],
     refLow: null, refHigh: 3.4, criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
     absoluteLow: 0.1, absoluteHigh: 30,
@@ -118,7 +118,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'hdl_cholesterol', nameEn: 'HDL cholesterol', nameZh: '高密度脂蛋白胆固醇',
-    aliases: ['HDL-C', 'HDL', '高密度脂蛋白', '高密度脂蛋白胆固醇'],
+    aliases: ['HDL-C', 'HDL', '高密度脂蛋白', '高密度脂蛋白胆固醇', 'Cholesterol, HDL'],
     unit: 'mmol/L', allowedUnits: ['mmol/L'],
     refLow: 1.0, refHigh: null, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
     absoluteLow: 0, absoluteHigh: 10,
@@ -328,7 +328,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'neutrophil_pct', nameEn: 'Neutrophil percentage', nameZh: '中性粒细胞百分比',
-    aliases: ['NEUT%', 'NE%', '中性粒细胞比率', '中性粒细胞百分比'],
+    aliases: ['NEUT%', 'NE%', '中性粒细胞比率', '中性粒细胞百分比', '中性细胞比率'],
     unit: '%', allowedUnits: ['%'],
     refLow: 40, refHigh: 75, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
     absoluteLow: 0, absoluteHigh: 100,
@@ -368,7 +368,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   // canonical SI unit (cross-scale conversions are handled in M2, not here).
   {
     key: 'mch', nameEn: 'Mean Corpuscular Hemoglobin (MCH)', nameZh: '平均血红蛋白量',
-    aliases: ["MCH", "平均血红蛋白量", "平均红细胞血红蛋白含量", "红细胞平均血红蛋白量"],
+    aliases: ["MCH", "平均血红蛋白量", "平均红细胞血红蛋白含量", "红细胞平均血红蛋白量", "均血红蛋白里"],
     unit: "pg", allowedUnits: ["pg"],
     refLow: 27, refHigh: 34,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -420,7 +420,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'eosinophil_pct', nameEn: 'Eosinophil Percentage', nameZh: '嗜酸性粒细胞百分数',
-    aliases: ["EOS%", "EOS", "嗜酸性粒细胞百分数", "嗜酸性粒细胞比率", "嗜酸细胞百分比"],
+    aliases: ["EOS%", "EOS", "嗜酸性粒细胞百分数", "嗜酸性粒细胞比率", "嗜酸细胞百分比", "嗜酸性粒细胞百分比"],
     unit: "%", allowedUnits: ["%"],
     refLow: 0.4, refHigh: 8,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -446,7 +446,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'neutrophil_abs', nameEn: 'Absolute Neutrophil Count', nameZh: '中性粒细胞绝对值',
-    aliases: ["NEUT#", "ANC", "中性粒细胞绝对值", "中性粒细胞计数", "中性粒细胞绝对数"],
+    aliases: ["NEUT#", "ANC", "中性粒细胞绝对值", "中性粒细胞计数", "中性粒细胞绝对数", "中性粒细胞数"],
     unit: "10^9/L", allowedUnits: ["10^9/L", "10*9/L", "/nL", "K/uL", "10^3/uL"],
     refLow: 1.8, refHigh: 6.3,
     criticalLow: 0.5, criticalHigh: null, highStakes: true, populationSensitive: false,
@@ -758,7 +758,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'beta2_microglobulin', nameEn: 'Beta-2 Microglobulin', nameZh: 'β2-微球蛋白',
-    aliases: ["B2M", "β2-MG", "β2M", "beta-2 microglobulin", "β2-微球蛋白", "贝塔2微球蛋白"],
+    aliases: ["B2M", "β2-MG", "β2M", "beta-2 microglobulin", "β2-微球蛋白", "贝塔2微球蛋白", "β2微球蛋白"],
     unit: "mg/L", allowedUnits: ["mg/L", "mg/l"],
     refLow: 0.8, refHigh: 2.4,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -836,7 +836,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'hs_crp', nameEn: 'High-sensitivity C-reactive protein', nameZh: '超敏C反应蛋白',
-    aliases: ["hs-CRP", "hsCRP", "高敏C反应蛋白", "超敏C反应蛋白", "hsCRP"],
+    aliases: ["hs-CRP", "hsCRP", "高敏C反应蛋白", "超敏C反应蛋白", "hsCRP", "超敏C-反应蛋白"],
     unit: "mg/L", allowedUnits: ["mg/L"],
     refLow: null, refHigh: 3.0,
     criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
@@ -883,7 +883,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'bnp', nameEn: 'B-type natriuretic peptide', nameZh: 'B型利钠肽',
-    aliases: ["BNP", "脑钠肽", "B型脑钠肽", "B型利钠肽"],
+    aliases: ["BNP", "脑钠肽", "B型脑钠肽", "B型利钠肽", "B型钠尿肽"],
     unit: "ng/L", allowedUnits: ["ng/L", "pg/mL"],
     refLow: null, refHigh: 35,
     criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,
@@ -952,7 +952,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'prothrombin_time', nameEn: 'Prothrombin time', nameZh: '凝血酶原时间',
-    aliases: ["PT", "凝血酶原时间", "PT(s)", "血浆凝血酶原时间"],
+    aliases: ["PT", "凝血酶原时间", "PT(s)", "血浆凝血酶原时间", "凝血酶原时间(PT)"],
     unit: "s", allowedUnits: ["s", "sec", "秒"],
     refLow: 11, refHigh: 14.5,
     criticalLow: null, criticalHigh: 30, highStakes: true, populationSensitive: false,
@@ -965,7 +965,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'inr', nameEn: 'International normalized ratio', nameZh: '国际标准化比值',
-    aliases: ["INR", "国际标准化比值", "PT-INR", "PT(INR)"],
+    aliases: ["INR", "国际标准化比值", "PT-INR", "PT(INR)", "INR(PT)", "PT国际标准比值(INR)"],
     unit: "ratio", allowedUnits: ["ratio"],
     refLow: 0.8, refHigh: 1.2,
     criticalLow: null, criticalHigh: 5.0, highStakes: true, populationSensitive: false,
@@ -978,7 +978,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'aptt', nameEn: 'Activated partial thromboplastin time', nameZh: '活化部分凝血活酶时间',
-    aliases: ["APTT", "aPTT", "PTT", "活化部分凝血活酶时间", "部分凝血活酶时间"],
+    aliases: ["APTT", "aPTT", "PTT", "活化部分凝血活酶时间", "部分凝血活酶时间", "活化部分凝血活酶(APTT)"],
     unit: "s", allowedUnits: ["s", "sec", "秒"],
     refLow: 25, refHigh: 37,
     criticalLow: null, criticalHigh: 70, highStakes: true, populationSensitive: false,
@@ -991,7 +991,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   },
   {
     key: 'fibrinogen', nameEn: 'Fibrinogen', nameZh: '纤维蛋白原',
-    aliases: ["FIB", "Fbg", "纤维蛋白原", "凝血因子I", "FIB-C"],
+    aliases: ["FIB", "Fbg", "纤维蛋白原", "凝血因子I", "FIB-C", "纤维蛋白原(FIB)"],
     unit: "g/L", allowedUnits: ["g/L"],
     refLow: 2.0, refHigh: 4.0,
     criticalLow: 1.0, criticalHigh: null, highStakes: true, populationSensitive: false,

@@ -77,6 +77,13 @@ const ABSTAIN_LABEL: Record<Classification, { en: string; zh: string }> = {
 const SURFACING_FLAGS = new Set([
   'R6-HIGH-STAKES-MANDATORY-CONFIRM',
   'R13-IMPLAUSIBLE-VALUE',
+  // R1 states that the test is NOT in our reference set — a fact about OUR SCOPE, not a conclusion
+  // about the patient's value, so it is speakable under the same rule that permits R6 and R13.
+  // It must be spoken: the chip is decoupled from recognition, so on the real corpora 126 rows
+  // (27.1%; 83 independently labelled high-stakes) asserted a position for an analyte we could not
+  // name, with no disclosure at all. Silence let a reproduction of the report's own arithmetic read
+  // as understanding of the test.
+  'R1-UNKNOWN-ANALYTE',
   'R16-PRINTED-RANGE-UNIT-SUSPECT',
 ]);
 
@@ -151,6 +158,9 @@ export function buildSummary(
     );
     const rs: ReportStatus = unusable ? 'none' : reportStatus(row);
     const defer = rs === 'none';
+    // R17 does NOT suppress the chip: the chip is the report's own arithmetic and stays correct
+    // whatever specimen the row is. What it suppresses is OUR band being shown beside it.
+    const bandNotComparable = row.flags.some((f) => f.id === 'R17-BAND-NOT-COMPARABLE');
 
     let tone: string;
     let chipEn: string;
@@ -190,8 +200,12 @@ export function buildSummary(
       // a comparison from it, known analyte or not (decoupled). Our curated range + the plain
       // education below DO need the table, so they stay gated on recognition.
       reportRange: !defer ? (row.extracted.printedRange ?? '') : '',
-      typicalRange: classified ? formatRefRange(entry!, report.sex, report.age) : '',
-      source: classified ? (entry!.source ?? '') : '',
+      // R17: our band does not overlap the report's printed range, so it is almost certainly not
+      // measuring this row (usually a different SPECIMEN under the same name — the urine-vs-serum
+      // β2-microglobulin case). Presenting it as "Typical range" beside the patient's number is a
+      // wrong-range claim, so we withhold it and its provenance rather than guess the specimen.
+      typicalRange: classified && !bandNotComparable ? formatRefRange(entry!, report.sex, report.age) : '',
+      source: classified && !bandNotComparable ? (entry!.source ?? '') : '',
     };
   });
 

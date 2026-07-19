@@ -71,8 +71,20 @@ export function evaluateRow(
       flag(
         'R1-UNKNOWN-ANALYTE',
         'caution',
-        'This test is not in our reference set, so we are not interpreting it. ' + CONFIRM_CLINICIAN_EN,
-        '该项目不在我们的参考范围内，因此我们不作解读。' + CONFIRM_CLINICIAN_ZH,
+        // SURFACED (see SURFACING_FLAGS in lib/summary.ts). Measured on the real corpora: 126 rows
+        // (27.1%) — 83 of them independently labelled high-stakes — asserted "Above/Below your
+        // report's range" while we did NOT recognise the analyte, with ZERO disclosure. A Lactate
+        // of 3.4 or a pO2 of 60 rendered exactly as confidently as a known, grounded row. The chip
+        // is decoupled from recognition on purpose (it reproduces the report's own range), but
+        // staying silent about not knowing the test let that reproduction read as understanding.
+        //
+        // Wording is B1-constrained: it describes OUR SCOPE and attributes the visible position to
+        // the report, never applying a range to the patient's number. "reference set"/"参考资料"
+        // deliberately avoid "our reference range"/"我们的参考范围", which the leakage gate bans
+        // because that phrasing implies we judged this value against our band.
+        'This test is not in our reference set, so we are not interpreting it — anything shown here comes from your report itself. ' +
+          CONFIRM_CLINICIAN_EN,
+        '该项目不在我们的参考资料中，因此我们不作解读——此处显示的内容均来自您的报告本身。' + CONFIRM_CLINICIAN_ZH,
       ),
     );
     return { action: 'abstain', needsConfirm: false, flags };
@@ -201,6 +213,38 @@ export function evaluateRow(
     const asOurs = printedSays === 'below' ? 'low' : printedSays === 'above' ? 'high' : printedSays === 'within' ? 'normal' : null;
     const valueFlips = oursSays !== null && asOurs !== null && oursSays !== asOurs;
     const bandsDiffer = printedRangeDisagrees(printed, entry, sex, age);
+
+    // R17 — our band and the report's printed range DO NOT OVERLAP AT ALL. Not lab-to-lab
+    // variation (that is bandsDiffer, a 15% tolerance): disjoint bands mean our entry is measuring
+    // something else — most often a different SPECIMEN under the same name.
+    //
+    // Found by an adversarial review of the β2-microglobulin alias: a urine β2M of 1.03 mg/L
+    // against a printed 0-0.3 rendered a correct chip ("Above your report's range") sitting beside
+    // "Typical range 0.8-2.4 mg/L" — our SERUM band — with nothing warning the user. R11 fires and
+    // confirms, but is not surfaced; R16 misses it (2.4 vs 0.3 is 8x, under SCALE_TOLERANCE 10);
+    // R13 catches only the HEALTHY urine value (0.15 < absoluteLow) and misses the injured patient.
+    //
+    // We cannot tell which specimen the row is, so we do not guess: we stop presenting our band as
+    // "typical" for it (lib/summary.ts suppresses typicalRange + source) and confirm. The chip is
+    // untouched — it is the report's own arithmetic and stays correct regardless of specimen.
+    const ourLow = low ?? -Infinity;
+    const ourHigh = high ?? Infinity;
+    const theirLow = printed.low ?? -Infinity;
+    const theirHigh = printed.high ?? Infinity;
+    if (!(ourLow <= theirHigh && theirLow <= ourHigh)) {
+      needsConfirm = true;
+      flags.push(
+        flag(
+          'R17-BAND-NOT-COMPARABLE',
+          'caution',
+          // INTERNAL (not in SURFACING_FLAGS): it drives suppression + the confirm gate. Its
+          // user-visible effect is the ABSENCE of a misleading "Typical range", which needs no
+          // new sentence. Surfacing a message here is a deliberate follow-up, not an oversight.
+          'Our reference band for this test does not overlap the range printed on your report, so we are not showing a typical range for it.',
+          '我们对该项目的参考区间与您报告上打印的范围完全不重叠，因此不显示一般范围。',
+        ),
+      );
+    }
     if (valueFlips || bandsDiffer) {
       if (valueFlips) needsConfirm = true;
       flags.push(
