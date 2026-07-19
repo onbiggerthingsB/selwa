@@ -88,6 +88,38 @@ function required(env: Env, name: string): string {
   return value;
 }
 
+/**
+ * Read the first env var that is actually set, from a list of accepted names.
+ *
+ * WHY A LIST. The Upstash SDK's own convention is UPSTASH_REDIS_REST_URL /
+ * UPSTASH_REDIS_REST_TOKEN, which is what you set by hand for local development. But
+ * Vercel's Upstash Marketplace integration injects its own KV_* names and cannot be made
+ * to emit the Upstash ones: its "custom prefix" option PREPENDS to fixed suffixes, so
+ * asking for prefix `UPSTASH_REDIS_REST` yields UPSTASH_REDIS_REST_KV_REST_API_URL, not
+ * UPSTASH_REDIS_REST_URL. There is no prefix that produces the SDK's names.
+ *
+ * Hard-coding either convention breaks the other environment, and the failure is
+ * invisible: the limiter fails closed, so both paid routes return 503 and it looks
+ * exactly like an outage or a network block rather than a misnamed variable.
+ *
+ * So accept both, and — deliberately — do NOT accept a prefixed variant. If a prefix was
+ * used at connect time, reconnect without one; encoding one team's accidental prefix here
+ * would make the config silently environment-specific.
+ */
+function requiredOneOf(env: Env, names: readonly string[]): string {
+  for (const name of names) {
+    const value = env[name]?.trim();
+    if (value) return value;
+  }
+  throw new RateLimitConfigurationError(
+    `none of ${names.join(', ')} is set — set one (Vercel's Upstash integration provides the KV_REST_API_* names when connected with NO custom prefix)`,
+  );
+}
+
+// Order matters only for determinism; either name is equally valid.
+const REDIS_URL_ENV = ['UPSTASH_REDIS_REST_URL', 'KV_REST_API_URL'] as const;
+const REDIS_TOKEN_ENV = ['UPSTASH_REDIS_REST_TOKEN', 'KV_REST_API_TOKEN'] as const;
+
 function positiveInteger(env: Env, name: string, fallback: number): number {
   const raw = env[name]?.trim();
   if (!raw) return fallback;
@@ -116,8 +148,8 @@ export function readRateLimitConfig(env: Env = process.env): RateLimitConfig {
   }
 
   return {
-    redisUrl: required(env, 'UPSTASH_REDIS_REST_URL'),
-    redisToken: required(env, 'UPSTASH_REDIS_REST_TOKEN'),
+    redisUrl: requiredOneOf(env, REDIS_URL_ENV),
+    redisToken: requiredOneOf(env, REDIS_TOKEN_ENV),
     ipHashSecret,
     namespace: safeNamespace(
       env.RATE_LIMIT_NAMESPACE ?? env.VERCEL_ENV ?? env.NODE_ENV,

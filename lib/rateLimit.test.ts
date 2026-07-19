@@ -130,9 +130,17 @@ describe('readRateLimitConfig', () => {
       const env: Record<string, string | undefined> = { ...REQUIRED_ENV };
       delete env[name];
 
-      expect(() => readRateLimitConfig(env)).toThrow(
-        new RateLimitConfigurationError(`${name} is not set`),
-      );
+      // The IP-hash secret has exactly one accepted name, so its message is exact.
+      // The Redis credentials accept either the Upstash SDK name or Vercel's
+      // KV_REST_API_* name, so removing one still fails closed but names both.
+      if (name === 'RATE_LIMIT_IP_HASH_SECRET') {
+        expect(() => readRateLimitConfig(env)).toThrow(
+          new RateLimitConfigurationError(`${name} is not set`),
+        );
+      } else {
+        expect(() => readRateLimitConfig(env)).toThrow(RateLimitConfigurationError);
+        expect(() => readRateLimitConfig(env)).toThrow(new RegExp(name));
+      }
     }
   });
 
@@ -696,5 +704,55 @@ describe('setDynamicRateLimitOverride', () => {
       vi.unstubAllEnvs();
       vi.resetModules();
     }
+  });
+});
+
+describe('redis credential env-name compatibility', () => {
+  // Regression: the Upstash SDK convention and Vercel's Marketplace integration use
+  // DIFFERENT variable names, and Vercel's "custom prefix" cannot produce the SDK's
+  // names — it prepends to fixed suffixes (prefix `UPSTASH_REDIS_REST` yields
+  // UPSTASH_REDIS_REST_KV_REST_API_URL). Accepting only one convention meant the
+  // limiter failed closed on the other, and a 503 on every paid route looks exactly
+  // like an outage rather than a misnamed variable.
+  const base = {
+    RATE_LIMIT_IP_HASH_SECRET: 'x'.repeat(32),
+  };
+
+  it('accepts the Upstash SDK names (local development)', () => {
+    const config = readRateLimitConfig({
+      ...base,
+      UPSTASH_REDIS_REST_URL: 'https://example.upstash.io',
+      UPSTASH_REDIS_REST_TOKEN: 'token-a',
+    });
+    expect(config.redisUrl).toBe('https://example.upstash.io');
+    expect(config.redisToken).toBe('token-a');
+  });
+
+  it('accepts the Vercel integration names (KV_REST_API_*)', () => {
+    const config = readRateLimitConfig({
+      ...base,
+      KV_REST_API_URL: 'https://example.upstash.io',
+      KV_REST_API_TOKEN: 'token-b',
+    });
+    expect(config.redisUrl).toBe('https://example.upstash.io');
+    expect(config.redisToken).toBe('token-b');
+  });
+
+  it('still fails closed when neither convention is present, and names both in the error', () => {
+    expect(() => readRateLimitConfig({ ...base })).toThrow(RateLimitConfigurationError);
+    expect(() => readRateLimitConfig({ ...base })).toThrow(/UPSTASH_REDIS_REST_URL/);
+    expect(() => readRateLimitConfig({ ...base })).toThrow(/KV_REST_API_URL/);
+  });
+
+  it('does NOT accept a prefixed variant — reconnect without a prefix instead', () => {
+    // Encoding one team's accidental connect-time prefix would make the config
+    // silently environment-specific.
+    expect(() =>
+      readRateLimitConfig({
+        ...base,
+        UPSTASH_REDIS_REST_KV_REST_API_URL: 'https://example.upstash.io',
+        UPSTASH_REDIS_REST_KV_REST_API_TOKEN: 'token-c',
+      }),
+    ).toThrow(RateLimitConfigurationError);
   });
 });
