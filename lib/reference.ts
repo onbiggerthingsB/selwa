@@ -79,8 +79,8 @@ export function findEntryMatch(
     // Some of the table's long-standing aliases predate specimen capture and
     // therefore also exist in INDEX. Preserve that exact legacy behavior when
     // specimen is omitted/unknown, but let an explicitly printed specimen
-    // refine a declared scoped alias. This prevents blood "GLU", "Ketones",
-    // "SG", etc. from silently inheriting a urine or fasting-blood frame.
+    // select only the frame declared for a scoped alias. Ambiguous names such
+    // as GLU can therefore route to blood or urine only when that context is printed.
     if (SCOPED_ALIAS_NAMES.has(normalized)) {
       return specimenSafeMatch(scoped, 'specimen-scoped', specimen);
     }

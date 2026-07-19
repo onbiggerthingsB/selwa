@@ -50,7 +50,7 @@ describe('groundExtraction', () => {
   });
 
   it('auto-converts a convertible unit mismatch and flags the conversion (R2b)', () => {
-    const ex = { rows: [{ name: 'GLU', value: '99', unit: 'mg/dL', printedRange: null, confidence: 'high' as const }] };
+    const ex = { rows: [{ name: 'GLU', value: '99', unit: 'mg/dL', printedRange: null, confidence: 'high' as const, specimen: 'blood' as const }] };
     const { rows } = groundExtraction(ex, 'unknown');
     const glu = rows.find((r) => r.entry?.key === 'fasting_glucose')!;
     expect(glu.classification).toBe('normal');          // 99 mg/dL = 5.49 mmol/L

@@ -108,6 +108,34 @@ describe('US English aliases — specimen-ambiguous names must STAY unknown', ()
   });
 });
 
+describe('Chinese/GLU aliases — explicit specimen selects the correct glucose frame', () => {
+  it('GLU stays unknown when specimen is omitted or unknown', () => {
+    expect(findEntry('GLU')).toBeNull();
+    expect(findEntry('GLU', 'unknown')).toBeNull();
+    expect(findEntry('GLU', null)).toBeNull();
+  });
+
+  it('葡萄糖 stays unknown when specimen is omitted or unknown', () => {
+    expect(findEntry('葡萄糖')).toBeNull();
+    expect(findEntry('葡萄糖', 'unknown')).toBeNull();
+    expect(findEntry('葡萄糖', null)).toBeNull();
+  });
+
+  it('GLU and 葡萄糖 resolve to fasting glucose only with printed blood context', () => {
+    expect(findEntry('GLU', 'blood')?.key).toBe('fasting_glucose');
+    expect(findEntry('葡萄糖', 'blood')?.key).toBe('fasting_glucose');
+  });
+
+  it('GLU and 葡萄糖 resolve to urine glucose only with printed urine context', () => {
+    expect(findEntry('GLU', 'urine')?.key).toBe('urine_glucose');
+    expect(findEntry('葡萄糖', 'urine')?.key).toBe('urine_glucose');
+  });
+
+  it('unambiguous 血糖 keeps its legacy unscoped fasting-glucose identity', () => {
+    expect(findEntry('血糖')?.key).toBe('fasting_glucose');
+  });
+});
+
 describe('US English aliases — specimen-scoped urine names', () => {
   it('bare pH resolves only with urine context', () => {
     expect(findEntry('pH')).toBeNull();
@@ -127,9 +155,8 @@ describe('US English aliases — specimen-scoped urine names', () => {
     expect(findEntry('GLU', 'urine')?.key).toBe('urine_glucose');
   });
 
-  it('bare Glucose remains unknown for blood', () => {
+  it('generic urine-only aliases remain unknown for blood', () => {
     expect(findEntry('Glucose', 'blood')).toBeNull();
-    expect(findEntry('GLU', 'blood')).toBeNull();
     expect(findEntry('PRO', 'blood')).toBeNull();
     expect(findEntry('Ketones', 'blood')).toBeNull();
     expect(findEntry('Specific Gravity', 'blood')).toBeNull();
