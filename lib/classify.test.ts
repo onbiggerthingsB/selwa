@@ -3,13 +3,21 @@ import { parseValue, classify, classifyAgainstBounds } from './classify';
 import { findEntry } from './reference';
 
 describe('parseValue', () => {
-  it('parses clean decimals', () => {
+  it('parses clean signed decimals', () => {
     expect(parseValue('5.5')).toBe(5.5);
     expect(parseValue(' 140 ')).toBe(140);
+    expect(parseValue('-5')).toBe(-5);
+    expect(parseValue('-2.0')).toBe(-2);
+    expect(parseValue('+3')).toBe(3);
   });
   it('rejects comparators, ranges, and junk (returns null)', () => {
     expect(parseValue('<0.5')).toBeNull();
-    expect(parseValue('3.5-5.1')).toBeNull();
+    expect(parseValue('0-2')).toBeNull();
+    expect(parseValue('3.5-5.1')).toBeNull(); // load-bearing: never parse a range as its first number
+    expect(parseValue('-2-2')).toBeNull();
+    expect(parseValue('-3.0--1.0')).toBeNull();
+    expect(parseValue('-')).toBeNull();
+    expect(parseValue('- 5')).toBeNull();
     expect(parseValue('positive')).toBeNull();
     expect(parseValue(null)).toBeNull();
     expect(parseValue('')).toBeNull();

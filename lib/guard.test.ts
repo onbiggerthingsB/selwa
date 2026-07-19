@@ -86,6 +86,42 @@ describe('evaluateRow', () => {
     expect(ids(out.flags)).toContain('R5-LOW-OCR-CONFIDENCE-NUMERIC');
   });
 
+  it('R5: a negative value stays suspicious when the entry does not admit signed values', () => {
+    const entry = findEntry('SG')!;
+    const ex = row({ name: 'SG', value: '-1.020', unit: 'SG' });
+    const valueNum = parseValue(ex.value);
+    const out = evaluateRow(ex, entry, valueNum, classify(valueNum, entry, 'unknown'), 'unknown');
+    expect(out.needsConfirm).toBe(true);
+    expect(ids(out.flags)).toContain('R5-LOW-OCR-CONFIDENCE-NUMERIC');
+  });
+
+  it('R5: a negative value is not suspicious when absoluteLow explicitly admits signed values', () => {
+    const signedEntry = {
+      ...findEntry('chloride')!,
+      refLow: -5,
+      refHigh: 5,
+      criticalLow: null,
+      criticalHigh: null,
+      absoluteLow: -10,
+      absoluteHigh: 10,
+      highStakes: false,
+    };
+    const ex = row({ name: 'signed fixture', value: '-2', unit: signedEntry.unit });
+    const valueNum = parseValue(ex.value);
+    const classification = classify(valueNum, signedEntry, 'unknown');
+    expect(classification).toBe('normal');
+    const out = evaluateRow(
+      ex,
+      signedEntry,
+      valueNum,
+      classification,
+      'unknown',
+    );
+    expect(out.action).toBe('classify');
+    expect(out.needsConfirm).toBe(false);
+    expect(ids(out.flags)).not.toContain('R5-LOW-OCR-CONFIDENCE-NUMERIC');
+  });
+
   it('R6: high-stakes analyte ALWAYS needs confirm even at high confidence + normal', () => {
     const entry = findEntry('potassium')!;
     const ex = row({ name: 'K', value: '4.0', unit: 'mmol/L', confidence: 'high' });

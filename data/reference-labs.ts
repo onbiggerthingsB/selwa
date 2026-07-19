@@ -2647,8 +2647,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   //   pO2  — a venous blood gas prints the identical row name "pO2"; specimen appears only in the
   //          report header, which row-level extraction never sees, so a NORMAL venous pO2 (~40)
   //          would trip an arterial critical-low alarm.
-  //   Base Excess — would be the first SIGNED analyte, and lib/classify.ts's NUMERIC regex rejects
-  //          a leading '-', so its entire negative half silently parses to null.
+  //   Base Excess — signed scalar parsing is now supported, but its sourced clinical curation
+  //          remains a separate high-stakes entry task.
   {
     key: 'calcium_ionized',
     name: defineText({

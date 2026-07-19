@@ -60,6 +60,15 @@ function structurallySuspicious(
   if (value === null) return true;
   if (entry.unit === 'qualitative' && parseQualitative(value) !== null) return false;
   if (valueNum === null) return true; // couldn't parse a clean number
+  // A leading minus is credible only for an entry whose curated absolute
+  // bounds explicitly admit signed values. Otherwise keep the OCR-confirmation
+  // gate even though parseValue now accepts signed scalars.
+  if (
+    valueNum < 0 &&
+    !(entry.absoluteLow !== null && entry.absoluteLow < 0)
+  ) {
+    return true;
+  }
   return false;
 }
 
