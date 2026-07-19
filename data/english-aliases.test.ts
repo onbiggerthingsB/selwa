@@ -41,6 +41,53 @@ describe('US English aliases — verified Blood-only names now resolve', () => {
   });
 });
 
+describe('Chinese aliases — unit and panel corroborate these exact names', () => {
+  it.each([
+    ['淋巴细胞数', 'lymphocyte_abs'],
+    ['中性细胞值', 'neutrophil_abs'],
+    ['红蛋白', 'hemoglobin'],
+  ])('%s resolves only by exact normalized match to %s', (name, key) => {
+    expect(findEntry(name)?.key).toBe(key);
+  });
+});
+
+describe('Chinese aliases — trace-element and sensitive names must STAY unknown', () => {
+  function expectUnknownForEverySpecimen(name: string) {
+    expect(findEntry(name)).toBeNull();
+    expect(findEntry(name, 'unknown')).toBeNull();
+    expect(findEntry(name, null)).toBeNull();
+    expect(findEntry(name, 'blood')).toBeNull();
+    expect(findEntry(name, 'urine')).toBeNull();
+  }
+
+  it('钙(Ca) stays unknown — heavy-metals/trace-element panel in μg/ml, not serum calcium in mmol/L', () => {
+    // Lock both sides of the boundary: bare serum names remain valid, while a future
+    // "strip parenthetical suffixes" normalization must not turn 钙(Ca) into 钙 or Ca.
+    expect(findEntry('钙')?.key).toBe('calcium_total');
+    expect(findEntry('Ca')?.key).toBe('calcium_total');
+    expectUnknownForEverySpecimen('钙(Ca)');
+  });
+
+  it('镁(Mg) stays unknown — heavy-metals/trace-element panel in ug/ml, not serum magnesium in mmol/L', () => {
+    // As above, preserving legitimate serum aliases must not erase the panel boundary.
+    expect(findEntry('镁')?.key).toBe('magnesium');
+    expect(findEntry('Mg')?.key).toBe('magnesium');
+    expectUnknownForEverySpecimen('镁(Mg)');
+  });
+
+  it('铅(Pb) stays unknown — heavy-metals/trace-element panel in μg/L and no curated lead entry exists', () => {
+    expectUnknownForEverySpecimen('铅(Pb)');
+  });
+
+  it('镉(Cd) stays unknown — heavy-metals/trace-element panel in μg/L and no curated cadmium entry exists', () => {
+    expectUnknownForEverySpecimen('镉(Cd)');
+  });
+
+  it('人类免疫缺陷病毒抗体/抗原(P24) stays unknown — sensitive HIV Ag/Ab result is deliberately uninterpreted', () => {
+    expectUnknownForEverySpecimen('人类免疫缺陷病毒抗体/抗原(P24)');
+  });
+});
+
 describe('US English aliases — specimen-ambiguous names must STAY unknown', () => {
   it('Glucose is NOT aliased — MIMIC carries it in 9 fluids (Blood, Urine, CSF, Pleural, Ascites, Joint, Body Fluid, Stool)', () => {
     // A CSF or pleural glucose is a different test with a different frame. Unknown > wrong entry.
