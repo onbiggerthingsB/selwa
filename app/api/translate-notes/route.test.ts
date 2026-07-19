@@ -6,9 +6,15 @@ vi.mock('@/lib/anthropic', () => ({
 }));
 
 import { POST } from './route';
+import { CONSENT_HEADER } from '@/lib/consentGate';
+import { CONSENT_VERSION } from '@/lib/consent';
+import { MAX_NOTES_CHARS } from '@/lib/notesSchema';
 
-function reqWith(body: unknown): Parameters<typeof POST>[0] {
-  return { json: async () => body } as unknown as Parameters<typeof POST>[0];
+function reqWith(body: unknown, consentHeader: string | null = String(CONSENT_VERSION)): Parameters<typeof POST>[0] {
+  return {
+    json: async () => body,
+    headers: { get: (k: string) => (k.toLowerCase() === CONSENT_HEADER ? consentHeader : null) },
+  } as unknown as Parameters<typeof POST>[0];
 }
 
 describe('POST /api/translate-notes', () => {
@@ -33,7 +39,12 @@ describe('POST /api/translate-notes', () => {
   });
 
   it('400s when the request body is not valid JSON', async () => {
-    const res = await POST({ json: async () => { throw new Error('bad json'); } } as unknown as Parameters<typeof POST>[0]);
+    // Consent must still be granted here: the gate runs first, so without the header this would
+    // 403 and stop testing the JSON path it is named for.
+    const res = await POST({
+      json: async () => { throw new Error('bad json'); },
+      headers: { get: (k: string) => (k.toLowerCase() === CONSENT_HEADER ? String(CONSENT_VERSION) : null) },
+    } as unknown as Parameters<typeof POST>[0]);
     expect(res.status).toBe(400);
     expect(parse).not.toHaveBeenCalled();
   });
@@ -65,5 +76,32 @@ describe('POST /api/translate-notes', () => {
     expect(res.status).toBe(502);
     const body = await res.json();
     expect(JSON.stringify(body)).not.toMatch(/secret-key-leak/);
+  });
+
+  it('403s without consent — notes are also transferred to Anthropic, so they are gated too', async () => {
+    const res = await POST(reqWith({ text: 'take one tablet daily' }, null));
+    expect(res.status).toBe(403);
+    expect(parse).not.toHaveBeenCalled();
+  });
+
+  it('403s a stale consent version', async () => {
+    const res = await POST(reqWith({ text: 'take one tablet daily' }, '1'));
+    expect(res.status).toBe(403);
+    expect(parse).not.toHaveBeenCalled();
+  });
+
+  // Unbounded free text forwarded verbatim to the model is a cost/abuse vector. Rejected, never
+  // truncated: half a note translated and then reconciled against the full "original" would
+  // corrupt the R7-R9 fidelity check.
+  it(`413s notes longer than MAX_NOTES_CHARS (${MAX_NOTES_CHARS}) without calling the model`, async () => {
+    const res = await POST(reqWith({ text: 'a'.repeat(MAX_NOTES_CHARS + 1) }));
+    expect(res.status).toBe(413);
+    expect(parse).not.toHaveBeenCalled();
+  });
+
+  it('accepts notes exactly at the limit (the cap is not off by one)', async () => {
+    parse.mockResolvedValue({ parsed_output: { segments: [] } });
+    const res = await POST(reqWith({ text: 'a'.repeat(MAX_NOTES_CHARS) }));
+    expect(res.status).toBe(200);
   });
 });

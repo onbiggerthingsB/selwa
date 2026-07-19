@@ -22,3 +22,11 @@ export const NOTES_PROMPT = [
   'Translate + simplify ONLY. Preserve every number, dose (amount + unit + frequency), negation, and drug name EXACTLY — do not round, convert, drop, or substitute any of them.',
   'Do NOT add a diagnosis, recommendation, or reassurance that is not in the source. Keep the source clause in sourceText and your plain translation in translatedText.',
 ].join(' ');
+
+// Typed notes are free text pasted by the user and forwarded verbatim to the model. Unbounded, it
+// is both a cost/abuse vector and a way to blow the model's context (which would surface to the
+// user as a generic 502). The cap is deliberately far above any real doctor's note. The route
+// rejects LOUDLY (413) rather than truncating: silently sending half a note to a translator whose
+// output the notes guard then reconciles against "the original" would corrupt the R7-R9 fidelity
+// check — it would be comparing a translation of one text against a different text.
+export const MAX_NOTES_CHARS = 5000;

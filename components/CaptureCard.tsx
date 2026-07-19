@@ -3,7 +3,8 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { downscaleToJpeg } from '@/lib/downscaleImage';
 import { assessQuality, toGray, escalateConfirm, RETAKE_GUIDANCE, type QualityVerdict } from '@/lib/imageQuality';
-import { hasConsent, grantConsent } from '@/lib/consent';
+import { hasConsent, grantConsent, CONSENT_VERSION } from '@/lib/consent';
+import { CONSENT_HEADER } from '@/lib/consentGate';
 import { applyRedactions, rectFromDrag, isMeaningful, type Rect } from '@/lib/redact';
 import { groundExtraction } from '@/lib/grounding';
 import { LabExtractionSchema } from '@/lib/extractionSchema';
@@ -145,7 +146,14 @@ export function CaptureCard() {
 
       const fd = new FormData();
       fd.append('image', small, 'lab.jpg');
-      const res = await fetch('/api/extract', { method: 'POST', body: fd });
+      // The server re-checks consent at the transfer point (lib/consentGate.ts). This header is
+      // that assertion; without it the route 403s, so a regression that skips the consent phase
+      // fails loudly instead of silently shipping a lab image off-device.
+      const res = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { [CONSENT_HEADER]: String(CONSENT_VERSION) },
+        body: fd,
+      });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? 'Could not read the report');
@@ -163,7 +171,7 @@ export function CaptureCard() {
         try {
           const nres = await fetch('/api/translate-notes', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', [CONSENT_HEADER]: String(CONSENT_VERSION) },
             body: JSON.stringify({ text: trimmed }),
           });
           if (nres.ok) {
