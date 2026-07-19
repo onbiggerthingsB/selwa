@@ -38,8 +38,17 @@ describe('SummaryView', () => {
   });
 
   it('presents an unknown analyte without a normal/abnormal judgment', () => {
-    render(<SummaryView report={report} lang="en" />);
-    expect(screen.getByText('ceruloplasmin')).toBeInTheDocument();
+    const { container } = render(<SummaryView report={report} lang="en" />);
+    const rawName = screen.getByText('ceruloplasmin');
+    expect(rawName).toBeInTheDocument();
+    expect(
+      rawName.closest('.name-primary')?.querySelector(
+        '[data-translation-review="unverified"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      container.querySelectorAll('[data-translation-review="unverified"]').length,
+    ).toBeGreaterThan(0);
     expect(screen.getAllByText(/not assessed/i).length).toBeGreaterThan(0);
   });
 

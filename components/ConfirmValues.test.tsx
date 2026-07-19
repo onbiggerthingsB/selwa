@@ -113,4 +113,46 @@ describe('ConfirmValues result-shape input', () => {
     expect(markers.length).toBeGreaterThan(0);
     expect(markers.every((marker) => marker.getAttribute('lang') === 'zh')).toBe(true);
   });
+
+  it('shows the verbatim report name when a specimen-scoped match abstains', () => {
+    const grounded = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'pH',
+            value: '7.1',
+            unit: 'pH',
+            printedRange: '7.35-7.45',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    );
+    const row = grounded.rows[0];
+    expect(row.entry?.key).toBe('urine_ph');
+    expect(row.action).toBe('abstain');
+    expect(row.flags.map((flag) => flag.id)).toContain(
+      'R18-SPECIMEN-MATCH-UNCORROBORATED',
+    );
+
+    // R18 itself does not force confirmation. Set only the display gate here to
+    // exercise ConfirmValues' defensive name boundary without changing guard logic.
+    const reportWithConfirm = {
+      ...grounded,
+      rows: [{ ...row, needsConfirm: true }],
+      generatedAt: 0,
+    };
+    render(
+      <ConfirmValues
+        report={reportWithConfirm}
+        lang="en"
+        onConfirmed={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('pH')).toBeInTheDocument();
+    expect(screen.queryByText('Urine pH')).toBeNull();
+  });
 });

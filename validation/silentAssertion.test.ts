@@ -34,10 +34,11 @@ function sectionFor(name: string, value: string | null, unit: string | null, ran
   return { row: rep.rows[0], section: buildSummary(rep, 'en').sections[0] as SummarySection };
 }
 
-// This is a semantic signal, not an English-copy regex. summary.ts exposes the
-// report's printed range only when it actually rendered a report-position chip.
+// This is a semantic signal, not an English-copy regex. `reportRange` now
+// reproduces all printed text even when no position can be computed, while the
+// neutral `report` tone is reserved for a successfully reproduced position.
 // Detecting assertion from one English chip field let every non-English path evade this gate.
-const asserts = (s: SummarySection) => s.reportRange.trim().length > 0;
+const asserts = (s: SummarySection) => s.tone === 'report';
 
 interface LanguageAudit {
   checked: Record<Lang, number>;
@@ -249,6 +250,8 @@ describe('a row may never assert a position with no disclosure', () => {
     expect(row.action).toBe('abstain');
     expect(row.needsConfirm).toBe(false);
     expect(row.flags.map((f) => f.id)).toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+    expect(resolveText(section.name, 'en').text).toBe('pH');
+    expect(resolveText(section.name, 'en').text).not.toBe('Urine pH');
     expect(resolveText(section.chip, 'en').text).toBe('Below your report’s range');
     expect(resolveText(section.chip, 'zh').text).toBe('低于报告所列范围');
     expect(resolveText(section.chip, 'bo').text).toBe('低于报告所列范围');

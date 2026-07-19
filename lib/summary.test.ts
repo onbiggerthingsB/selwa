@@ -86,6 +86,32 @@ describe('buildSummary', () => {
     expect(cer.typicalRange).toBe(''); // no curated range to offer as context
   });
 
+  it('reproduces an unparseable printed range for an unknown row without inventing a position', () => {
+    const report = groundExtraction(
+      {
+        rows: [
+          {
+            name: '未知项目甲',
+            value: '12',
+            unit: null,
+            printedRange: '见备注',
+            confidence: 'high',
+          },
+        ],
+      },
+      'unknown',
+    );
+    const row = report.rows[0];
+    const section = buildSummary(report, 'en').sections[0];
+
+    expect(row.entry).toBeNull();
+    expect(row.flags.map((flag) => flag.id)).toContain('R1-UNKNOWN-ANALYTE');
+    expect(resolveText(section.chip, 'en').text).toBe('Not assessed');
+    expect(section.reportRange).toBe('见备注');
+    expect(resolveText(section.plain, 'en').text).toBe('');
+    expect(section.typicalRange).toBe('');
+  });
+
   it('a report-only row renders its definition but never an owned range or source', () => {
     const report = groundExtraction(
       {
@@ -168,10 +194,8 @@ describe('buildSummary', () => {
     const section = buildSummary(report, 'en').sections[0];
 
     expect(resolveText(section.chip, 'en').text).toBe(chip);
-    if (chip === 'Ask your clinician to interpret') {
-      expect(section.reportRange).toBe('');
-    } else {
-      expect(section.reportRange).toBe(printedRange);
+    expect(section.reportRange).toBe(printedRange);
+    if (chip !== 'Ask your clinician to interpret') {
       expect(section.tone).toBe('report');
     }
   });

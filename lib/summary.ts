@@ -14,6 +14,7 @@ import {
   defineText,
   fallback,
   reviewed,
+  unverified,
   type Lang,
   type LocalizedText,
 } from '@/lib/i18n';
@@ -99,13 +100,14 @@ const ABSTAIN_LABEL: Record<Classification, LocalizedText> = {
   unclassified: NOT_ASSESSED,
 };
 
-function emptyText(): LocalizedText {
-  return defineText({
-    en: reviewed(''),
-    zh: reviewed(''),
-    bo: fallback('zh'),
-  });
-}
+// Empty content is absence, not reviewed clinical copy. Keeping it outside the
+// review taxonomy prevents future localization audits from counting placeholders
+// as human-reviewed strings.
+const EMPTY_LOCALIZED_TEXT: LocalizedText = defineText({
+  en: { text: '' },
+  zh: { text: '' },
+  bo: fallback('zh'),
+});
 
 // B1 RULE (see validation/b1VerdictLeakage.test.ts): a user-visible message may describe only
 // (a) our confidence in the READING, or (b) the REPORT'S OWN information — never a conclusion
@@ -246,27 +248,30 @@ export function buildSummary(
 
     return {
       key: entry?.key ?? `row-${i}`,
-      name: entry
+      // A matched entry is not enough to trust its curated name: an abstention
+      // means the guard could not safely establish that the entry describes this
+      // row. Keep the report's verbatim name and mark it unverified.
+      name: handled
         ? entry.name
         : defineText({
-            en: reviewed(row.extracted.name),
-            zh: reviewed(row.extracted.name),
-            bo: fallback('zh'),
+            en: unverified(row.extracted.name),
+            zh: unverified(row.extracted.name),
+            bo: unverified(row.extracted.name),
           }),
       valueText: valueText(row),
       tone,
       chip,
       // CARD: the direction-neutral definition (never the directional plain — that is glossary-only).
-      plain: handled ? entry!.definition : emptyText(),
+      plain: handled ? entry!.definition : EMPTY_LOCALIZED_TEXT,
       // GLOSSARY: the fuller description, surfaced separately (not beneath the chip).
-      glossary: handled ? entry!.plain : emptyText(),
+      glossary: handled ? entry!.plain : EMPTY_LOCALIZED_TEXT,
       flags: row.flags
         .filter((f) => SURFACING_FLAGS.has(f.id))
         .map((f) => ({ severity: f.severity, message: f.message })),
-      // The report's OWN range is the report's information — it surfaces whenever we reproduced
-      // a comparison from it, known analyte or not (decoupled). Our curated range + the plain
-      // education below DO need the table, so they stay gated on recognition.
-      reportRange: !defer ? (row.extracted.printedRange ?? '') : '',
+      // The report's OWN range is faithfully reproduced whenever present, even
+      // when we cannot parse it or compute a position from it. Our curated range
+      // and education still require a safely handled entry.
+      reportRange: row.extracted.printedRange ?? '',
       // R17: our band does not overlap the report's printed range, so it is almost certainly not
       // measuring this row (usually a different SPECIMEN under the same name — the urine-vs-serum
       // β2-microglobulin case). Presenting it as "Typical range" beside the patient's number is a

@@ -47,10 +47,13 @@ describe('decoupled chip — safety limits', () => {
     // believe we misread would assert a position from bad data.
     const s = sec('钾', '40', 'mmol/L', '3.5-5.1');
     expect(resolveText(s.chip, 'en').text).not.toMatch(/above|below|within/i);
+    expect(s.reportRange).toBe('3.5-5.1');
   });
 
   it('a non-numeric value asserts nothing (nothing to reproduce)', () => {
-    expect(resolveText(sec('滴虫', 'Negative(-)', null, 'Negative(-)').chip, 'en').text).toMatch(/clinician|not assessed/i);
+    const s = sec('滴虫', 'Negative(-)', null, 'Negative(-)');
+    expect(resolveText(s.chip, 'en').text).toMatch(/clinician|not assessed/i);
+    expect(s.reportRange).toBe('Negative(-)');
   });
 
   it('a KNOWN analyte is unaffected — still reproduces the report’s frame', () => {
