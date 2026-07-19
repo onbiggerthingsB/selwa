@@ -118,3 +118,132 @@ describe('groundExtraction', () => {
     expect(dd.flags.map((f) => f.id)).toContain('R2-UNIT-MISMATCH');
   });
 });
+
+describe('specimen-scoped grounding', () => {
+  it('uses printed urine context to resolve a bare pH row', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'pH',
+            value: '5',
+            unit: null,
+            printedRange: '5.0-8.0',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('urine_ph');
+    expect(row.matchedVia).toBe('specimen-scoped');
+    expect(row.action).toBe('classify');
+    expect(row.classification).toBe('normal');
+    expect(row.flags.map((f) => f.id)).not.toContain('R1-UNKNOWN-ANALYTE');
+    expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+  });
+
+  it('records scoped provenance when context refines a legacy unscoped alias', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Specific Gravity',
+            value: '1.015',
+            unit: 'SG',
+            printedRange: '1.003-1.030',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('urine_specific_gravity');
+    expect(row.matchedVia).toBe('specimen-scoped');
+    expect(row.action).toBe('classify');
+    expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+  });
+
+  it('abstains when a scoped urine match conflicts with a blood-gas printed range', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'pH',
+            value: '7.1',
+            unit: 'pH',
+            printedRange: '7.35-7.45',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('urine_ph');
+    expect(row.matchedVia).toBe('specimen-scoped');
+    expect(row.action).toBe('abstain');
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(false);
+    expect(row.flags.map((f) => f.id)).toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+  });
+
+  // THE HOLE THE FIRST R18 LEFT OPEN. The original condition required `printed !== null`,
+  // so a scoped match with NO printed range skipped the corroboration check entirely —
+  // treating "no evidence" as "no problem". Measured before the fix: a mislabelled blood gas
+  // (pH 7.1, no range, no unit, specimen 'urine') resolved to urine_ph and classified as
+  // NORMAL against the urine band, with needsConfirm false, zero flags, and "Typical range
+  // 5-8 pH" shown beside a life-threatening acidosis. The scoped name is the ONLY evidence of
+  // specimen here, and R16/R17 cannot fire without a printed range, so nothing else caught it.
+  it('abstains on a scoped match with NO printed range — absence of evidence is not corroboration', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'pH',
+            value: '7.1',
+            unit: null,
+            printedRange: null,
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('urine_ph');
+    expect(row.matchedVia).toBe('specimen-scoped');
+    expect(row.action, 'an uncorroborated scoped match must not classify').toBe('abstain');
+    expect(row.classification).toBe('unclassified');
+    expect(row.flags.map((f) => f.id)).toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+  });
+
+  it('keeps a bare pH row unknown when no printed specimen is available', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'pH',
+            value: '5',
+            unit: 'pH',
+            printedRange: '5.0-8.0',
+            confidence: 'high',
+            specimen: null,
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry).toBeNull();
+    expect(row.matchedVia).toBe('unmatched');
+    expect(row.action).toBe('abstain');
+    expect(row.flags.map((f) => f.id)).toContain('R1-UNKNOWN-ANALYTE');
+  });
+});

@@ -1121,6 +1121,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   {
     key: 'urine_protein', nameEn: 'Urine Protein (Dipstick)', nameZh: '尿蛋白',
     aliases: ["Urine PRO", "Urinary protein", "尿蛋白", "尿蛋白质", "PRO"],
+    specimenAliases: { urine: ["Protein", "PRO", "蛋白质"] },
     unit: "qualitative", allowedUnits: ["qualitative", "negative/+/++/+++"],
     refLow: 0, refHigh: 0,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -1134,6 +1135,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   {
     key: 'urine_glucose', nameEn: 'Urine Glucose (Dipstick)', nameZh: '尿糖',
     aliases: ["Urine GLU", "Urinary glucose", "Glycosuria", "尿糖"],
+    specimenAliases: { urine: ["Glucose", "GLU", "尿糖"] },
     unit: "qualitative", allowedUnits: ["qualitative", "negative/+/++/+++"],
     refLow: 0, refHigh: 0,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: true,
@@ -1147,6 +1149,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   {
     key: 'urine_ketones', nameEn: 'Urine Ketones (Dipstick)', nameZh: '尿酮体',
     aliases: ["Urine KET", "Ketones", "Ketonuria", "尿酮体", "酮体", "KET"],
+    specimenAliases: { urine: ["Ketone", "Ketones", "KET"] },
     unit: "qualitative", allowedUnits: ["qualitative", "negative/+/++/+++"],
     refLow: 0, refHigh: 0,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
@@ -1160,7 +1163,9 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   {
     key: 'urine_ph', nameEn: 'Urine pH', nameZh: '尿酸碱度',
     aliases: ["Urine pH", "尿酸碱度", "尿pH值", "酸碱度"],
+    specimenAliases: { urine: ["pH", "PH"] },
     unit: "pH", allowedUnits: ["pH"],
+    unitOptional: true, // pH is dimensionless and urinalysis reports commonly leave the unit cell blank
     refLow: 5.0, refHigh: 8.0,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
     absoluteLow: 4, absoluteHigh: 9,
@@ -1173,6 +1178,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   {
     key: 'urine_specific_gravity', nameEn: 'Urine Specific Gravity', nameZh: '尿比重',
     aliases: ["USG", "SG", "Specific gravity", "比重"],
+    specimenAliases: { urine: ["Specific Gravity", "SG", "比重"] },
     unit: "SG", allowedUnits: ["SG"], // dimensionless; canonical token 'SG' (empty unit would break integrity contract)
     refLow: 1.003, refHigh: 1.030,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,

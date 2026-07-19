@@ -1,6 +1,6 @@
 import type { GroundedReport, GroundedRow, Sex } from '@/lib/types';
 import type { LabExtraction } from '@/lib/extractionSchema';
-import { findEntry, unitMatches, parsePrintedRange } from '@/lib/reference';
+import { findEntryMatch, unitMatches, parsePrintedRange } from '@/lib/reference';
 import { parseValue, classify } from '@/lib/classify';
 import { evaluateRow } from '@/lib/guard';
 import { convertValue } from '@/lib/convert';
@@ -8,7 +8,12 @@ import { applyCrossRowChecks } from '@/lib/crossRowChecks';
 
 export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: number): GroundedReport {
   const rows: GroundedRow[] = extraction.rows.map((extracted) => {
-    const entry = findEntry(extracted.name);
+    // Only explicitly printed urine/blood context may unlock (or refine) a
+    // scoped alias. Missing/null context retains the legacy exact lookup.
+    const { entry, matchedVia } = findEntryMatch(
+      extracted.name,
+      extracted.specimen ?? 'unknown',
+    );
     let valueNum = parseValue(extracted.value);
 
     // R2b — safe unit auto-conversion. When the reported unit doesn't match our
@@ -55,6 +60,7 @@ export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: numb
       sex,
       age,
       normalizedPrintedRange,
+      matchedVia,
     );
 
     // Surface the conversion as a non-blocking info flag (EN + ZH).
@@ -70,6 +76,7 @@ export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: numb
     return {
       extracted,
       entry,
+      matchedVia,
       valueNum,
       classification: outcome.action === 'abstain' ? 'unclassified' : classification,
       action: outcome.action,

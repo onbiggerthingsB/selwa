@@ -62,6 +62,7 @@ export function evaluateRow(
   // canonical unit by grounding.ts. Optional for back-compat with direct callers
   // (whose printed range is in canonical units); falls back to parsing the raw string.
   normalizedPrintedRange?: PrintedRange | null,
+  matchedVia: 'unmatched' | 'exact' | 'specimen-scoped' = 'exact',
 ): GuardOutcome {
   const flags: GuardFlag[] = [];
 
@@ -87,6 +88,43 @@ export function evaluateRow(
         '该项目不在我们的参考资料中，因此我们不作解读——此处显示的内容均来自您的报告本身。' + CONFIRM_CLINICIAN_ZH,
       ),
     );
+    return { action: 'abstain', needsConfirm: false, flags };
+  }
+
+  const printed = normalizedPrintedRange ?? parsePrintedRange(extracted.printedRange);
+
+  // R18 — a specimen-scoped alias is trusted ONLY while the report's own printed range
+  // corroborates it. A wrong specimen label hands classification the wrong clinical frame
+  // (blood-gas pH against a urine pH band), so this fails closed before unit handling or
+  // classification can present the scoped entry as understood.
+  //
+  // ABSENCE OF A PRINTED RANGE IS NOT CORROBORATION. An earlier version required
+  // `printed !== null`, which treated "no evidence" as "no problem" and left the exact hole
+  // this rule exists to close: a mislabelled blood gas — pH 7.1, no printed range, no unit —
+  // resolved to urine_ph and classified as NORMAL against the urine band, with needsConfirm
+  // false, no flag, and "Typical range 5–8 pH" plus "Urine pH measures how acidic or alkaline
+  // the urine is" rendered beside a life-threatening acidosis. Nothing else catches it: the
+  // scoped name is the ONLY evidence of specimen, and R16/R17 cannot fire without a printed
+  // range to compare against. A scoped match with nothing to check is uncorroborated by
+  // definition, so it aborts too — the flag text already says exactly that.
+  //
+  // Cost of failing closed here is small and bounded: with no printed range there is no chip
+  // either, so the row loses only typicalRange and the definition, and it still discloses.
+  if (
+    matchedVia === 'specimen-scoped' &&
+    (printed === null || printedRangeDisagrees(printed, entry, sex, age))
+  ) {
+    flags.push(
+      flag(
+        'R18-SPECIMEN-MATCH-UNCORROBORATED',
+        'caution',
+        'We could not corroborate the specimen label we read with the reference range printed on your report, so we are not interpreting this test. Please check the specimen and range on your report.',
+        '我们无法用报告上打印的参考范围确认所读取的样本类型，因此不解读此项目。请核对报告上的样本类型和范围。',
+      ),
+    );
+    // The existing confirmation screen can edit only value and unit. Sending an
+    // R18 row there cannot resolve a specimen/range mismatch, so disclose and
+    // abstain without adding an irrelevant confirmation step.
     return { action: 'abstain', needsConfirm: false, flags };
   }
 
@@ -182,8 +220,6 @@ export function evaluateRow(
   // the materiality tolerance. Band differences that don't flip this value are informational
   // only (assay/lab reference ranges legitimately vary). Surfaced by the real-content
   // measurement: HCT 49.9% (our sex-unknown union band vs a narrower printed range).
-  const printed = normalizedPrintedRange ?? parsePrintedRange(extracted.printedRange);
-
   // R16 — the printed range cannot be this analyte's range in the unit we assumed (grounding
   // assumes the range shares the VALUE's unit; real reports mix them). The assumption is
   // DISPROVED, so every downstream use of this range is void: R11 must not draw a conclusion

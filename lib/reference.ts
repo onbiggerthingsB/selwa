@@ -19,8 +19,77 @@ const INDEX: Map<string, ReferenceEntry> = (() => {
   return m;
 })();
 
-export function findEntry(rawName: string): ReferenceEntry | null {
-  return INDEX.get(normName(rawName)) ?? null;
+type ScopedSpecimen = 'urine' | 'blood';
+type SpecimenContext = ScopedSpecimen | 'unknown';
+export type ReferenceMatchVia = 'unmatched' | 'exact' | 'specimen-scoped';
+
+export interface ReferenceMatch {
+  entry: ReferenceEntry | null;
+  matchedVia: ReferenceMatchVia;
+}
+
+const SCOPED_INDEX: Map<string, ReferenceEntry> = (() => {
+  const m = new Map<string, ReferenceEntry>();
+  for (const e of REFERENCE_LABS) {
+    for (const specimen of ['urine', 'blood'] as const) {
+      for (const alias of e.specimenAliases?.[specimen] ?? []) {
+        m.set(`${specimen}\0${normName(alias)}`, e);
+      }
+    }
+  }
+  return m;
+})();
+
+const SCOPED_ALIAS_NAMES: Set<string> = (() => {
+  const names = new Set<string>();
+  for (const e of REFERENCE_LABS) {
+    for (const aliases of Object.values(e.specimenAliases ?? {})) {
+      for (const alias of aliases ?? []) names.add(normName(alias));
+    }
+  }
+  return names;
+})();
+
+export function findEntryMatch(
+  rawName: string,
+  specimen: SpecimenContext | null = 'unknown',
+): ReferenceMatch {
+  const normalized = normName(rawName);
+  const unscoped = INDEX.get(normalized);
+
+  if (specimen === 'urine' || specimen === 'blood') {
+    const scoped = SCOPED_INDEX.get(`${specimen}\0${normalized}`) ?? null;
+
+    // Some of the table's long-standing aliases predate specimen capture and
+    // therefore also exist in INDEX. Preserve that exact legacy behavior when
+    // specimen is omitted/unknown, but let an explicitly printed specimen
+    // refine a declared scoped alias. This prevents blood "GLU", "Ketones",
+    // "SG", etc. from silently inheriting a urine or fasting-blood frame.
+    if (SCOPED_ALIAS_NAMES.has(normalized)) {
+      return {
+        entry: scoped,
+        matchedVia: scoped ? 'specimen-scoped' : 'unmatched',
+      };
+    }
+  }
+
+  if (unscoped) return { entry: unscoped, matchedVia: 'exact' };
+  if (specimen !== 'urine' && specimen !== 'blood') {
+    return { entry: null, matchedVia: 'unmatched' };
+  }
+
+  const scoped = SCOPED_INDEX.get(`${specimen}\0${normalized}`) ?? null;
+  return {
+    entry: scoped,
+    matchedVia: scoped ? 'specimen-scoped' : 'unmatched',
+  };
+}
+
+export function findEntry(
+  rawName: string,
+  specimen: SpecimenContext | null = 'unknown',
+): ReferenceEntry | null {
+  return findEntryMatch(rawName, specimen).entry;
 }
 
 export function normalizeUnit(u: string): string {
@@ -34,7 +103,7 @@ export function normalizeUnit(u: string): string {
 }
 
 export function unitMatches(extractedUnit: string | null, entry: ReferenceEntry): boolean {
-  if (!extractedUnit) return false;
+  if (!extractedUnit) return entry.unitOptional === true;
   const u = normalizeUnit(extractedUnit);
   return entry.allowedUnits.some((a) => normalizeUnit(a) === u);
 }

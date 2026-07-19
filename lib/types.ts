@@ -7,8 +7,14 @@ export interface ReferenceEntry {
   nameEn: string;
   nameZh: string;
   aliases: string[]; // EN abbreviations + ZH names/synonyms, matched case-insensitively
+  /**
+   * Aliases that are safe only when the report explicitly identifies the row's
+   * specimen. These are indexed separately from the unscoped aliases above.
+   */
+  specimenAliases?: Partial<Record<'urine' | 'blood', string[]>>;
   unit: string; // canonical SI unit, e.g. 'mmol/L'
   allowedUnits: string[]; // exact equivalents accepted without conversion
+  unitOptional?: boolean; // curated exception for intrinsically unitless rows whose reports omit a unit
   refLow: Bound | null; // null when the analyte has only an upper decision cutoff
   refHigh: Bound | null; // null when only a lower bound is meaningful (e.g. eGFR, HDL)
   criticalLow: number | null; // SI; null when no panic band defined
@@ -59,11 +65,13 @@ export interface ExtractedRow {
   unit: string | null;
   printedRange: string | null; // reference range as printed on the report, if any
   confidence: 'low' | 'medium' | 'high';
+  specimen?: 'urine' | 'blood' | 'unknown' | null; // absent/null === unknown
 }
 
 export interface GroundedRow {
   extracted: ExtractedRow;
   entry: ReferenceEntry | null;
+  matchedVia: 'unmatched' | 'exact' | 'specimen-scoped';
   valueNum: number | null;
   classification: Classification;
   action: GuardAction;

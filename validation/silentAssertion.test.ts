@@ -91,6 +91,35 @@ describe('a row may never assert a position with no disclosure', () => {
     expect(row.needsConfirm, 'a high-stakes unit mismatch must reach the confirm gate').toBe(true);
     expect(section.flags.length, 'and must not be silent').toBeGreaterThan(0);
   });
+
+  it('a specimen-scoped row that abstains under R18 discloses why', () => {
+    const report = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'pH',
+            value: '7.1',
+            unit: 'pH',
+            printedRange: '7.35-7.45',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    );
+    const row = report.rows[0];
+    const section = buildSummary(report, 'en').sections[0];
+
+    expect(row.matchedVia).toBe('specimen-scoped');
+    expect(row.action).toBe('abstain');
+    expect(row.needsConfirm).toBe(false);
+    expect(row.flags.map((f) => f.id)).toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+    expect(section.chipEn).toBe('Below your report’s range');
+    expect(section.typicalRange).toBe('');
+    expect(section.source).toBe('');
+    expect(section.flags.map((f) => f.messageEn).join(' ')).toMatch(/could not corroborate the specimen/i);
+  });
 });
 
 describe('R17 — we stop showing our band when it cannot be this row’s band', () => {

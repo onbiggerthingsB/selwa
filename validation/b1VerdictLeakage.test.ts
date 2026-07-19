@@ -116,6 +116,36 @@ describe('B1 gate — no user-visible verdict about the patient’s own value', 
     expect(violations, `B1 verdict leakage:\n${violations.join('\n')}`).toEqual([]);
   });
 
+  it('R18 explains an uncorroborated specimen match without making a clinical claim', () => {
+    const report = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'pH',
+            value: '7.1',
+            unit: 'pH',
+            printedRange: '7.35-7.45',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    );
+    const [section] = buildSummary(report, 'en').sections;
+    const visible = visibleStrings(section);
+    const violations: string[] = [];
+
+    expect(report.rows[0].flags.map((f) => f.id)).toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+    expect(visible.join(' ')).toMatch(/could not corroborate the specimen/i);
+    for (const text of visible) {
+      for (const b of BANNED) {
+        if (b.re.test(text)) violations.push(`"${text}" [${b.why}]`);
+      }
+    }
+    expect(violations, `R18 B1 verdict leakage:\n${violations.join('\n')}`).toEqual([]);
+  });
+
   it('real corpora surface no banned verdict/triage text', () => {
     const violations: string[] = [];
     for (const corpus of [MIMIC_US_SAMPLE, MEDREPBENCH_SAMPLE]) {

@@ -24,6 +24,20 @@ describe('reference table integrity', () => {
     }
   });
 
+  it('every specimen-scoped alias resolves to its declared entry', () => {
+    for (const e of REFERENCE_LABS) {
+      for (const specimen of ['urine', 'blood'] as const) {
+        for (const alias of e.specimenAliases?.[specimen] ?? []) {
+          expect(findEntry(alias, specimen)?.key, `${specimen}:${alias}`).toBe(e.key);
+        }
+      }
+    }
+  });
+
+  it('keeps missing-unit acceptance narrowly curated to dimensionless urine pH', () => {
+    expect(REFERENCE_LABS.filter((e) => e.unitOptional).map((e) => e.key)).toEqual(['urine_ph']);
+  });
+
   it('age-banded entries are well-formed', () => {
     for (const e of REFERENCE_LABS) {
       if (!e.ageBands) continue;

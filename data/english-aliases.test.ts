@@ -5,11 +5,9 @@
 // the real MIMIC-IV d_labitems dictionary, and — just as importantly — locks the ones we must
 // deliberately NOT alias.
 //
-// THE RULE (learned the hard way): only alias a name whose SPECIMEN is unambiguous in the real
-// data. Our table separates specimen by naming (fasting_glucose / random_glucose / urine_glucose,
-// urine_ph, urine_protein) and has no fluid field, while extraction captures no panel context —
-// so an ambiguous name cannot be resolved to the right entry, and a wrong entry is worse than
-// no entry (it hands the guards the wrong reference frame).
+// THE RULE (learned the hard way): an ambiguous name may resolve only when OCR reads explicit
+// specimen context printed on the report. Missing/unknown context must keep the legacy safe
+// behavior, because a wrong entry is worse than no entry (it hands the guards the wrong frame).
 
 import { describe, it, expect } from 'vitest';
 import { findEntry } from '@/lib/reference';
@@ -51,5 +49,33 @@ describe('US English aliases — specimen-ambiguous names must STAY unknown', ()
 
   it('ionized calcium is a DIFFERENT analyte from total calcium — never aliased together', () => {
     expect(findEntry('Free Calcium')?.key ?? null).not.toBe('calcium_total');
+  });
+});
+
+describe('US English aliases — specimen-scoped urine names', () => {
+  it('bare pH resolves only with urine context', () => {
+    expect(findEntry('pH')).toBeNull();
+    expect(findEntry('pH', 'unknown')).toBeNull();
+    expect(findEntry('pH', null)).toBeNull();
+    expect(findEntry('pH', 'urine')?.key).toBe('urine_ph');
+    expect(findEntry('pH', 'blood')).toBeNull();
+  });
+
+  it('urinalysis names resolve with urine context', () => {
+    expect(findEntry('Protein', 'urine')?.key).toBe('urine_protein');
+    expect(findEntry('PRO', 'urine')?.key).toBe('urine_protein');
+    expect(findEntry('Ketone', 'urine')?.key).toBe('urine_ketones');
+    expect(findEntry('Ketones', 'urine')?.key).toBe('urine_ketones');
+    expect(findEntry('Specific Gravity', 'urine')?.key).toBe('urine_specific_gravity');
+    expect(findEntry('Glucose', 'urine')?.key).toBe('urine_glucose');
+    expect(findEntry('GLU', 'urine')?.key).toBe('urine_glucose');
+  });
+
+  it('bare Glucose remains unknown for blood', () => {
+    expect(findEntry('Glucose', 'blood')).toBeNull();
+    expect(findEntry('GLU', 'blood')).toBeNull();
+    expect(findEntry('PRO', 'blood')).toBeNull();
+    expect(findEntry('Ketones', 'blood')).toBeNull();
+    expect(findEntry('Specific Gravity', 'blood')).toBeNull();
   });
 });

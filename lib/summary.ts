@@ -63,12 +63,10 @@ const ABSTAIN_LABEL: Record<Classification, { en: string; zh: string }> = {
 
 // B1 RULE (see validation/b1VerdictLeakage.test.ts): a user-visible message may describe only
 // (a) our confidence in the READING, or (b) the REPORT'S OWN information — never a conclusion
-// about the patient's value derived from our table. So ONLY these two flags are speakable:
-//   R6  — "confirm the value we read"      (routing; about our reading)
-//   R13 — "we may have misread it"          (routing; about our reading)
-// Everything else (R3 critical verdict+triage, R4 "your value is outside the usual range",
-// R11/R12/R2b which reveal we judged the value against OUR range) stays INTERNAL: it still
-// drives needsConfirm and still feeds the confirm-burden metrics — it just isn't spoken.
+// about the patient's value derived from our table. Speakable flags are limited to our reading,
+// our supported scope, or the report's own content (for example R6 and R13 reading checks).
+// Clinical guard conclusions (R3/R4/R11/R12/R2b) stay INTERNAL: they still drive needsConfirm
+// and feed the confirm-burden metrics, but are not spoken.
 // The guard computes; the summary decides what is speakable.
 //   R16 — "the range doesn't appear to use the same units as the value; check your report"
 //         (about the REPORT'S OWN content + our ability to read it — not a verdict on the value.
@@ -90,6 +88,10 @@ const SURFACING_FLAGS = new Set([
   // user WORSE informed. Seen on Troponin T, whose corpus rows print ng/mL against our ng/L band.
   'R2-UNIT-MISMATCH',
   'R16-PRINTED-RANGE-UNIT-SUSPECT',
+  // R18 speaks only about our confidence in the specimen match. It must be
+  // visible because the row abstains while its report-relative chip may still
+  // reproduce the range printed on the report.
+  'R18-SPECIMEN-MATCH-UNCORROBORATED',
 ]);
 
 // Reproduce the report's OWN determination: where does the value sit in the range PRINTED on

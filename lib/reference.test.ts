@@ -9,6 +9,12 @@ describe('findEntry', () => {
     expect(findEntry('glu')?.key).toBe('fasting_glucose');
     expect(findEntry('LDL-C')?.key).toBe('ldl_cholesterol');
   });
+  it('lets explicit specimen context safely refine a legacy unscoped collision', () => {
+    expect(findEntry('GLU')?.key).toBe('fasting_glucose');
+    expect(findEntry('GLU', 'unknown')?.key).toBe('fasting_glucose');
+    expect(findEntry('GLU', 'urine')?.key).toBe('urine_glucose');
+    expect(findEntry('GLU', 'blood')).toBeNull();
+  });
   it('matches the canonical English name', () => {
     expect(findEntry('Potassium')?.key).toBe('potassium');
   });
@@ -17,6 +23,21 @@ describe('findEntry', () => {
   });
   it('returns null for an unknown analyte', () => {
     expect(findEntry('ceruloplasmin')).toBeNull();
+  });
+  it('treats omitted, unknown, and null specimen context identically', () => {
+    for (const name of [
+      'Potassium',
+      'GLU',
+      'PRO',
+      'Ketones',
+      'Specific Gravity',
+      'Glucose',
+      'pH',
+      'ceruloplasmin',
+    ]) {
+      expect(findEntry(name, 'unknown')).toBe(findEntry(name));
+      expect(findEntry(name, null)).toBe(findEntry(name));
+    }
   });
 });
 
@@ -34,9 +55,11 @@ describe('unit matching', () => {
     const glu = findEntry('fasting_glucose')!;
     expect(unitMatches('mg/dL', glu)).toBe(false);
   });
-  it('treats a missing unit as not matching', () => {
+  it('rejects a missing unit unless the entry has a narrow curated exception', () => {
     const glu = findEntry('fasting_glucose')!;
     expect(unitMatches(null, glu)).toBe(false);
+    const urinePh = findEntry('pH', 'urine')!;
+    expect(unitMatches(null, urinePh)).toBe(true);
   });
 });
 
