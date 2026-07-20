@@ -47,6 +47,36 @@ describe('US English aliases — verified Blood-only names now resolve', () => {
     expect(findEntry('Calcium')?.key).toBe('calcium_total'); // MIMIC qualifies urine as "24 hr Calcium"
     expect(findEntry('Calcium, Total')?.key).toBe('calcium_total');
   });
+
+  it.each([
+    ['Sodium, Whole Blood', 'sodium', '131', '133-145'],
+    ['Potassium, Whole Blood', 'potassium', '4.9', '3.3-5.1'],
+  ])('%s resolves by its explicit matrix name and reaches confirmation', (
+    name,
+    key,
+    value,
+    printedRange,
+  ) => {
+    expect(findEntry(name)?.key).toBe(key);
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name,
+            value,
+            unit: 'mEq/L',
+            printedRange,
+            confidence: 'high',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+    expect(row.entry?.key).toBe(key);
+    expect(row.entry?.highStakes).toBe(true);
+    expect(row.matchedVia).toBe('exact');
+    expect(row.needsConfirm).toBe(true);
+  });
 });
 
 describe('Chinese aliases — unit and panel corroborate these exact names', () => {
