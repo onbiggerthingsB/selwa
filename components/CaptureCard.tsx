@@ -12,11 +12,14 @@ import { NotesTranslationSchema } from '@/lib/notesSchema';
 import { groundNotes } from '@/lib/notesGrounding';
 import { setPendingReport } from '@/lib/session';
 import type { GroundedNotes, Sex } from '@/lib/types';
+import { CONSENT_COPY } from '@/lib/consentCopy';
+import { LocalizedText as LocalizedTextView } from '@/components/LocalizedText';
 import {
   defineText,
   fallback,
   resolveText,
   reviewed,
+  type Lang,
   type LocalizedText,
 } from '@/lib/i18n';
 
@@ -158,7 +161,32 @@ async function blobQuality(blob: Blob): Promise<QualityVerdict | null> {
   }
 }
 
-export function CaptureCard() {
+function ConsentText({
+  value,
+  lang,
+  joined = false,
+}: {
+  value: LocalizedText;
+  lang: Lang;
+  joined?: boolean;
+}) {
+  if (lang === 'bo') {
+    return <LocalizedTextView value={value} lang={lang} />;
+  }
+
+  const en = resolveText(value, 'en').text;
+  const zh = resolveText(value, 'zh').text;
+  if (joined) return <>{`${en} · ${zh}`}</>;
+
+  return (
+    <>
+      {en}
+      <span className="zh" lang="zh">{zh}</span>
+    </>
+  );
+}
+
+export function CaptureCard({ lang }: { lang: Lang }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [sex, setSex] = useState<Sex>('unknown');
@@ -178,6 +206,7 @@ export function CaptureCard() {
   const dragRef = useRef<{ ax: number; ay: number; bx: number; by: number } | null>(null);
   const [drag, setDrag] = useState<{ ax: number; ay: number; bx: number; by: number } | null>(null);
   const [redactError, setRedactError] = useState<string | null>(null);
+  const consentDialogLabel = resolveText(CONSENT_COPY.dialogLabel, lang);
 
   function dragPoint(e: React.PointerEvent) {
     const box = redactBoxRef.current?.getBoundingClientRect();
@@ -526,12 +555,21 @@ export function CaptureCard() {
       )}
 
       {phase === 'consent' && (
-        <div className="callout-error" role="dialog" aria-label="Before we read your report">
+        <div
+          className="callout-error"
+          role="dialog"
+          aria-label={consentDialogLabel.text}
+          {...(lang === 'bo'
+            ? {
+                'data-requested-lang': lang,
+                'data-resolved-lang': consentDialogLabel.resolvedLang,
+              }
+            : {})}
+        >
           <div className="err-row">
             <LockGlyph />
             <span>
-              Before we read your report
-              <span className="zh" lang="zh">在读取您的化验单之前</span>
+              <ConsentText value={CONSENT_COPY.heading} lang={lang} />
             </span>
           </div>
           {failure?.cause === 'not-permitted' && (
@@ -544,12 +582,10 @@ export function CaptureCard() {
           )}
           <ul className="quality-tips">
             <li>
-              Two things are sent to Anthropic (a US company): your photo — including any name, values, or hospital shown on it — so its text can be read; and anything you typed under “What the doctor told you”, so it can be translated.
-              <span className="zh" lang="zh">有两项内容会发送给美国公司 Anthropic：您的照片（包括其中的姓名、数值或医院信息），用于识别其中的文字；以及您在“医生说了什么”中输入的内容，用于翻译。</span>
+              <ConsentText value={CONSENT_COPY.transferDisclosure} lang={lang} />
             </li>
             <li>
-              The meaning of your results is worked out on this device. We don’t save either on our servers, and neither is ever used for advertising. Anthropic does not use them to train its models, though it may hold them briefly (up to 30 days) for safety checks.
-              <span className="zh" lang="zh">结果的含义在本设备上计算。两者都不会保存在我们的服务器上，也绝不用于广告。Anthropic 不会用它们训练模型，但可能为安全检查短暂保留（最多 30 天）。</span>
+              <ConsentText value={CONSENT_COPY.onDeviceDisclosure} lang={lang} />
             </li>
           </ul>
           <button
@@ -561,7 +597,7 @@ export function CaptureCard() {
               submit(Boolean(retryWithQualityOverride));
             }}
           >
-            I agree — read my report · 我同意，读取报告
+            <ConsentText value={CONSENT_COPY.agree} lang={lang} joined />
           </button>
           <button
             className="btn btn-ghost btn-block"
@@ -570,7 +606,7 @@ export function CaptureCard() {
               setPhase('preview');
             }}
           >
-            Back · 返回
+            <ConsentText value={CONSENT_COPY.back} lang={lang} joined />
           </button>
         </div>
       )}

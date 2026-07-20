@@ -43,6 +43,7 @@ vi.mock('@/lib/session', () => ({
 
 describe('ResultPage language toggle', () => {
   beforeEach(() => {
+    localStorage.clear();
     mocks.replace.mockClear();
   });
 

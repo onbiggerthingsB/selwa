@@ -1,12 +1,14 @@
 'use client';
-import { useState } from 'react';
 import { CaptureCard } from '@/components/CaptureCard';
 import { SavedVisits } from '@/components/SavedVisits';
 import { InstallPrompt } from '@/components/InstallPrompt';
-import type { Lang } from '@/lib/i18n';
+import { LocalizedText } from '@/components/LocalizedText';
+import { resolveText } from '@/lib/i18n';
+import { useLangPreference } from '@/lib/langPreference';
+import { UI_COPY } from '@/lib/uiCopy';
 
 export default function Home() {
-  const [lang] = useState<Lang>('en');
+  const [lang, setLang] = useLangPreference();
   return (
     <main className="home">
       <header>
@@ -24,8 +26,30 @@ export default function Home() {
           Understand your lab report in plain language — safely.
           <span className="zh" lang="zh">用您能读懂的语言，安心了解您的化验单。</span>
         </p>
+        <div
+          className="lang-toggle"
+          role="group"
+          aria-label={resolveText(UI_COPY.language, lang).text}
+        >
+          <button aria-pressed={lang === 'en'} onClick={() => setLang('en')}>
+            EN
+          </button>
+          <button aria-pressed={lang === 'zh'} onClick={() => setLang('zh')}>
+            中文
+          </button>
+          <button aria-pressed={lang === 'bo'} onClick={() => setLang('bo')}>
+            TB
+          </button>
+        </div>
       </header>
-      <CaptureCard />
+      {lang === 'bo' && (
+        <aside className="tibetan-availability" data-testid="home-tibetan-availability">
+          <p>
+            <LocalizedText value={UI_COPY.tibetanUnavailable} lang={lang} />
+          </p>
+        </aside>
+      )}
+      <CaptureCard lang={lang} />
       <SavedVisits lang={lang} />
       <InstallPrompt />
     </main>

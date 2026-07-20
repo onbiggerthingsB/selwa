@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { REFERENCE_LABS } from '@/data/reference-labs';
+import { CONSENT_COPY } from '@/lib/consentCopy';
 import { DISCLAIMER_TEXTS } from '@/lib/disclaimers';
 import { groundExtraction } from '@/lib/grounding';
 import { resolveText, type LocalizedText } from '@/lib/i18n';
@@ -93,6 +94,10 @@ function auditedCopies(): AuditedCopy[] {
       context: `UI_COPY.${key}`,
       copy,
     })),
+    ...Object.entries(CONSENT_COPY).map(([key, copy]) => ({
+      context: `CONSENT_COPY.${key}`,
+      copy,
+    })),
     ...REFERENCE_LABS.flatMap((entry) => [
       { context: `REFERENCE_LABS.${entry.key}.name`, copy: entry.name },
       { context: `REFERENCE_LABS.${entry.key}.definition`, copy: entry.definition },
@@ -109,10 +114,11 @@ describe('direct Tibetan localization audit', () => {
   it('requires every direct bo variant to be a named opt-in', () => {
     expect(DISCLAIMER_TEXTS).toHaveLength(5);
     expect(Object.keys(UI_COPY)).toHaveLength(25);
+    expect(Object.keys(CONSENT_COPY)).toHaveLength(6);
     expect(REFERENCE_LABS).toHaveLength(116);
 
     const copies = auditedCopies();
-    expect(copies).toHaveLength(5 + 25 + (116 * 3) + 1);
+    expect(copies).toHaveLength(5 + 25 + 6 + (116 * 3) + 1);
     expect(
       copies.find(({ context }) => context === SUMMARY_DIRECT_BO_CONTEXT)?.copy,
       'the sole direct-bo exception must stay a verbatim unverified OCR token',

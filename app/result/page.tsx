@@ -9,7 +9,8 @@ import { NotesSection } from '@/components/NotesSection';
 import { SaveVisitButton } from '@/components/SaveVisitButton';
 import { LocalizedText } from '@/components/LocalizedText';
 import { TibetanText, TIBETAN_TYPOGRAPHY_SAMPLE } from '@/components/TibetanText';
-import { resolveText, type Lang } from '@/lib/i18n';
+import { resolveText } from '@/lib/i18n';
+import { useLangPreference } from '@/lib/langPreference';
 import { UI_COPY } from '@/lib/uiCopy';
 
 export default function ResultPage() {
@@ -17,7 +18,7 @@ export default function ResultPage() {
   const [report, setReport] = useState<GroundedReport | null>(null);
   const [notes, setNotes] = useState<GroundedNotes | undefined>(undefined);
   const [confirmed, setConfirmed] = useState<GroundedReport | null>(null);
-  const [lang, setLang] = useState<Lang>('en');
+  const [lang, setLang] = useLangPreference();
 
   useEffect(() => {
     // Mount-time load of the in-progress report from sessionStorage (browser-only).
