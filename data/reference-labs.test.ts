@@ -5,6 +5,7 @@ import { LANGS, resolveText } from '@/lib/i18n';
 
 const SOURCED_REPORT_ONLY_KEYS = new Set([
   'base_excess',
+  'blood_ph',
   'prothrombin_activity',
 ]);
 
@@ -24,6 +25,7 @@ describe('reference table integrity', () => {
 
     expect(reportOnly.map((entry) => entry.key).sort()).toEqual([
       'base_excess',
+      'blood_ph',
       'prothrombin_activity',
       'urine_amorphous_deposits',
       'urine_appearance',
@@ -169,6 +171,22 @@ describe('reference table integrity', () => {
     expect(entry?.source).toMatch(/doi:10\.1186\/s40001-024-01796-6/);
     expect(entry?.source).toMatch(/ABE.*SBE.*algorithm-dependent/i);
     expect(entry?.source).toMatch(/severity-stratification criteria, not laboratory panic values/i);
+  });
+
+  it('defines blood pH only for explicit blood context or unambiguous names', () => {
+    const entry = findEntry('Blood pH');
+    expect(entry?.key).toBe('blood_ph');
+    expect(entry?.interpretation).toBe('report-only');
+    expect(entry?.specimen).toBe('blood');
+    expect(entry?.allowedUnits).toEqual(['units', 'pH', '']);
+    expect(entry?.unitOptional).toBeUndefined();
+    expect(entry?.highStakes).toBe(true);
+    for (const alias of ['Blood pH', 'Arterial pH', 'Venous pH', '血气pH']) {
+      expect(findEntry(alias)?.key, alias).toBe('blood_ph');
+    }
+    expect(entry?.source).toMatch(/Sourcing failed:/);
+    expect(entry?.source).toMatch(/arterial.*venous.*no arterial\/venous axis/i);
+    expect(entry?.source).toMatch(/§6\.3/);
   });
 
   it('keeps every pre-existing urine report-only entry non-high-stakes', () => {

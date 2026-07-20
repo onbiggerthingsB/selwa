@@ -567,6 +567,30 @@ describe('report-only high-stakes grounding', () => {
     expect(section.valueText).toBe('-5 mmol/L');
   });
 
+  it('uses explicit blood context for bare pH and carries it into confirmation', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'pH',
+            value: '7.40',
+            unit: 'units',
+            printedRange: '7.35-7.45',
+            confidence: 'high',
+            specimen: 'blood',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('blood_ph');
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect(row.matchedVia).toBe('specimen-scoped');
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(true);
+  });
+
   it('carries PT activity into the confirmation gate before the ordinary R6 path', () => {
     const row = groundExtraction(
       {

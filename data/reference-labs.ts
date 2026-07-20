@@ -1183,6 +1183,46 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
       'Sourcing failed: no harmonised reference or laboratory panic interval exists. Zander R. Base excess (BE): reloaded. Eur J Med Res. 2024; PMCID PMC11089692; doi:10.1186/s40001-024-01796-6. Actual base excess (ABE) and standard base excess (SBE) are different algorithm-dependent measurands; the classical formula can create an artefactual arterial-venous difference of 1.5-2 mmol/L, while manufacturers implement formulas inconsistently. Trauma base-deficit cutoffs such as -6 are severity-stratification criteria, not laboratory panic values. Use only the range printed on the patient\'s report.',
   },
   {
+    key: 'blood_ph',
+    name: defineText({
+      en: reviewed('Blood pH'),
+      zh: reviewed('血气pH'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: ['Blood pH', 'Arterial pH', 'Venous pH', '血气pH'],
+    specimenAliases: {
+      blood: ['pH'],
+    },
+    unit: 'units',
+    allowedUnits: ['units', 'pH', ''],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed('A measurement of how acidic or alkaline a blood sample is.'),
+      zh: reviewed('用于测量血液样本酸碱程度的项目。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'Blood pH measures how acidic or alkaline a blood sample is. Arterial and venous samples differ slightly, and this table cannot distinguish them, so use the range printed on the report.',
+      ),
+      zh: reviewed(
+        '血气pH用于测量血液样本的酸碱程度。动脉血和静脉血的结果略有差异，而本表无法区分两者，因此应以报告打印的范围为准。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'Sourcing failed: one owned interval cannot represent an unspecified blood sample. Although the arterial pH range is well established, venous pH runs approximately 0.03-0.04 lower and the current schema records only blood, with no arterial/venous axis; see docs/superpowers/specs/2026-07-20-w4-curation-cycle.md §6.3. Use only the range printed on the patient\'s report.',
+  },
+  {
     key: 'random_glucose',
     name: defineText({
       en: reviewed('Random (non-fasting) glucose'),

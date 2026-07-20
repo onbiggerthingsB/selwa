@@ -37,6 +37,9 @@ const EQUIVALENCE_GROUPS: Record<string, string[]> = {
   egfr: ['ml/min/1.73m2', 'ml/min/1.73m²'],
   // D-dimer FEU basis: µg/mL FEU = mg/L FEU exactly (both FEU-qualified).
   ddimer_feu: ['mg/lfeu', 'ug/mlfeu'],
+  // Dimensionless pH is variously printed with a placeholder, "pH", or an
+  // empty unit cell. These labels all preserve the same numeric value.
+  dimensionless_ph: ['units', 'ph', ''],
   urine_qual: ['qualitative', 'negative/+/++/+++', 'negative/positive'],
   // Microscopy count notations: a bare field abbreviation and the common
   // slash/hash/cells spellings all mean count per the same field size.

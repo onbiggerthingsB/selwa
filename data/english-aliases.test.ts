@@ -166,12 +166,12 @@ describe('Chinese/GLU aliases — explicit specimen selects the correct glucose 
 });
 
 describe('US English aliases — specimen-scoped urine names', () => {
-  it('bare pH resolves only with urine context', () => {
+  it('bare pH resolves only with explicit urine or blood context', () => {
     expect(findEntry('pH')).toBeNull();
     expect(findEntry('pH', 'unknown')).toBeNull();
     expect(findEntry('pH', null)).toBeNull();
     expect(findEntry('pH', 'urine')?.key).toBe('urine_ph');
-    expect(findEntry('pH', 'blood')).toBeNull();
+    expect(findEntry('pH', 'blood')?.key).toBe('blood_ph');
   });
 
   it('urinalysis names resolve with urine context', () => {
