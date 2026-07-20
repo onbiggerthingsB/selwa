@@ -287,7 +287,60 @@ Reachable set verified: **3 entries are `highStakes: false` with a critical band
    - **(a) Unconditional confirm.** `ConfirmValues.tsx:25` becomes `report.rows`; `:69` drops the conditional. `needsConfirm` survives as an internal field. Cleanest B1 story, cannot regress.
    - **(b) Reading-confidence-only selection.** `needsConfirm` narrowed to R5, R13, R16, and analyte-level R6; R3, R11-flip and R17 move to a new internal `needsReview` on `GroundedRow` (`lib/types.ts`) driving suppression and metrics but not the confirm list.
 
-   **Recommendation: (a).** Fewer moving parts; converts the strongest remaining conditional element into an unconditional one.
+   > **DECIDED 2026-07-19: (b).** This overrides the "Recommendation: (a)" that stood here, on
+   > evidence the spec asked for but did not have when it was written.
+   >
+   > **Finding 1 — the confirm screen is a BLOCKING GATE, not a review panel.**
+   > `app/result/page.tsx:85` renders `{!confirmed ? <ConfirmValues/> : <SummaryView/>}`. The user
+   > cannot see their report until they pass it. `ConfirmValues.tsx:35` passes through silently
+   > when the list is empty, so today the gate is *invisible* on most reports.
+   >
+   > **Finding 2 — measured confirm burden** (`groundExtraction` over both committed corpora,
+   > editable fields per report):
+   >
+   > | | today (median / max / total) | under (a) (median / max / total) |
+   > |---|---|---|
+   > | MedRepBench (ZH, primary) | **0** / 6 / 30 | **4** / 20 / 143 |
+   > | MIMIC (US) | **4** / 10 / 91 | **14** / 24 / 322 |
+   >
+   > Both corpora exclude their largest panels (`sample.ts:17-19` drops an ~30-row IgE microarray
+   > and two long urinalysis panels for size), so real-world maxima are **higher** than shown.
+   >
+   > Option (a) therefore converts an invisible pass-through into a mandatory wall of a median 4
+   > (ZH) to 14 (US) editable fields on every report — currently rendered in Chinese for Tibetan
+   > users, since `lib/i18n.ts` falls back to `zh`. For this user population that is a serious
+   > regression, and the spec's own guardrail names the property at risk: the user actually
+   > verifying the high-stakes numbers.
+   >
+   > **Finding 3 — (b) is also the more honest option, not merely the cheaper one.** The leak
+   > being fixed is R3: a critical potassium is singled out under copy that says
+   > "double-check a few results from your photo" (`lib/uiCopy.ts:35-44`). The true cause is
+   > "your number is in our panic band." Moving R3/R11-flip/R17 to `needsReview` removes exactly
+   > that dishonesty. What remains in `needsConfirm` — R5 (low OCR confidence), R13 (value
+   > outside absolute physiological bounds), R16 (printed range implausible) — is value-triggered
+   > but genuinely *about reading confidence*, so the OCR framing is true for those rows.
+   > (b) also makes the gate fire *less* often than today, since R3 currently forces it.
+   >
+   > **Honest weakness of (b), which the implementer must not paper over.** (b) does NOT satisfy
+   > the literal §0 design test: confirm-list membership still varies with the number via R13/R16.
+   > It substitutes a finer line — value-dependence signalling *reading confidence* is permitted;
+   > value-dependence signalling a *clinical conclusion* is not. This repo's history is that
+   > subtle lines erode (B1 shipped half-done once already). **The conditionality gate below is
+   > what keeps this one from eroding and is therefore mandatory, not optional, under (b).**
+   >
+   > **Gate construction under (b):** ground each curated analyte at a normal value and at a
+   > critical-but-physiologically-plausible value, and assert the surfaced-flag id set **and**
+   > confirm-list membership are identical. Critical-but-plausible is the correct second point
+   > because R13 fires only on physiologically *impossible* values, which lie outside that range —
+   > so the gate still catches the R3 leak without falsely failing on R13. Land it red first: it
+   > fails today on `wbc_count`, `platelet_count`, `phosphate` (verified: exactly 3 entries are
+   > `highStakes: false` with a critical band).
+   >
+   > **Metric consequence under (b), per item 3 below:** re-ground `realContentBench.ts:256` on
+   > `needsConfirm || needsReview`. Without this, moving R3/R11/R17 out of `needsConfirm` promotes
+   > critical rows into the "presented confidently" set — inflating the agreement denominator with
+   > precisely the rows most likely to disagree. That is the 80%-self-graded failure mode, and it
+   > is the single most likely way this change ships green and wrong.
 
 3. **Metric rename, same commit — mandatory.** `validation/real-corpus/realContentBench.ts:275` computes `r6CoverageGold = goldHighStakesConfirmed / goldHighStakesRows` with the numerator being `row.needsConfirm` (`:221`), and `:256` defines the safety metric as `classifiedDetail.filter(d => !d.needsConfirm)` — "rows we present confidently".
    - Under (a), "high-stakes rows reaching the confirm gate" no longer describes anything a user experiences. Rename to `r6HighStakesFlagRate` (or equivalent) and re-ground it on `entry.highStakes` flag emission, and state in the runner output that the confirm screen is now unconditional.
