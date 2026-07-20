@@ -230,8 +230,8 @@ export function evaluateRow(
   // OCR confidence still enters the confirmation flow; the result can be a word
   // or a range, so do not mislabel it as a suspicious numeric shape. A high-stakes
   // report-only entry must also carry confirmation here because this branch returns
-  // before R6. All 14 entries that predate prothrombin_activity are highStakes:false,
-  // so the high-confidence path changes only for that new entry.
+  // before R6. The 14 legacy urine report-only entries are highStakes:false; explicitly
+  // curated blood report-only entries may opt into confirmation without owning a band.
   if (entry.interpretation === 'report-only') {
     if (extracted.confidence === 'low') {
       flags.push(

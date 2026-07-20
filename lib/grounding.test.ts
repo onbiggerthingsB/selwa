@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { groundExtraction } from './grounding';
+import { buildSummary } from './summary';
 import type { LabExtraction } from '@/lib/extractionSchema';
 import { resolveText } from '@/lib/i18n';
 
@@ -540,6 +541,32 @@ describe('report-only urinalysis grounding', () => {
 });
 
 describe('report-only high-stakes grounding', () => {
+  it('preserves and renders a signed Base Excess value of -5 rather than its mirror image', () => {
+    const report = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Base Excess',
+            value: '-5',
+            unit: 'mmol/L',
+            printedRange: null,
+            confidence: 'high',
+            specimen: 'blood',
+          },
+        ],
+      },
+      'unknown',
+    );
+    const row = report.rows[0];
+    const section = buildSummary(report, 'en').sections[0];
+
+    expect(row.entry?.key).toBe('base_excess');
+    expect(row.valueNum).toBe(-5);
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(true);
+    expect(section.valueText).toBe('-5 mmol/L');
+  });
+
   it('carries PT activity into the confirmation gate before the ordinary R6 path', () => {
     const row = groundExtraction(
       {

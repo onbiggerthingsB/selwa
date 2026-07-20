@@ -3,6 +3,11 @@ import { REFERENCE_LABS } from './reference-labs';
 import { findEntry } from '@/lib/reference';
 import { LANGS, resolveText } from '@/lib/i18n';
 
+const SOURCED_REPORT_ONLY_KEYS = new Set([
+  'base_excess',
+  'prothrombin_activity',
+]);
+
 describe('reference table integrity', () => {
   it('has at least 25 analytes', () => {
     expect(REFERENCE_LABS.length).toBeGreaterThanOrEqual(25);
@@ -18,6 +23,7 @@ describe('reference table integrity', () => {
     );
 
     expect(reportOnly.map((entry) => entry.key).sort()).toEqual([
+      'base_excess',
       'prothrombin_activity',
       'urine_amorphous_deposits',
       'urine_appearance',
@@ -140,11 +146,34 @@ describe('reference table integrity', () => {
     );
   });
 
-  it('keeps every pre-existing report-only entry non-high-stakes', () => {
+  it('defines Base Excess as sourced report-only context with signed values and no invented band', () => {
+    const entry = findEntry('Base Excess');
+    expect(entry?.key).toBe('base_excess');
+    expect(entry?.interpretation).toBe('report-only');
+    expect(entry?.specimen).toBe('blood');
+    expect(entry?.allowedUnits).toEqual(['mmol/L', 'mEq/L']);
+    expect(entry?.highStakes).toBe(true);
+    for (const alias of [
+      'Base Excess',
+      'BE',
+      'Actual Base Excess',
+      'ABE',
+      'Standard Base Excess',
+      'SBE',
+      '碱剩余',
+      '剩余碱',
+    ]) {
+      expect(findEntry(alias)?.key, alias).toBe('base_excess');
+    }
+    expect(entry?.source).toMatch(/PMC11089692/);
+    expect(entry?.source).toMatch(/doi:10\.1186\/s40001-024-01796-6/);
+    expect(entry?.source).toMatch(/ABE.*SBE.*algorithm-dependent/i);
+    expect(entry?.source).toMatch(/severity-stratification criteria, not laboratory panic values/i);
+  });
+
+  it('keeps every pre-existing urine report-only entry non-high-stakes', () => {
     const preExisting = REFERENCE_LABS.filter(
-      (entry) =>
-        entry.interpretation === 'report-only' &&
-        entry.key !== 'prothrombin_activity',
+      (entry) => entry.interpretation === 'report-only' && entry.specimen === 'urine',
     );
     expect(preExisting).toHaveLength(14);
     expect(preExisting.every((entry) => entry.highStakes === false)).toBe(true);
@@ -173,7 +202,7 @@ describe('reference table integrity', () => {
         expect(e.source.length).toBeGreaterThan(0);
         expect(e.refLow !== null || e.refHigh !== null).toBe(true);
       } else {
-        if (e.key === 'prothrombin_activity') {
+        if (SOURCED_REPORT_ONLY_KEYS.has(e.key)) {
           expect(e.source.length).toBeGreaterThan(0);
         } else {
           expect(e.source).toBe('');

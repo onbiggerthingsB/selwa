@@ -1135,6 +1135,54 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     source: 'Medscape/Testing.com Bicarbonate (total CO2) reference range (22-29 mmol/L)',
   },
   {
+    key: 'base_excess',
+    name: defineText({
+      en: reviewed('Base excess'),
+      zh: reviewed('碱剩余'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: [
+      'Base Excess',
+      'BE',
+      'Actual Base Excess',
+      'ABE',
+      'Standard Base Excess',
+      'SBE',
+      '碱剩余',
+      '剩余碱',
+    ],
+    unit: 'mmol/L',
+    allowedUnits: ['mmol/L', 'mEq/L'],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed(
+        'A calculated estimate of the metabolic component of blood acid-base balance.',
+      ),
+      zh: reviewed('根据血气测量值计算的指标，用于描述血液酸碱平衡中的代谢成分。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'An estimate derived from blood-gas measurements. A negative value is called a base deficit and can accompany metabolic acidosis. Actual and standard base excess are calculated differently, so use the range printed on the report.',
+      ),
+      zh: reviewed(
+        '由血气测量值计算得出的指标。负值也称碱缺失，可见于代谢性酸中毒。实际碱剩余和标准碱剩余的算法不同，应以报告打印的范围为准。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'Sourcing failed: no harmonised reference or laboratory panic interval exists. Zander R. Base excess (BE): reloaded. Eur J Med Res. 2024; PMCID PMC11089692; doi:10.1186/s40001-024-01796-6. Actual base excess (ABE) and standard base excess (SBE) are different algorithm-dependent measurands; the classical formula can create an artefactual arterial-venous difference of 1.5-2 mmol/L, while manufacturers implement formulas inconsistently. Trauma base-deficit cutoffs such as -6 are severity-stratification criteria, not laboratory panic values. Use only the range printed on the patient\'s report.',
+  },
+  {
     key: 'random_glucose',
     name: defineText({
       en: reviewed('Random (non-fasting) glucose'),
