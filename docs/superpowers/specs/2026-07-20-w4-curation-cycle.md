@@ -38,7 +38,7 @@ The one honest thing to say about the ZH number is that it is a *saturated metri
 
 ### The US corpus is where the winnable work is, and it too has a hard floor
 
-Baseline **87/212 = 41.0%**. This cycle pre-registers **121/212 = 57.1%** (derivation in §8 — note two buckets are deliberately priced below their raw row counts). The remaining 91 rows decompose as:
+Baseline **87/212 = 41.0%**. This cycle pre-registers **111/212 = 52.4%** (derivation in §8 — note THREE buckets are deliberately priced below their raw row counts: blood `pH`, `Urea Nitrogen`, and Bili/Hct). The remaining 101 rows decompose as:
 
 | remainder after this cycle | rows | status |
 |---|---|---|
@@ -48,6 +48,7 @@ Baseline **87/212 = 41.0%**. This cycle pre-registers **121/212 = 57.1%** (deriv
 | urine drug screens | 7 | **permanent policy refusal** — see §5 |
 | urine Glucose / Ketone / pH | 6 | corpus artifact, metric ceiling **0.0pp** — see §4 |
 | blood-gas `pH` | 6 | entry ships (§6.3), but the rows print bare `pH` with `specimen:'unknown'` and a bare alias is forbidden |
+| `Urea Nitrogen` | 10 | alias ships (§6.10), but **+0 on the bench** — `RealItem` has no specimen field, so a blood-gated alias cannot match. Real product gain, no metric gain. |
 | `Bilirubin, Total` + `Hematocrit, Calculated` | 2 | aliased in this cycle, but **+0 metric** — targets are `highStakes:false` |
 | `Estimated GFR (MDRD equation)` | 1 | **permanent refusal** — see §6.9 |
 
@@ -392,7 +393,29 @@ Two independent reasons:
 
 **Residual hazard, stated not waved away:** a 24h urine urea nitrogen reported in mg/dL with a printed blood specimen would classify against a serum band. A urine UN in mg/24h fails *safe* (R2 abstain with `needsConfirm = highStakes = true`, since `bun.allowedUnits` is `['mg/dL']` only and no `bun` row exists in `data/unit-conversions.ts`). The residual is not zero. It is weighed against 10 rows / +4.7pp and the fact that the specimen gate is the same instrument that resolved the GLU case.
 
-> **OPEN IMPLEMENTATION QUESTION — check this before writing the alias.** All 10 corpus rows are `specimen: 'unknown'`, so a blood-gated alias recovers **zero of them in the bench**. Determine whether the extraction stage supplies `specimen: 'blood'` for a photographed US chemistry panel (`lib/extractionSchema.ts:45-47`). **If it does not, the alias must not ship as the only change** — and the pre-registered +10 does not materialise. See §8, where this is priced honestly.
+> **~~OPEN IMPLEMENTATION QUESTION~~ — ANSWERED 2026-07-20. W4-9 IS +0 ON THE BENCH.**
+>
+> The question was whether the bench can supply `specimen: 'blood'`. **It cannot, structurally.**
+> `RealItem` (`validation/real-corpus/sample.ts:25-31`) has **no specimen field at all** — its shape
+> is `{item_name, item_value, item_unit, item_range, is_abnormal}`. No fixture row in either corpus
+> can carry a specimen, so a blood-gated alias recovers **zero rows in the bench, permanently**.
+> This is not a data gap that could be filled by relabelling fixtures; it is the fixture type.
+>
+> **The conditional +10 therefore does not materialise. The honest landing is 111/212 = 52.4%.**
+>
+> **The alias still ships, because the production path DOES supply specimen.**
+> `EXTRACTION_PROMPT` (`lib/extractionSchema.ts:45-47`) instructs: *"read specimen ONLY from a
+> printed section or panel heading … use 'blood' for blood, serum, plasma, or whole-blood"*, and
+> forbids inferring it from the analyte name, value, or range. So a photographed panel with a
+> qualifying printed heading resolves `Urea Nitrogen` → `bun` in the real product.
+>
+> Honest residual on that: a generic `CHEMISTRY` heading may not satisfy the prompt's examples
+> (`Urinalysis` / `Blood gas` / `Serum`), so production recovery is real but **not guaranteed** on
+> every US chemistry page. Do not overstate it in the PR.
+>
+> **This is now structurally identical to W4-4 (blood pH): a correct entry, a real product gain, and
+> +0 on a bench that cannot express the gate. If US lands above 111, a bare `Urea Nitrogen` alias was
+> added — that is the documented refusal being broken, and it is a defect to revert, not a win.**
 
 ---
 
@@ -428,15 +451,17 @@ Baselines, measured at `306a264`: **ZH 22/37 = 59.5%. US 87/212 = 41.0%. CHIP 72
 | W4-6 `Anion Gap` | +0 | **+10** | 109 = 51.4% |
 | W4-7 whole-blood Na/K | +0 | **+2** | 111 = 52.4% |
 | W4-8 Bili Total / Hct Calc | +0 | **+0** | 111 = 52.4% |
-| W4-9 `Urea Nitrogen` | +0 | **+10, conditional** | **121/212 = 57.1%** |
-| W4-10 lock tidy-up | +0 | +0 | 121 |
+| W4-9 `Urea Nitrogen` | +0 | **+0 on the bench** (answered — see §6.10) | **111/212 = 52.4%** |
+| W4-10 lock tidy-up | +0 | +0 | 111 |
 
-**PRE-REGISTERED PREDICTION: MedRepBench stays at exactly 22/37 (59.5%). MIMIC-IV moves 87/212 (41.0%) → 121/212 (57.1%).**
+**PRE-REGISTERED PREDICTION: MedRepBench stays at exactly 22/37 (59.5%). MIMIC-IV moves 87/212 (41.0%) → 111/212 (52.4%).**
+
+*(Revised down from 121 on 2026-07-20: W4-9's conditional +10 was resolved to +0 — `RealItem` has no specimen field, so the bench cannot express a blood-gated alias. See §6.10.)*
 
 Two figures in that table are deliberately lower than a naive reading of the row counts, and the implementer must not "fix" them upward:
 
 - **W4-4 blood `pH` is priced at +0, not +6.** The 6 corpus rows print bare `pH` with `specimen: 'unknown'`. A specimen-gated blood alias cannot match them, and a bare `pH` alias is forbidden (§4.1). The entry ships because it closes a real curation gap for photographed reports that print a specimen; it does not ship to move this number. **If US lands at 127 instead of 121, a bare `pH` alias got added — that is a defect, not an overperformance.**
-- **W4-9 `Urea Nitrogen` +10 is conditional** on the extraction stage supplying `specimen: 'blood'` for US chemistry panels. If it does not, the honest result is **111/212 = 52.4%** and a written finding. Do not convert the gated alias into a bare one to reach the number.
+- **W4-9 `Urea Nitrogen` is priced at +0, resolved 2026-07-20.** `RealItem` (`validation/real-corpus/sample.ts:25-31`) carries no specimen field, so a blood-gated alias matches nothing in the bench — structurally, not incidentally. The alias ships for the production path (`EXTRACTION_PROMPT` does supply specimen from a printed heading), not for this number. **If US lands above 111, a bare `Urea Nitrogen` alias got added — that breaks a documented refusal and is a defect to revert.**
 
 **If ZH moves at all, in either direction, stop and investigate before accepting.** Nothing in this cycle touches a Chinese analyte's confirm path. A ZH movement means something resolved that should not have.
 
@@ -529,7 +554,7 @@ The PR description MUST:
 - [ ] `validation/b1VerdictLeakage.test.ts`, `validation/chipFidelity.test.ts`, `validation/silentAssertion.test.ts` all green.
 - [ ] `lib/localizationBaseline.test.ts` movement is expected (four new entries add EN/ZH strings) and the new strings pass the `CARD_BANNED` bank.
 - [ ] MedRepBench reported as **22/37, unchanged**, with its ceiling stated as `policy-max 22/37, absolute-max 30/37`.
-- [ ] MIMIC-IV reported against the §8 prediction of **121/212**, with any shortfall attributed to a named row and mechanism.
+- [ ] MIMIC-IV reported against the §8 prediction of **111/212**, with any shortfall attributed to a named row and mechanism. **A result ABOVE 111 is also a failure** — it means a bare `pH` or bare `Urea Nitrogen` alias was added.
 - [ ] The runner output prints the permanent residual — **16 US rows** (7 drug screens, 6 urine artifact, 2 `highStakes:false` targets, 1 MDRD eGFR) and **15 ZH rows** (7 policy refusals, 8 refused-flips) — with the sentence *"these rows are a permanent residual in the analyte-confirm denominator; do not chase them"*, so the next implementer does not spend a cycle on them.
 
 ---
