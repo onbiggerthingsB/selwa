@@ -15,7 +15,7 @@ describe('reference table integrity', () => {
   it('declares the complete report-only urinalysis set without curated bands', () => {
     expect(
       REFERENCE_LABS
-        .filter((e) => e.interpretation === 'report-only')
+        .filter((e) => e.interpretation === 'report-only' && e.specimen === 'urine')
         .map((e) => e.key)
         .sort(),
     ).toEqual([
@@ -84,6 +84,58 @@ describe('reference table integrity', () => {
     expect(findEntry('铁蛋白')?.key).toBe('ferritin');
   });
 
+  it('defines PT activity as sourced report-only context with no invented band', () => {
+    const entry = findEntry('PT%');
+    expect(entry?.key).toBe('prothrombin_activity');
+    expect(entry?.interpretation).toBe('report-only');
+    expect(entry?.specimen).toBe('blood');
+    expect(entry?.unit).toBe('%');
+    expect(entry?.allowedUnits).toEqual(['%']);
+    expect([
+      entry?.refLow,
+      entry?.refHigh,
+      entry?.criticalLow,
+      entry?.criticalHigh,
+      entry?.absoluteLow,
+      entry?.absoluteHigh,
+    ]).toEqual([null, null, null, null, null, null]);
+    expect(entry?.highStakes).toBe(true);
+
+    for (const alias of [
+      'PT%',
+      'PTA',
+      '凝血酶原活动度',
+      'PT活动度',
+      '凝血酶原活性',
+    ]) {
+      expect(findEntry(alias)?.key, alias).toBe('prothrombin_activity');
+    }
+    expect(findEntry('PT')?.key).toBe('prothrombin_time');
+  });
+
+  it('locks the inverse PT-activity direction and the no-harmonised-band rationale', () => {
+    const entry = findEntry('PT%')!;
+    expect(resolveText(entry.plain, 'en').text).toMatch(
+      /lower percentages mean blood clots more slowly.*opposite direction.*prothrombin time/i,
+    );
+    expect(resolveText(entry.plain, 'zh').text).toMatch(
+      /百分比越低表示凝血越慢.*与以秒计量的凝血酶原时间方向相反/,
+    );
+    expect(entry.source).toMatch(
+      /No harmonised reference interval exists.*Low percent indicates impaired clotting.*opposite direction from prothrombin time in seconds/i,
+    );
+  });
+
+  it('keeps every pre-existing report-only entry non-high-stakes', () => {
+    const preExisting = REFERENCE_LABS.filter(
+      (entry) =>
+        entry.interpretation === 'report-only' &&
+        entry.key !== 'prothrombin_activity',
+    );
+    expect(preExisting).toHaveLength(14);
+    expect(preExisting.every((entry) => entry.highStakes === false)).toBe(true);
+  });
+
   it('every entry has unique key and required fields', () => {
     const keys = new Set<string>();
     for (const e of REFERENCE_LABS) {
@@ -107,7 +159,11 @@ describe('reference table integrity', () => {
         expect(e.source.length).toBeGreaterThan(0);
         expect(e.refLow !== null || e.refHigh !== null).toBe(true);
       } else {
-        expect(e.source).toBe('');
+        if (e.key === 'prothrombin_activity') {
+          expect(e.source.length).toBeGreaterThan(0);
+        } else {
+          expect(e.source).toBe('');
+        }
         expect([
           e.refLow,
           e.refHigh,

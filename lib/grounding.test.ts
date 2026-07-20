@@ -538,3 +538,33 @@ describe('report-only urinalysis grounding', () => {
     expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
   });
 });
+
+describe('report-only high-stakes grounding', () => {
+  it('carries PT activity into the confirmation gate before the ordinary R6 path', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'PT%',
+            value: '86.40',
+            unit: '%',
+            printedRange: '70-140',
+            confidence: 'high',
+            specimen: 'blood',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('prothrombin_activity');
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect(row.entry?.highStakes).toBe(true);
+    expect(row.action).toBe('classify');
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(true);
+    expect(row.flags.map((flag) => flag.id)).not.toContain(
+      'R5-LOW-OCR-CONFIDENCE-NUMERIC',
+    );
+  });
+});

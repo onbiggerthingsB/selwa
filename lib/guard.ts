@@ -227,7 +227,10 @@ export function evaluateRow(
   // name and definition may render, and the summary may reproduce the report's
   // own comparison, but no unit/value/clinical classification runs here. Low
   // OCR confidence still enters the confirmation flow; the result can be a word
-  // or a range, so do not mislabel it as a suspicious numeric shape.
+  // or a range, so do not mislabel it as a suspicious numeric shape. A high-stakes
+  // report-only entry must also carry confirmation here because this branch returns
+  // before R6. All 14 entries that predate prothrombin_activity are highStakes:false,
+  // so the high-confidence path changes only for that new entry.
   if (entry.interpretation === 'report-only') {
     if (extracted.confidence === 'low') {
       flags.push(
@@ -243,7 +246,7 @@ export function evaluateRow(
       );
       return { action: 'classify', needsConfirm: true, flags };
     }
-    return { action: 'classify', needsConfirm: false, flags };
+    return { action: 'classify', needsConfirm: entry.highStakes, flags };
   }
 
   // R2 — unit mismatch: abstain (no auto-conversion in v0).

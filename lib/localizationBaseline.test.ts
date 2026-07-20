@@ -8,9 +8,9 @@ import { UI_COPY } from '@/lib/uiCopy';
 // Captured from clean pre-refactor HEAD 9c5100a85565bba784bac2ff488bd28a6e2720bb.
 // Hash input is JSON.stringify's UTF-8 bytes with the property order below and no trailing LF.
 const REFERENCE_BASELINE = {
-  count: 111,
-  en: '60a3f8c0c88c7e6f3e92e21ecbd3f1a272c6ef4a0e220c16e7c6cce2ec845816',
-  zh: 'e3511373a595f796fc6c1a1914923a4dd1e405b05c17a7ef542860e95edeb812',
+  count: 112,
+  en: 'b093043cd7a457996faf5c94522dca4bf693d3c2272d895de16a5ba4b3db5d64',
+  zh: '3b982899de701193e22a912fa4f77a23615b5bf0b53db85301f44b0b9fb8460b',
 } as const;
 
 const DISCLAIMER_KEYS = [

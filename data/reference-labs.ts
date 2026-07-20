@@ -1962,6 +1962,45 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     source: 'Tietz/Medscape: PT ~11-14.5 s (reagent-dependent). Critical >30 s (lab-defined panic value)',
   },
   {
+    key: 'prothrombin_activity',
+    name: defineText({
+      en: reviewed('Prothrombin activity percentage'),
+      zh: reviewed('凝血酶原活动度'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: ['PT%', 'PTA', '凝血酶原活动度', 'PT活动度', '凝血酶原活性'],
+    unit: '%',
+    allowedUnits: ['%'],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed(
+        'A laboratory-derived percentage expressing prothrombin activity from the report’s own assay calibration.',
+      ),
+      zh: reviewed('由实验室依据本次检测方法的校准曲线得出的凝血酶原活动百分比。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'A laboratory-derived percentage expressing prothrombin activity. Lower percentages mean blood clots more slowly, the opposite direction from prothrombin time measured in seconds. Methods differ, so use the range printed on the report.',
+      ),
+      zh: reviewed(
+        '由实验室检测方法得出的凝血酶原活动百分比。百分比越低表示凝血越慢，与以秒计量的凝血酶原时间方向相反。检测方法各不相同，应以报告上打印的范围为准。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'No harmonised reference interval exists for prothrombin activity %. The value is interpolated from each laboratory\'s own normal-pooled-plasma dilution curve, so it depends on reagent, instrument, diluent and population; WS/T 220—2021 declines to publish intervals for clotting-factor activity assays and directs each laboratory to establish its own. Published bands disagree widely (70–130, 80–120, 85–100, 70–140), and the name covers at least two different measurands (Quick-type, which includes fibrinogen and FV; Owren-type, which does not). This app therefore uses only the range printed on the patient\'s own report and abstains when none is present. Low percent indicates impaired clotting — the opposite direction from prothrombin time in seconds.',
+  },
+  {
     key: 'inr',
     name: defineText({
       en: reviewed('International normalized ratio'),
