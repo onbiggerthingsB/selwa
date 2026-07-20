@@ -591,6 +591,30 @@ describe('report-only high-stakes grounding', () => {
     expect(row.needsConfirm).toBe(true);
   });
 
+  it('grounds calculated total CO2 separately from bicarbonate and requires confirmation', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Calculated Total CO2',
+            value: '19',
+            unit: 'mEq/L',
+            printedRange: '21-30',
+            confidence: 'high',
+            specimen: 'blood',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('total_co2_calculated');
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect(row.entry?.key).not.toBe('bicarbonate');
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(true);
+  });
+
   it('carries PT activity into the confirmation gate before the ordinary R6 path', () => {
     const row = groundExtraction(
       {

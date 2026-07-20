@@ -1117,7 +1117,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ["HCO3", "HCO3-", "CO2", "CO2-CP", "TCO2", "二氧化碳结合力", "碳酸氢根"],
+    aliases: ["HCO3", "HCO3-", "CO2", "CO2-CP", "二氧化碳结合力", "碳酸氢根"],
     unit: "mmol/L", allowedUnits: ["mmol/L", "mEq/L"],
     refLow: 22, refHigh: 29,
     criticalLow: 10, criticalHigh: 40, highStakes: true, populationSensitive: false,
@@ -1221,6 +1221,45 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     source:
       'Sourcing failed: one owned interval cannot represent an unspecified blood sample. Although the arterial pH range is well established, venous pH runs approximately 0.03-0.04 lower and the current schema records only blood, with no arterial/venous axis; see docs/superpowers/specs/2026-07-20-w4-curation-cycle.md §6.3. Use only the range printed on the patient\'s report.',
+  },
+  {
+    key: 'total_co2_calculated',
+    name: defineText({
+      en: reviewed('Calculated total CO2'),
+      zh: reviewed('计算总二氧化碳'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: ['Calculated Total CO2', 'Total CO2', 'TCO2', '总二氧化碳'],
+    unit: 'mmol/L',
+    allowedUnits: ['mmol/L', 'mEq/L'],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed(
+        'A value calculated from blood-gas measurements that estimates bicarbonate plus dissolved carbon dioxide.',
+      ),
+      zh: reviewed('根据血气测量值计算的指标，用于估算碳酸氢盐与溶解二氧化碳的总量。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'Calculated total CO2 estimates bicarbonate plus dissolved carbon dioxide from blood-gas measurements. It is not identical to a bicarbonate measurement, and methods and report ranges differ, so use the range printed on the report.',
+      ),
+      zh: reviewed(
+        '计算总二氧化碳根据血气测量值估算碳酸氢盐与溶解二氧化碳的总量。它与碳酸氢盐测量不是同一项目，检测方法和报告范围也可能不同，因此应以报告打印的范围为准。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'Sourcing failed: no harmonised interval exists for this measurand. Calculated total CO2 differs from bicarbonate because it includes dissolved CO2 and is calculated from blood-gas pH and pCO2; methods and reported intervals differ. Reference: Parameters that reflect the carbon dioxide content of blood, acutecaretesting.org. Use only the range printed on the patient\'s report.',
   },
   {
     key: 'random_glucose',

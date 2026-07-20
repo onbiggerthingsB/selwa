@@ -7,6 +7,7 @@ const SOURCED_REPORT_ONLY_KEYS = new Set([
   'base_excess',
   'blood_ph',
   'prothrombin_activity',
+  'total_co2_calculated',
 ]);
 
 describe('reference table integrity', () => {
@@ -27,6 +28,7 @@ describe('reference table integrity', () => {
       'base_excess',
       'blood_ph',
       'prothrombin_activity',
+      'total_co2_calculated',
       'urine_amorphous_deposits',
       'urine_appearance',
       'urine_bacteria',
@@ -187,6 +189,28 @@ describe('reference table integrity', () => {
     expect(entry?.source).toMatch(/Sourcing failed:/);
     expect(entry?.source).toMatch(/arterial.*venous.*no arterial\/venous axis/i);
     expect(entry?.source).toMatch(/§6\.3/);
+  });
+
+  it('separates calculated total CO2 from the existing bicarbonate entry', () => {
+    const entry = findEntry('TCO2');
+    expect(entry?.key).toBe('total_co2_calculated');
+    expect(entry?.interpretation).toBe('report-only');
+    expect(entry?.specimen).toBe('blood');
+    expect(entry?.allowedUnits).toEqual(['mmol/L', 'mEq/L']);
+    expect(entry?.highStakes).toBe(true);
+    for (const alias of [
+      'Calculated Total CO2',
+      'Total CO2',
+      'TCO2',
+      '总二氧化碳',
+    ]) {
+      expect(findEntry(alias)?.key, alias).toBe('total_co2_calculated');
+    }
+    expect(findEntry('HCO3')?.key).toBe('bicarbonate');
+    expect(findEntry('CO2')?.key).toBe('bicarbonate');
+    expect(entry?.source).toMatch(/Sourcing failed:/);
+    expect(entry?.source).toMatch(/differs from bicarbonate.*dissolved CO2/i);
+    expect(entry?.source).toMatch(/Parameters that reflect the carbon dioxide content of blood/i);
   });
 
   it('keeps every pre-existing urine report-only entry non-high-stakes', () => {
