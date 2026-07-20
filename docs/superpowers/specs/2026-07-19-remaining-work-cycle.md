@@ -205,7 +205,97 @@ Entry shape:
 - `populationSensitive: false`
 - `plain`/`definition` **must state the inverse relationship explicitly** ("lower percentages mean blood clots more slowly"), or a reader who knows PT-seconds will invert it. Both strings must pass the `CARD_BANNED` bank in `validation/b1VerdictLeakage.test.ts`.
 
-> **BLOCKED ON A DECISION — sourcing.** The 70-130% band and the <40% critical threshold above are stated from general knowledge and were **not verified against a citable document**. `source:` must cite a real reference. If no harmonised interval can be sourced, follow the house pattern at `data/reference-labs.ts:2812` (`thrombin_time`) for an honest "no harmonized interval exists" note — which may well be the correct outcome here. **Do not ship a fabricated citation.** If sourcing fails, ship W2 and §4.4 alone and report R6-gold unchanged at 23/37 with a written finding.
+> **RESOLVED 2026-07-19 — sourcing attempted and DELIBERATELY FAILED. Ship band-less.**
+>
+> The `refLow: 70` / `refHigh: 130` / `criticalLow: 40` figures above were stated from general
+> knowledge. **All three are now withdrawn. Do not ship any of them.** Two independent sourcing
+> passes over disjoint literatures (Chinese national standards; European/Japanese/US lab medicine)
+> both returned no harmonised interval.
+>
+> **Why no band exists.** Bands found in the wild are mutually incompatible — 70–130, 80–120,
+> 80–130, 75–100, 70–150, 85–100, ">70", and this corpus row's own printed 70–140. That spread is
+> not measurement noise; it is the absence of a defined measurand. PT% is interpolated off each
+> laboratory's own normal-pooled-plasma dilution curve, so it inherits reagent ISI, instrument,
+> diluent and the pool itself — *more* method-dependent than PT-seconds, which is why INR was
+> invented. Worse, at least three distinct quantities are all reported as "prothrombin activity %":
+> **Quick %** (~33% sample; reflects FII, FV, FVII, FX *and fibrinogen* — almost certainly what a
+> Chinese hospital on a Sysmex/Stago reports), **Owren %** (~5% sample; FV and fibrinogen supplied
+> by reagent, so reflects only FII, FVII, FX), and **prothrombin index** (post-Soviet usage; a plain
+> patient/normal ratio ×100). Importing a band across those is a category error, not an imprecision.
+>
+> Supporting citation, with its limit stated: **WS/T 220—2021** (NHC, PDF retrieved and clause read)
+> declines to publish intervals and directs each laboratory to establish its own. **Do not overclaim
+> this** — that standard scopes individual clotting-factor activity assays, not PTA specifically. It
+> is strong evidence about the standards regime, weaker as a direct statement about PTA.
+>
+> **`criticalLow: null`. Do not ship 40.** Both passes converged on 40% from real retrieved
+> documents, and it must still be rejected: 40% is a **diagnostic criterion, not a panic value** —
+> one limb of a composite liver-failure diagnosis that also requires bleeding tendency, cause
+> exclusion, and (in the Japanese criteria) an 8-week onset window. No Chinese 危急值 standard lists
+> PTA; the emergency-lab consensus lists PT and APTT. The concrete failure mode is decisive: **a
+> stably anticoagulated warfarin patient routinely sits below 40% PT activity.** Shipping 40 would
+> fire the app's most alarming channel at a correctly-managed patient, from a threshold whose source
+> document does not apply to them — a safety defect in the opposite direction from the one this
+> cycle guards against. Liver-failure context, if wanted, belongs in non-alarming educational prose.
+
+#### 4.3.1 Construction — the `thrombin_time` precedent does NOT mean what the note above assumed
+
+**Verified against the code: `thrombin_time` is not band-less.** `data/reference-labs.ts` gives it
+`refLow: 10, refHigh: 21`, and its `source` documents that band as the **union of two real printed
+hospital ranges in this corpus** ("TT" 14–21 s; "凝血酶时间(TT)" 10.00–16.00 s), explicitly "not a
+textbook figure and wider than any single laboratory's own range." That is a different pattern from
+band-less and must not be cited as precedent for one.
+
+The correct existing pattern is **`interpretation: 'report-only'`** — 14 entries already use it
+(`urine_color`, `urine_nitrite`, …), all with `refLow: null, refHigh: null`.
+
+**Both candidate constructions are defective. Verified empirically — read this before implementing.**
+
+- **`interpretation: 'ours'` with both bounds null — SILENTLY WRONG. Do not use.** `classify()`
+  returns `'normal'` for *every* value: probed 30 → `normal`, 86.4 → `normal`, 150 → `normal`. A
+  severely impaired PT% of 30 would classify as normal.
+- **`interpretation: 'report-only'` with `highStakes: true` — R6 NEVER FIRES as the code stands.**
+  The report-only branch returns at `lib/guard.ts:244/246`
+  (`return { action: 'classify', needsConfirm: …, flags }`) — **before R6 at `:354`**. `highStakes`
+  is silently ignored, and the pre-registered +1 would not materialise.
+
+**This is the same bug class the repo already fixed once, for R2.** The comment at `lib/guard.ts:268`
+records it: *"R2 returns before R6 can fire, so without this a recognised-but-unit-mismatched
+troponin abstained with needsConfirm=false AND no visible flag at all — strictly worse than not
+recognising it, because R1 at least spoke. Recognising an analyte must never reduce what the user is
+told."* The report-only path is a second instance of the same early-return hazard.
+
+**Therefore W3 is a data entry PLUS a guard fix, not a data entry alone:**
+
+1. `key: 'prothrombin_activity'`, `interpretation: 'report-only'`, `specimen: 'blood'`,
+   `refLow: null`, `refHigh: null`, `criticalLow: null`, `criticalHigh: null`,
+   `highStakes: true` (consistent with **all five** coagulation siblings — `prothrombin_time`,
+   `inr`, `thrombin_time`, `aptt`, `fibrinogen` are every one of them `highStakes: true`).
+2. **Mirror the R2 fix on the report-only branch**: carry `needsConfirm: entry.highStakes` out of
+   `lib/guard.ts:246` instead of hardcoded `false`.
+   **Regression risk today is zero and this is checkable**: all 14 existing `report-only` entries are
+   `highStakes: false`, so the change is a strict no-op for every shipped entry and activates only
+   for `prothrombin_activity`. State that check in the PR.
+3. Add a test asserting a `report-only` + `highStakes` entry reaches the confirm gate — the
+   combination has **no coverage today** because it has never existed.
+
+Direction metadata is the highest-risk field in this entry and must be tested explicitly:
+**low % = impaired clotting**, inverse to PT-seconds. A copy-paste of PT-seconds directionality
+would flag high values and silently pass a critically low one.
+
+Suggested `source:` text — *"No harmonised reference interval exists for prothrombin activity %. The
+value is interpolated from each laboratory's own normal-pooled-plasma dilution curve, so it depends
+on reagent, instrument, diluent and population; WS/T 220—2021 declines to publish intervals for
+clotting-factor activity assays and directs each laboratory to establish its own. Published bands
+disagree widely (70–130, 80–120, 85–100, 70–140), and the name covers at least two different
+measurands (Quick-type, which includes fibrinogen and FV; Owren-type, which does not). This app
+therefore uses only the range printed on the patient's own report and abstains when none is present.
+Low percent indicates impaired clotting — the opposite direction from prothrombin time in seconds."*
+
+The corpus row (86.40% against its printed 70–140) resolves correctly as normal under this design
+with **zero curated numbers**. The +1 R6-gold prediction stands **only if** fix (2) lands; if
+R6-gold reports 23/37 instead of 24/37, fix (2) did not wire through — that is the finding, not a
+rounding error.
 
 Under B1 the chip reproduces the *report's* printed 70-140 regardless; our band drives only classification and the guards.
 
