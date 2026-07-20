@@ -564,3 +564,101 @@ The PR description MUST:
 The risk in this cycle is not that any single alias is wrong. It is that a coverage number applies pressure in exactly one direction — up — and the three cheapest ways to move it are all defects: flip six `highStakes` fields (+12.8pp US, +21.6pp ZH, and a mandatory confirm on every CBC row), add a bare `Glucose` alias (+11, silently grounding random glucoses against a fasting band), and add a bare `pH` alias (+6, re-opening a lock that exists because a blood-gas pH of 7.1 sits comfortably inside the urine band 4-9).
 
 All three are available in one line each. All three would pass CI. §8's numbers are pre-registered so that a shortfall reads as *a thing to investigate* rather than as pressure to reach for one of them.
+
+---
+
+## 13. W4-8 DEFERRED — findings recorded 2026-07-20
+
+**Decision: defer the `Hematocrit, Calculated` alias. Change nothing about the metric or the test
+in the same commit.** Codex hit a red `realContentBench.test.ts` ("expected zero confidently-wrong
+rows, received one"), refused to flip `highStakes`, weaken the test, change the band or exempt the
+row, and stopped. That refusal was correct.
+
+### 13.1 `is_abnormal: '0'` on a rangeless MIMIC row is a DEFAULT, not a label
+
+This corrects a premise stated in this cycle's own briefing. Measured over `us-sample.ts`:
+
+```
+rows WITH a printed range:    242 · 111 flagged abnormal = 45.9%
+rows WITHOUT a printed range:  80 ·   1 flagged abnormal =  1.3%
+occurrences of is_abnormal: '' in the US corpus: ZERO
+```
+
+MIMIC's `flag` column carries only `abnormal` or NULL, and the corpus builder binarises NULL to
+`'0'`. The `''` "unscored" value documented on `RealItem` is **never emitted for MIMIC**, so `'0'`
+cannot be read as an assertion of normality on a row that prints no range. It means *no range was
+configured, so no flag was emitted*.
+
+**Anyone scoring against these rows must read this before arguing about a disagreement.**
+
+### 13.2 The gate was right to block, for the wrong reason
+
+Our `low` classification is **clinically correct** — 0.23 L/L is severely anaemic under every adult
+frame, and no population makes 23% normal. The red arose from comparing a correct classification
+against a non-label. **That specific red is an artifact and is not evidence against the alias.**
+
+The alias is nonetheless wrong on merits the gate never measured:
+
+- **It deletes a user-visible safety disclosure.** `R1-UNKNOWN-ANALYTE` is in `SURFACING_FLAGS`
+  (`lib/summary.ts:126-146`); `R2b-UNIT-CONVERTED` and `R12-POPULATION-SENSITIVE` are not. Today the
+  row says "This test is not in our reference set — confirm with your clinician." After the alias it
+  says nothing. Same lesson already paid for at `lib/summary.ts:136-140`.
+- **The measurand identity is probably wrong.** `us-sample.ts:186-203` is an arterial blood gas
+  (`Specimen Type: ART.`, intubated). `Hemoglobin 7.5 × 3 = 22.5 ≈ 23` — this is the analyser's
+  fixed-factor re-expression of the Hb row above it, not a spun or MCV×RBC CBC hematocrit, and it
+  would be mapped onto a CBC entry sourced from a Han-Chinese multicentre study
+  (`data/reference-labs.ts:176`). That is the **fifth** cross-matrix alias of this repo's signature
+  pattern.
+- **R17 structurally cannot fire here.** `lib/guard.ts:424` gates the specimen guard on
+  `printed && printedUsable`. No printed range → no guard. The one row where the specimen mismatch
+  is real is the row where the detector is off.
+- **Its only measurable effect is to shrink the work list.** `gold-labels.ts:136` labels this
+  `Hematocrit (calculated)`, `highStakes: true`; our entry is `highStakes: false`, so no R6 fires,
+  coverage is unchanged, and the row silently leaves `goldHighStakesUnrecognized` **while gaining
+  zero protection**.
+
+### 13.3 LIVE DEFECT — mismatched value/band frames. Own cycle, higher priority than the alias.
+
+`valueText` renders in the **report's** units (`lib/summary.ts:192-195`); `typicalRange` renders in
+**ours** (`:288`), gated only on `curated && !bandNotComparable`. With no printed range there is no
+`reportRange` to anchor against. Verified on the shipped pipeline:
+
+```
+Hematocrit 23 %, printedRange null
+  valueText    "23 %"
+  reportRange  ""
+  typicalRange "0.35–0.51 L/L"
+```
+
+A reader compares 23 against 0.35–0.51 and concludes the value is enormously high. **The patient is
+severely anaemic. The card inverts the direction.**
+
+Currently reachable on **1 corpus row** — `Cholesterol, HDL "84 mg/dL" vs "≥ 1 mmol/L"` — benign
+only by accident (84 > 1 happens to point the right way). Hematocrit would add a
+direction-inverting instance. `chipWrong` and `chipFidelity` are **blind to this**: both score the
+chip string, not the value/band juxtaposition.
+
+### 13.4 Metric naming defect — pre-approved as a STANDALONE change
+
+`realContentBench.ts:5-10,35-36` demoted confident-agreement to internal guard-health and says it is
+"no longer the safety gate". That demotion **never reached `realContentBench.test.ts`**, which still
+frames it as a safety gate. Permitted: rename `confidentlyWrong` → `unguardedDisagreement`, retitle
+the test, and fix the stale comment promising a user-facing claim.
+
+**It must land on a day when nothing is blocked by it, and it leaves this row failing exactly as it
+does now.** Adding `&& asserted` to the `confident` filter is NOT permitted here: the population it
+would delete is n=1 today and n=2 after the alias, the new member being the disagreeing row. A
+correction whose entire observed effect is to unblock the change that provoked it is
+indistinguishable from adjusting a gate to make a number work.
+
+### 13.5 What actually helps this patient
+
+Not the alias. A **distinct entry** keyed to the gold canonical `Hematocrit (calculated)`,
+specimen-scoped to blood gas per the `22354e8` `GLU` pattern, `highStakes: true` **with a cited
+source**, so R6 fires and the row reaches a mandatory confirm. Real work with a real citation
+requirement. **This is deferral of the alias, not of the analyte.**
+
+Honest cost of deferral: coverage stays 111/212 and a transfusion-threshold anaemia goes
+unrecognised. But under the alias that anaemia is *also* unrecognised — no position, no flag, no
+confirm gate — with the disclosure removed and a mismatched band added. **The alias buys the patient
+nothing.**
