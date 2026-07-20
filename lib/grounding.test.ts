@@ -615,6 +615,37 @@ describe('report-only high-stakes grounding', () => {
     expect(row.needsConfirm).toBe(true);
   });
 
+  it('grounds Anion Gap without an owned band and requires confirmation', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Anion Gap',
+            value: '21',
+            unit: 'mEq/L',
+            printedRange: '8-20',
+            confidence: 'high',
+            specimen: 'blood',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('anion_gap');
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect([
+      row.entry?.refLow,
+      row.entry?.refHigh,
+      row.entry?.criticalLow,
+      row.entry?.criticalHigh,
+      row.entry?.absoluteLow,
+      row.entry?.absoluteHigh,
+    ]).toEqual([null, null, null, null, null, null]);
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(true);
+  });
+
   it('carries PT activity into the confirmation gate before the ordinary R6 path', () => {
     const row = groundExtraction(
       {

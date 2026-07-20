@@ -4,6 +4,7 @@ import { findEntry } from '@/lib/reference';
 import { LANGS, resolveText } from '@/lib/i18n';
 
 const SOURCED_REPORT_ONLY_KEYS = new Set([
+  'anion_gap',
   'base_excess',
   'blood_ph',
   'prothrombin_activity',
@@ -25,6 +26,7 @@ describe('reference table integrity', () => {
     );
 
     expect(reportOnly.map((entry) => entry.key).sort()).toEqual([
+      'anion_gap',
       'base_excess',
       'blood_ph',
       'prothrombin_activity',
@@ -211,6 +213,23 @@ describe('reference table integrity', () => {
     expect(entry?.source).toMatch(/Sourcing failed:/);
     expect(entry?.source).toMatch(/differs from bicarbonate.*dissolved CO2/i);
     expect(entry?.source).toMatch(/Parameters that reflect the carbon dioxide content of blood/i);
+  });
+
+  it('defines Anion Gap as formula- and analyser-dependent report-only context', () => {
+    const entry = findEntry('Anion Gap');
+    expect(entry?.key).toBe('anion_gap');
+    expect(entry?.interpretation).toBe('report-only');
+    expect(entry?.specimen).toBe('blood');
+    expect(entry?.allowedUnits).toEqual(['mmol/L', 'mEq/L']);
+    expect(entry?.highStakes).toBe(true);
+    for (const alias of ['Anion Gap', 'AG', '阴离子间隙']) {
+      expect(findEntry(alias)?.key, alias).toBe('anion_gap');
+    }
+    expect(entry?.source).toMatch(/Sourcing failed:/);
+    expect(entry?.source).toMatch(/PMID 31669932/);
+    expect(entry?.source).toMatch(/PMID 32445342/);
+    expect(entry?.source).toMatch(/Na-Cl-HCO3.*Na\+K-Cl-HCO3.*potassium concentration/i);
+    expect(entry?.source).toMatch(/Diagnostic thresholds are not laboratory panic values/i);
   });
 
   it('keeps every pre-existing urine report-only entry non-high-stakes', () => {

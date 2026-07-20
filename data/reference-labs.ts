@@ -1262,6 +1262,43 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
       'Sourcing failed: no harmonised interval exists for this measurand. Calculated total CO2 differs from bicarbonate because it includes dissolved CO2 and is calculated from blood-gas pH and pCO2; methods and reported intervals differ. Reference: Parameters that reflect the carbon dioxide content of blood, acutecaretesting.org. Use only the range printed on the patient\'s report.',
   },
   {
+    key: 'anion_gap',
+    name: defineText({
+      en: reviewed('Anion gap'),
+      zh: reviewed('阴离子间隙'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: ['Anion Gap', 'AG', '阴离子间隙'],
+    unit: 'mmol/L',
+    allowedUnits: ['mmol/L', 'mEq/L'],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed('A value calculated from the electrolytes reported in a blood sample.'),
+      zh: reviewed('根据血液样本中所报告的电解质计算得出的指标。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'The anion gap is a calculated difference among electrolytes. Some laboratories include potassium in the formula and others do not, and analyser-specific intervals differ, so use the formula and range printed on the report.',
+      ),
+      zh: reviewed(
+        '阴离子间隙是根据多项电解质计算得出的差值。有些实验室的公式包含钾，有些则不包含，而且不同分析仪的范围也不同，因此应以报告使用的公式和打印范围为准。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'Sourcing failed: no harmonised reference or laboratory panic interval exists. Published intervals differ materially by analyser: Pratumvinit B et al., Clin Chim Acta. 2020;500:172-179, PMID 31669932; Ayala-Lopez N and Harb R, J Appl Lab Med. 2020;5(1):126-135, PMID 32445342. The Na-Cl-HCO3 and Na+K-Cl-HCO3 formulas differ by approximately the potassium concentration, while the row name does not identify the formula. Diagnostic thresholds are not laboratory panic values. Use only the range printed on the patient\'s report.',
+  },
+  {
     key: 'random_glucose',
     name: defineText({
       en: reviewed('Random (non-fasting) glucose'),

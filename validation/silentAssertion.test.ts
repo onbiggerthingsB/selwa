@@ -167,13 +167,12 @@ describe('a row may never assert a position with no disclosure', () => {
 
   it('still-unrecognised high-stakes rows disclose that we cannot name them', () => {
     const audit = languageAudit();
-    // Lactate / Free Calcium / Troponin T were on this list until the tranche-1 curation gave them
+    // Lactate / Free Calcium / Troponin T / Anion Gap were on this list until curation gave them
     // entries. These remain unrecognised on purpose: pO2 because a venous gas prints the identical
     // row name, 'Urea Nitrogen' because MIMIC carries it in EIGHT fluids (the Glucose trap).
     for (const [n, v, u, r] of [
       ['pO2', '60', 'mm Hg', '80-100'],
       ['Urea Nitrogen', '47', 'mg/dL', '6-20'],
-      ['Anion Gap', '20', 'mEq/L', '8-16'],
     ] as const) {
       expect(goldFor(n)?.highStakes, `${n} should be gold-high-stakes`).toBe(true);
       const { row, section } = sectionFor(n, v, u, r);
