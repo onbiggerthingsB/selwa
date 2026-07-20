@@ -19,6 +19,7 @@ import {
   type LocalizedText,
 } from '@/lib/i18n';
 import { isSensitiveAnalyteName } from '@/lib/sensitiveAnalytes';
+import { canonicalToDisplayConversion } from '@/lib/convert';
 
 export type { Lang } from '@/lib/i18n';
 export type ReportStatus = 'below' | 'within' | 'above' | 'outside' | 'none';
@@ -195,12 +196,78 @@ function valueText(row: GroundedRow): string {
   return `${v}${u}`;
 }
 
-function formatRefRange(entry: ReferenceEntry, sex: Sex, age?: number): string {
-  const { low, high } = resolveBounds(entry, sex, age);
-  const u = entry.unit;
-  if (low !== null && high !== null) return `${low}–${high} ${u}`;
-  if (high !== null) return `< ${high} ${u}`;
-  if (low !== null) return `≥ ${low} ${u}`;
+const CONVERTED_BOUND_SIGNIFICANT_DIGITS = 4;
+
+interface DisplayBound {
+  value: number;
+  text: string;
+}
+
+/**
+ * Converted bounds use at most four significant digits. Lower bounds round up
+ * and upper bounds round down, so formatting can narrow a band slightly but can
+ * never widen it. Exact trailing zeroes are removed (35, not 35.0000).
+ */
+function roundConvertedBound(value: number, side: 'low' | 'high'): DisplayBound | null {
+  if (!Number.isFinite(value)) return null;
+  if (value === 0) return { value: 0, text: '0' };
+
+  const magnitude = Math.floor(Math.log10(Math.abs(value)));
+  const exponent = magnitude - (CONVERTED_BOUND_SIGNIFICANT_DIGITS - 1);
+  const step = 10 ** exponent;
+  if (!Number.isFinite(step) || step === 0) return null;
+
+  const scaled = value / step;
+  const roundedSteps = side === 'low' ? Math.ceil(scaled) : Math.floor(scaled);
+  const rounded = roundedSteps * step;
+  const normalized = Object.is(rounded, -0) ? 0 : rounded;
+  const decimals = Math.max(0, -exponent);
+  if (decimals > 100) return null;
+  const text = normalized
+    .toFixed(decimals)
+    .replace(/(\.\d*?[1-9])0+$/, '$1')
+    .replace(/\.0+$/, '');
+
+  return { value: normalized, text };
+}
+
+function formatRefRange(
+  entry: ReferenceEntry,
+  displayUnit: string | null,
+  sex: Sex,
+  age?: number,
+): string {
+  const conversion = canonicalToDisplayConversion(displayUnit, entry);
+  if (!conversion) return '';
+
+  const bounds = resolveBounds(entry, sex, age);
+  let low: DisplayBound | null =
+    bounds.low === null ? null : { value: bounds.low, text: String(bounds.low) };
+  let high: DisplayBound | null =
+    bounds.high === null ? null : { value: bounds.high, text: String(bounds.high) };
+
+  if (conversion.converted) {
+    low =
+      bounds.low === null
+        ? null
+        : roundConvertedBound(bounds.low * conversion.factor, 'low');
+    high =
+      bounds.high === null
+        ? null
+        : roundConvertedBound(bounds.high * conversion.factor, 'high');
+    if ((bounds.low !== null && low === null) || (bounds.high !== null && high === null)) {
+      return '';
+    }
+  }
+
+  // Inward rounding can collapse an extremely narrow interval. Suppression is
+  // safer than displaying an inverted or fabricated band.
+  if (low !== null && high !== null && low.value > high.value) return '';
+
+  const unitSuffix = displayUnit ? ` ${displayUnit}` : '';
+  if (low !== null && high !== null) return `${low.text}–${high.text}${unitSuffix}`;
+  if (high !== null) return `< ${high.text}${unitSuffix}`;
+  if (low !== null) return `≥ ${low.text}${unitSuffix}`;
   return '';
 }
 
@@ -241,6 +308,10 @@ export function buildSummary(
     // R17 does NOT suppress the chip: the chip is the report's own arithmetic and stays correct
     // whatever specimen the row is. What it suppresses is OUR band being shown beside it.
     const bandNotComparable = row.flags.some((f) => f.id === 'R17-BAND-NOT-COMPARABLE');
+    const typicalRange =
+      curated && !bandNotComparable
+        ? formatRefRange(entry!, row.extracted.unit, report.sex, report.age)
+        : '';
 
     let tone: string;
     let chip: LocalizedText;
@@ -285,8 +356,12 @@ export function buildSummary(
       // measuring this row (usually a different SPECIMEN under the same name — the urine-vs-serum
       // β2-microglobulin case). Presenting it as "Typical range" beside the patient's number is a
       // wrong-range claim, so we withhold it and its provenance rather than guess the specimen.
-      typicalRange: curated && !bandNotComparable ? formatRefRange(entry!, report.sex, report.age) : '',
-      source: curated && !bandNotComparable ? (entry!.source ?? '') : '',
+      // The same rule applies to units: valueText stays verbatim in the report's frame, so our
+      // band is converted into that frame with a reviewed reverse factor. If no such factor
+      // exists, showing a canonical-unit band beside the report-unit value would be a wrong-range
+      // claim; withhold both the band and its provenance rather than guess.
+      typicalRange,
+      source: typicalRange ? (entry!.source ?? '') : '',
     };
   });
 
