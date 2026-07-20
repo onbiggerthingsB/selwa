@@ -19,7 +19,7 @@ describe('NotesSection — total-drop completeness fallback', () => {
     expect(screen.getByText(/shown as written/i)).toBeInTheDocument();
   });
 
-  it('marks every bo UI fallback in readable Chinese while preserving source text verbatim', () => {
+  it('identifies every bo UI fallback as Chinese while preserving source text verbatim', () => {
     const original = '医生说：未见占位，继续服用二甲双胍。';
     const notes = groundNotes({ segments: [] }, original);
 
@@ -33,8 +33,9 @@ describe('NotesSection — total-drop completeness fallback', () => {
       '[data-requested-lang="bo"][data-resolved-lang="zh"]',
     );
     expect(fallbacks.length).toBeGreaterThan(0);
-    const markers = screen.getAllByText('翻译未经审核');
-    expect(markers.length).toBe(fallbacks.length);
-    expect(markers.every((marker) => marker.getAttribute('lang') === 'zh')).toBe(true);
+    expect(screen.queryByText('翻译未经审核')).toBeNull();
+    expect(
+      container.querySelectorAll('[data-translation-review="unverified"]'),
+    ).toHaveLength(0);
   });
 });

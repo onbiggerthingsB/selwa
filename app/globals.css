@@ -90,7 +90,6 @@ body {
   border: 1px solid currentColor;
   border-radius: 999px;
   color: var(--ink-muted);
-  font-family: var(--font-cjk);
   font-size: 0.72em;
   font-weight: 650;
   line-height: 1.45;

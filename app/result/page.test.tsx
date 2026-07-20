@@ -46,7 +46,7 @@ describe('ResultPage language toggle', () => {
     mocks.replace.mockClear();
   });
 
-  it('offers TB and visibly explains its marked Chinese fallback', async () => {
+  it('offers TB and visibly explains its screen-level Chinese fallback', async () => {
     const user = userEvent.setup();
     render(<ResultPage />);
 
@@ -59,10 +59,13 @@ describe('ResultPage language toggle', () => {
     const notice = screen.getByTestId('tibetan-availability');
     expect(notice).toHaveTextContent('藏语暂不可用；目前显示中文内容。');
     expect(notice.querySelectorAll('[data-translation-review="unverified"]').length)
-      .toBeGreaterThan(0);
-    expect(
-      notice.querySelectorAll('[data-translation-review="unverified"][lang="zh"]').length,
-    ).toBeGreaterThan(0);
+      .toBe(0);
+    const fallbackNotice = screen.getByText('藏语暂不可用；目前显示中文内容。');
+    expect(fallbackNotice).toHaveAttribute('lang', 'zh');
+    expect(fallbackNotice.closest('[data-requested-lang="bo"]')).toHaveAttribute(
+      'data-resolved-lang',
+      'zh',
+    );
 
     const sample = screen.getByTestId('tibetan-typography-sample');
     expect(sample).toHaveAttribute('lang', 'bo');
