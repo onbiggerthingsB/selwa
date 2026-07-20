@@ -31,6 +31,7 @@ import { describe, it, expect } from 'vitest';
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary, type SummarySection } from '@/lib/summary';
 import { REFERENCE_LABS } from '@/data/reference-labs';
+import { resolveBounds } from '@/lib/reference';
 import {
   LANGS,
   resolveText,
@@ -186,6 +187,71 @@ function sectionsFor(name: string, value: string, unit: string | null, range: st
   return buildSummary(rep, 'en').sections;
 }
 
+function normalPoint(entry: (typeof REFERENCE_LABS)[number]): number {
+  const { low, high } = resolveBounds(entry, 'male', 40);
+  if (low !== null && high !== null) return (low + high) / 2;
+  if (low !== null) return low;
+  if (high !== null) return high;
+  throw new Error(`${entry.key}: critical entry has no normal reference point`);
+}
+
+function plausibleCriticalPoint(entry: (typeof REFERENCE_LABS)[number]): number {
+  if (
+    entry.criticalLow !== null &&
+    entry.absoluteLow !== null &&
+    entry.absoluteLow < entry.criticalLow
+  ) {
+    return (entry.absoluteLow + entry.criticalLow) / 2;
+  }
+  if (
+    entry.criticalHigh !== null &&
+    entry.absoluteHigh !== null &&
+    entry.criticalHigh < entry.absoluteHigh
+  ) {
+    return (entry.criticalHigh + entry.absoluteHigh) / 2;
+  }
+  throw new Error(`${entry.key}: critical band has no physiologically plausible test point`);
+}
+
+function visibleTriggerSurface(
+  entry: (typeof REFERENCE_LABS)[number],
+  value: number,
+) {
+  const report = groundExtraction(
+    {
+      rows: [
+        {
+          name: entry.key,
+          value: String(value),
+          unit: entry.unit,
+          printedRange: null,
+          confidence: 'high',
+          specimen: entry.specimen,
+        },
+      ],
+    },
+    'male',
+    40,
+  );
+  const row = report.rows[0];
+  if (row.entry?.key !== entry.key) {
+    throw new Error(`${entry.key}: conditionality fixture grounded to ${row.entry?.key ?? 'none'}`);
+  }
+  const section = buildSummary(report, 'en').sections[0];
+  const surfacedFlagIds = section.flags
+    .map((surfaced) => {
+      const sources = row.flags.filter((candidate) => candidate.message === surfaced.message);
+      if (sources.length !== 1) {
+        throw new Error(
+          `${entry.key}: surfaced flag did not map uniquely to a guard flag`,
+        );
+      }
+      return sources[0].id;
+    })
+    .sort();
+  return { row, surfacedFlagIds };
+}
+
 // Rows engineered to force each guard to fire, so the gate sees the worst case — not just
 // whatever the corpus happens to contain.
 const FORCING_ROWS: [string, string, string | null, string | null][] = [
@@ -202,6 +268,57 @@ const FORCING_ROWS: [string, string, string | null, string | null][] = [
 ];
 
 describe('B1 gate — no user-visible verdict about the patient’s own value', () => {
+  it('keeps surfaced flags and confirm-list membership independent of critical-but-plausible values', () => {
+    // Option (b) permits value-dependent selection only when it truthfully signals
+    // reading confidence (R13/R16), never when it reveals a clinical conclusion.
+    // For every curated panic band, compare a normal value with a critical value
+    // that remains inside the entry's absolute physiological bounds. R13 therefore
+    // cannot confound this gate: any difference here is the forbidden R3/R6 leak.
+    const mismatches: Array<{
+      key: string;
+      normal: { surfacedFlagIds: string[]; needsConfirm: boolean };
+      critical: { surfacedFlagIds: string[]; needsConfirm: boolean };
+    }> = [];
+    let compared = 0;
+
+    for (const entry of REFERENCE_LABS) {
+      if (
+        entry.interpretation !== 'ours' ||
+        (entry.criticalLow === null && entry.criticalHigh === null)
+      ) {
+        continue;
+      }
+
+      compared += 1;
+      const normal = visibleTriggerSurface(entry, normalPoint(entry));
+      const critical = visibleTriggerSurface(entry, plausibleCriticalPoint(entry));
+      expect(normal.row.classification, `${entry.key}: normal fixture`).toBe('normal');
+      expect(critical.row.classification, `${entry.key}: critical fixture`).toBe('critical');
+
+      const normalSurface = {
+        surfacedFlagIds: normal.surfacedFlagIds,
+        needsConfirm: normal.row.needsConfirm,
+      };
+      const criticalSurface = {
+        surfacedFlagIds: critical.surfacedFlagIds,
+        needsConfirm: critical.row.needsConfirm,
+      };
+      if (JSON.stringify(normalSurface) !== JSON.stringify(criticalSurface)) {
+        mismatches.push({
+          key: entry.key,
+          normal: normalSurface,
+          critical: criticalSurface,
+        });
+      }
+    }
+
+    expect(compared, 'conditionality gate must exercise curated critical bands').toBeGreaterThan(0);
+    expect(
+      mismatches,
+      `patient-value-dependent screen elements:\n${JSON.stringify(mismatches, null, 2)}`,
+    ).toEqual([]);
+  });
+
   it('guard-forcing rows surface no banned verdict/triage text', () => {
     const copies: NamedCopy[] = [];
     for (const [n, v, u, r] of FORCING_ROWS) {

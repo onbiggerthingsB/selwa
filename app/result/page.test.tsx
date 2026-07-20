@@ -25,6 +25,7 @@ const report: GroundedReport = {
       classification: 'unclassified',
       action: 'abstain',
       needsConfirm: true,
+      needsReview: false,
       flags: [],
     },
   ],

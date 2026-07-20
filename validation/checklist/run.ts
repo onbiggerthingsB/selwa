@@ -6,9 +6,9 @@ import { groundNotes } from '@/lib/notesGrounding';
 import type { SegmentAction, Sex, Classification, GroundedRow } from '@/lib/types';
 import type { BehavioralCase, LabsInput, NotesInput, Verdict } from './types';
 
-// Normalize the two guard vocabularies to the unified Verdict. A high-stakes /
-// critical labs row keeps action='classify' but sets needsConfirm=true and carries
-// a "confirm with clinician" flag — so those states are 'flag', not clean 'render'.
+// Normalize the two guard vocabularies to the unified Verdict. A high-stakes row
+// keeps action='classify' and sets needsConfirm; a critical row carries an internal
+// guard flag/review signal. Both states are 'flag', not clean 'render'.
 // (Verified against the real guard: 空腹血糖 5.5 mmol/L → classify + needsConfirm.)
 function fromLabs(row: GroundedRow): Verdict {
   if (row.action === 'abstain') return 'abstain';

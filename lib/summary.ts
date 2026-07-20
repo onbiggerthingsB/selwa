@@ -112,9 +112,11 @@ const EMPTY_LOCALIZED_TEXT: LocalizedText = defineText({
 // B1 RULE (see validation/b1VerdictLeakage.test.ts): a user-visible message may describe only
 // (a) our confidence in the READING, or (b) the REPORT'S OWN information — never a conclusion
 // about the patient's value derived from our table. Speakable flags are limited to our reading,
-// our supported scope, or the report's own content (for example R6 and R13 reading checks).
-// Clinical guard conclusions (R3/R4/R11/R12/R2b) stay INTERNAL: they still drive needsConfirm
-// and feed the confirm-burden metrics, but are not spoken.
+// our supported scope, or the report's own content (for example R6's analyte-level check and
+// R13's reading check).
+// Clinical guard conclusions stay INTERNAL. R3/R11/R17 feed safety metrics through
+// needsReview; R4/R12/R2b remain context flags. None are spoken or select rows for
+// the OCR-framed confirmation screen.
 // The guard computes; the summary decides what is speakable.
 //   R16 — "the range doesn't appear to use the same units as the value; check your report"
 //         (about the REPORT'S OWN content + our ability to read it — not a verdict on the value.

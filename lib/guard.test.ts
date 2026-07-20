@@ -42,14 +42,28 @@ describe('evaluateRow', () => {
     expect(ids(out.flags)).toContain('R2-UNIT-MISMATCH');
   });
 
-  it('R3: critical value → confirm + urgent flag', () => {
+  it('R3: a critical high-stakes value reviews internally and confirms only via analyte-level R6', () => {
     const entry = findEntry('potassium')!;
     const ex = row({ name: 'K+', value: '6.9', unit: 'mmol/L' });
     const cls = classify(parseValue(ex.value), entry, 'unknown');
     const out = evaluateRow(ex, entry, parseValue(ex.value), cls, 'unknown');
     expect(out.needsConfirm).toBe(true);
+    expect(out.needsReview).toBe(true);
     expect(ids(out.flags)).toContain('R3-CRITICAL-PANIC-RANGE');
     expect(out.flags.some((f) => f.severity === 'urgent')).toBe(true);
+  });
+
+  it('R3: criticality alone stays internal and does not select a confirm-list row', () => {
+    const entry = findEntry('wbc_count')!;
+    const ex = row({ name: 'WBC', value: '1', unit: '10^9/L' });
+    const cls = classify(parseValue(ex.value), entry, 'unknown');
+    const out = evaluateRow(ex, entry, parseValue(ex.value), cls, 'unknown');
+    expect(cls).toBe('critical');
+    expect(entry.highStakes).toBe(false);
+    expect(out.needsConfirm).toBe(false);
+    expect(out.needsReview).toBe(true);
+    expect(ids(out.flags)).toContain('R3-CRITICAL-PANIC-RANGE');
+    expect(ids(out.flags)).not.toContain('R6-HIGH-STAKES-MANDATORY-CONFIRM');
   });
 
   it('R4: high-stakes mild abnormal → classify but flag clinician', () => {
@@ -190,17 +204,18 @@ describe('R13 — implausible value suppression', () => {
 });
 
 describe('R11 — flip-gated printed-range disagreement', () => {
-  // total_cholesterol is not high-stakes and has no critical band, so needsConfirm
-  // here is driven purely by R11 (no R4/R6 confounding).
+  // total_cholesterol is not high-stakes and has no critical band, so the
+  // internal review signal here is driven purely by R11.
   const tc = findEntry('总胆固醇')!; // refHigh 5.2 (one-sided, desirable <5.2)
 
-  it('a disagreement that FLIPS the call → needsConfirm + caution', () => {
+  it('a disagreement that FLIPS the call → internal review + caution, not confirmation', () => {
     // value 5.5 is HIGH under our <5.2 but NORMAL under the report's <6.5 → flips.
     const ex = row({ name: '总胆固醇', value: '5.5', unit: 'mmol/L', printedRange: '<6.5' });
     const out = evaluateRow(ex, tc, parseValue(ex.value), classify(parseValue(ex.value), tc, 'unknown'), 'unknown');
     const r11 = out.flags.find((f) => f.id === 'R11-RANGE-DISAGREEMENT');
     expect(r11?.severity).toBe('caution');
-    expect(out.needsConfirm).toBe(true);
+    expect(out.needsConfirm).toBe(false);
+    expect(out.needsReview).toBe(true);
   });
 
   it('a disagreement that does NOT flip the call → info flag, no confirm', () => {
@@ -211,5 +226,6 @@ describe('R11 — flip-gated printed-range disagreement', () => {
     const r11 = out.flags.find((f) => f.id === 'R11-RANGE-DISAGREEMENT');
     expect(r11?.severity).toBe('info');
     expect(out.needsConfirm).toBe(false);
+    expect(out.needsReview).toBe(false);
   });
 });

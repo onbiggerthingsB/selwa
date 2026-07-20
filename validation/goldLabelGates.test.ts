@@ -37,7 +37,7 @@ describe('chip vs the report’s own flag — an independent label', () => {
   });
 });
 
-describe('R6 coverage is graded against labels we do not control', () => {
+describe('analyte-confirm coverage is graded against labels we do not control', () => {
   it('gold labels cover every row name in both corpora', () => {
     const missing = new Set<string>();
     for (const corpus of [MIMIC_US_SAMPLE, MEDREPBENCH_SAMPLE])
@@ -50,8 +50,8 @@ describe('R6 coverage is graded against labels we do not control', () => {
   it('the gold denominator is not our own table in disguise', () => {
     // The whole point: unrecognised high-stakes rows must STAY in the denominator. If the gold
     // denominator ever collapses to the self-graded one, independence has been lost.
-    expect(US.goldHighStakesRows).toBeGreaterThan(US.highStakesRows);
-    expect(ZH.goldHighStakesRows).toBeGreaterThan(ZH.highStakesRows);
+    expect(US.goldHighStakesRows).toBeGreaterThan(US.recognizedHighStakesRows);
+    expect(ZH.goldHighStakesRows).toBeGreaterThan(ZH.recognizedHighStakesRows);
   });
 
   it('reports the unprotected high-stakes analytes as an actionable work list', () => {

@@ -12,19 +12,19 @@
 export interface ConfirmRow {
   emitted: boolean; // action !== 'abstain' (an abstained row shows source only)
   needsConfirm: boolean; // routed to the confirm-the-values gate
-  ruleIds: string[]; // flag ids carried on the row (which rules fired)
+  ruleIds: string[]; // every flag carried on the row, including non-confirming co-triggers
 }
 
 export interface ConfirmBurden {
   emitted: number; // rows that produced an interpretation (not abstained)
   confirmed: number; // emitted AND needsConfirm
   confirmRate: number; // confirmed / emitted; NaN when nothing emitted (never 1.0 by fiat)
-  byRule: Record<string, number>; // flag ids that rode along on confirmed rows
+  byRule: Record<string, number>; // co-occurring flag ids on confirmed rows; not causal attribution
 }
 
 /**
  * Confirm burden over a set of grounded labs rows: what fraction of emitted rows
- * we route to the confirm gate, and which rules drove it. Excludes abstained rows
+ * we route to the confirm gate, and which flags coexist on those rows. Excludes abstained rows
  * from the denominator (they never reach the confirm gate). NaN rate when the
  * denominator is empty — reported "N/A", never a misleading 1.0.
  */

@@ -1,10 +1,11 @@
 // INDEPENDENT GOLD LABELS for the real corpora (Codex should-fix #7).
 //
-// WHY: r6Coverage and confidentlyWrong were SELF-GRADED, and the self-grading hid the thing they
-// were introduced to find. r6Coverage's denominator was `row.entry?.highStakes` — OUR table. An
-// analyte we fail to NAME has entry === null, so it dropped out of the numerator AND the
-// denominator: it did not score 0, it became invisible. The metric therefore reported a
-// comfortable "80% of high-stakes rows confirmed" while Lactate, Free (ionized) Calcium, the
+// WHY: the recognized-analyte coverage precursor and confidentlyWrong were SELF-GRADED, and the
+// self-grading hid the thing they were introduced to find. The recognized denominator is
+// `row.entry?.highStakes` — OUR table. An analyte we fail to NAME has entry === null, so it drops
+// out of the numerator AND the denominator: it does not score 0, it becomes invisible. The retired
+// pre-W5 metric therefore reported a comfortable "80% of high-stakes rows confirmed" while
+// Lactate, Free (ionized) Calcium, the
 // blood gases (pH/pO2/pCO2/Base Excess), INR(PT), Glucose and Urea Nitrogen were not being counted
 // at all, because we don't recognise them. A metric whose denominator is chosen by the system
 // under test cannot measure that system's blind spots.

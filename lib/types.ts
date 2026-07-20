@@ -81,6 +81,9 @@ export interface GroundedRow {
   classification: Classification;
   action: GuardAction;
   needsConfirm: boolean;
+  // Internal clinical-review signal. It protects suppression and safety metrics,
+  // but never controls membership in the user-facing ConfirmValues list.
+  needsReview: boolean;
   flags: GuardFlag[];
 }
 

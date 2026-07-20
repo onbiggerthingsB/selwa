@@ -278,7 +278,8 @@ describe('R17 — we stop showing our band when it cannot be this row’s band',
     expect(row.flags.map((f) => f.id)).toContain('R17-BAND-NOT-COMPARABLE');
     expect(section.typicalRange, 'our serum band must not be presented for a urine row').toBe('');
     expect(section.source).toBe('');
-    expect(row.needsConfirm).toBe(true);
+    expect(row.needsConfirm).toBe(false);
+    expect(row.needsReview).toBe(true);
     // The chip is the REPORT's own arithmetic and stays correct whatever the specimen.
     expect(resolveText(section.chip, 'en').text).toBe('Above your report’s range');
     expect(resolveText(section.chip, 'zh').text).toBe('高于报告所列范围');

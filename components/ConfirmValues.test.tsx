@@ -155,4 +155,23 @@ describe('ConfirmValues result-shape input', () => {
     expect(screen.getByText('pH')).toBeInTheDocument();
     expect(screen.queryByText('Urine pH')).toBeNull();
   });
+
+  it('does not add internal review-only rows to the editable confirmation list', () => {
+    const onConfirmed = vi.fn();
+    const reviewOnly = {
+      ...report,
+      rows: report.rows.map((row, index) => ({
+        ...row,
+        needsConfirm: false,
+        needsReview: index === 0,
+      })),
+    };
+
+    const { container } = render(
+      <ConfirmValues report={reviewOnly} lang="en" onConfirmed={onConfirmed} />,
+    );
+
+    expect(container.querySelector('.confirm')).toBeNull();
+    expect(onConfirmed).toHaveBeenCalledWith(reviewOnly);
+  });
 });

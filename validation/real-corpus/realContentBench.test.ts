@@ -19,10 +19,10 @@ describe('real-content grounding harness', () => {
     expect(s.agreement).toBeLessThanOrEqual(1);
   });
 
-  it('SAFETY GATE: no confidently-wrong row on real content (a disagreement must be confirm-flagged, never silent)', () => {
+  it('SAFETY GATE: no confidently-wrong row on real content (a disagreement must be protected, never silent)', () => {
     // This is the gate for coverage work: widening recognition may raise the abstain-rate
-    // floor and add confirm-flagged disagreements, but must NEVER produce a row we present
-    // confidently (needsConfirm=false) that disagrees with the report's own flag.
+    // floor and add protected disagreements, but must NEVER produce a row we present
+    // confidently (neither confirmation nor internal review) that disagrees with the report.
     const s = scoreRealCorpus(MEDREPBENCH_SAMPLE);
     expect(s.confidentlyWrong).toHaveLength(0);
     expect(s.confidentAgreement).toBe(1);
@@ -45,12 +45,16 @@ describe('real-content grounding harness', () => {
     expect(a.heldout.length).toBeGreaterThan(0);
   });
 
-  it('the AST band disagreement is confirm-flagged (safe), not a silent wrong call', () => {
-    // 谷草转氨酶 11 U/L printed 2-40: our band floor > 11 → we say low; R11 must route to confirm.
+  it('the AST band disagreement is internally reviewed (safe), not a silent wrong call', () => {
+    // 谷草转氨酶 11 U/L printed 2-40: our band floor > 11 → we say low; R11 must route to review
+    // without adding an editable field to the OCR-framed user confirmation screen.
     const s = scoreRealCorpus([
       { image: 'ast-probe', kind: 'probe', items: [{ item_name: '谷草转氨酶', item_value: '11', item_unit: 'U/L', item_range: '2-40', is_abnormal: '0' }] },
     ]);
     expect(s.classified).toBe(1);
-    expect(s.confirmRate).toBe(1); // the disagreeing row is sent to confirm
+    expect(s.confirmRate).toBe(0);
+    expect(s.classifiedDetail[0].needsConfirm).toBe(false);
+    expect(s.classifiedDetail[0].needsReview).toBe(true);
+    expect(s.confidentlyWrong).toHaveLength(0);
   });
 });
