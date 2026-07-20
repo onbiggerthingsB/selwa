@@ -232,7 +232,7 @@ Rationale for putting band-less curation *above* aliases: a `report-only` entry 
 | **W4-1** | Sensitive-analyte chip suppressor + leakage test | policy | +0 | live defect closed | **DECIDED 2026-07-20 — ready** |
 | **W4-2** | Missing refusal locks (`a-淀粉酶`, `髓系原始细胞群`, drug screens, MDRD eGFR) | policy | +0 | none | ready |
 | **W4-3** | `Base Excess` — new report-only entry | curation | +6 | **lowest in cycle** | ready |
-| **W4-4** | Blood `pH` — new report-only entry | curation | +6 | low | ready |
+| **W4-4** | Blood `pH` — new report-only entry | curation | **+0 on the bench** (see §6.3) | low | ready |
 | **W4-5** | `Calculated Total CO2` — new report-only entry, unalias `TCO2` | curation | +6 | low | ready |
 | **W4-6** | `Anion Gap` — new report-only entry | curation | +10 | low | ready |
 | **W4-7** | Whole-blood Na/K aliases | alias | +2 | low | ready |
@@ -269,7 +269,36 @@ Entry shape: `key: 'base_excess'`, `specimen: 'blood'`, `interpretation: 'report
 
 **Negative values are expected and are the clinically important direction** — the corpus carries `-5`, `-2`, `0`, `2`, `5`. Negative BE = base deficit = metabolic acidosis. The W1 signed-value parser fix is what makes this representable; a parser that dropped the sign would render `-5` as `5` and print the exact mirror image of the patient's acid-base state. **Add an explicit regression test on `-5`.**
 
-### 6.3 W4-4 — blood `pH`, new report-only entry (+6)
+### 6.3 W4-4 — blood `pH`, new report-only entry (**+0 on the bench**, corrected 2026-07-20)
+
+> **CORRECTION — this section previously claimed +6 and omitted the alias list. Both were defects,
+> and together they pointed an implementer straight at the one change §4.1 forbids.**
+>
+> Verified against `us-sample.ts`: the blood-gas pH rows and the urine pH rows are **byte-identical
+> in name and unit**.
+>
+> ```
+> blood gas (:77,181,202,217,299,388)  item_name:'pH'  item_unit:'units'  item_range:'7.35-7.45'
+> urinalysis (:19,140)                 item_name:'pH'  item_unit:'units'  item_range:'5-8'
+> ```
+>
+> The ONLY distinguisher is the printed range or the sibling rows in the panel. Neither is available
+> to `findEntry`, which sees the name and the specimen and nothing else.
+>
+> Current resolution, verified: `findEntry('pH','unknown') → null`, `('pH','blood') → null`,
+> `('pH','urine') → urine_ph`.
+>
+> **Therefore the +6 was only ever reachable by giving `blood_ph` an unscoped bare `pH` alias — which
+> would also capture the two urine pH rows and ground a urine pH against a blood-gas frame. That is
+> the cross-specimen bug class this repo has nearly shipped four times, and §4.1 forbids it by name.**
+>
+> **Ship `blood_ph` with BLOOD-SCOPED aliases only. Predicted movement on the bench: +0.**
+> The entry still has real product value: MIMIC ships no page image, so `specimen` is always
+> `'unknown'` in the bench, but a real photographed blood-gas page carries a printed heading and
+> `lib/extractionSchema.ts:45` supplies `specimen: 'blood'` — where the entry fires normally. This is
+> the same conditional structure as W4-9's Urea Nitrogen.
+>
+> **If W4-4 reports +6, a bare `pH` alias was added. That is a defect to revert, not a win.**
 
 No blood pH entry exists. The 6 rows print `7.35-7.45` and B1 reproduces that verbatim.
 
