@@ -12,13 +12,13 @@ describe('reference table integrity', () => {
     expect(REFERENCE_LABS.length).toBeGreaterThanOrEqual(80);
   });
 
-  it('declares the complete report-only urinalysis set without curated bands', () => {
-    expect(
-      REFERENCE_LABS
-        .filter((e) => e.interpretation === 'report-only' && e.specimen === 'urine')
-        .map((e) => e.key)
-        .sort(),
-    ).toEqual([
+  it('declares the complete report-only set and keeps every member bandless', () => {
+    const reportOnly = REFERENCE_LABS.filter(
+      (entry) => entry.interpretation === 'report-only',
+    );
+
+    expect(reportOnly.map((entry) => entry.key).sort()).toEqual([
+      'prothrombin_activity',
       'urine_amorphous_deposits',
       'urine_appearance',
       'urine_bacteria',
@@ -34,6 +34,20 @@ describe('reference table integrity', () => {
       'urine_wbc_microscopy',
       'urine_yeast_cells',
     ]);
+
+    for (const entry of reportOnly) {
+      expect(
+        [
+          entry.refLow,
+          entry.refHigh,
+          entry.criticalLow,
+          entry.criticalHigh,
+          entry.absoluteLow,
+          entry.absoluteHigh,
+        ],
+        `${entry.key} must remain report-only with no owned band`,
+      ).toEqual([null, null, null, null, null, null]);
+    }
   });
 
   it('every alias is unique across the whole table (no analyte collisions)', () => {

@@ -18,6 +18,7 @@ import {
   type Lang,
   type LocalizedText,
 } from '@/lib/i18n';
+import { isSensitiveAnalyteName } from '@/lib/sensitiveAnalytes';
 
 export type { Lang } from '@/lib/i18n';
 export type ReportStatus = 'below' | 'within' | 'above' | 'outside' | 'none';
@@ -217,9 +218,9 @@ export function buildSummary(
     // analyte. Gating it on recognition discarded ~28 points of deliverable coverage (US:
     // recognition ~47% vs rows-with-a-printed-range ~75%) on rows where we can faithfully
     // reproduce what the report already says.
-    // The suppressors are the two cases where we have POSITIVE EVIDENCE that one side of the
-    // comparison is unusable — asserting a position from an input we believe is wrong is worse
-    // than deferring:
+    // The arithmetic suppressors are the two cases where we have POSITIVE EVIDENCE that one side
+    // of the comparison is unusable — asserting a position from an input we believe is wrong is
+    // worse than deferring:
     //   R13 — the VALUE was misread.
     //   R16 — the printed RANGE cannot be in the unit we assumed (Codex #5), so raw-value-vs-raw-
     //         range is comparing two different units. This produced inverted chips on real
@@ -229,7 +230,13 @@ export function buildSummary(
     const unusable = row.flags.some(
       (f) => f.id === 'R13-IMPLAUSIBLE-VALUE' || f.id === 'R16-PRINTED-RANGE-UNIT-SUSPECT',
     );
-    const rs: ReportStatus = unusable ? 'none' : reportStatus(row);
+    // Separate product-policy boundary: named sensitive rows keep their name and
+    // verbatim result, but never show a patient-position signal. This is keyed on
+    // the name alone and therefore suppresses every value direction, including a
+    // negative/normal-looking result. Exact-normalised matching intentionally
+    // fails open for unknown vendor spellings and OCR variants.
+    const sensitivePosition = isSensitiveAnalyteName(row.extracted.name);
+    const rs: ReportStatus = unusable || sensitivePosition ? 'none' : reportStatus(row);
     const defer = rs === 'none';
     // R17 does NOT suppress the chip: the chip is the report's own arithmetic and stays correct
     // whatever specimen the row is. What it suppresses is OUR band being shown beside it.

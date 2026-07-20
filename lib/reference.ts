@@ -2,7 +2,7 @@ import type { Bound, ReferenceEntry, Sex } from '@/lib/types';
 import { REFERENCE_LABS } from '@/data/reference-labs';
 import { LANGS, resolveText } from '@/lib/i18n';
 
-function normName(s: string): string {
+export function normName(s: string): string {
   return s
     .trim()
     .toLowerCase()

@@ -158,6 +158,12 @@ This is the cross-specimen bug class one axis down. **Out of scope. If it is eve
 
 > **This section contains a live defect, not a hypothetical. It is the product's worst-case output and it is reachable today with zero code change.**
 
+> **DECIDED 2026-07-20 by the product owner:** translate/show the analyte name, but
+> withhold every patient-position signal for the named sensitive-analyte registry.
+> Implement §5.2's name-keyed, value-independent suppressor. This is a recorded
+> product judgement balancing access against disclosure and prognostic-shock harms,
+> not a claim that every vendor spelling or OCR variant can be recognised.
+
 ### 5.1 Evidence — the chip is decoupled from recognition, and it does not abstain
 
 `lib/summary.ts:212-218` documents the decoupling deliberately: the chip reproduces the report's own printed range, so it is **not** gated on whether we recognise the analyte. That is correct for the general case. It means an unrecognised name still gets a position. Probed on the shipped pipeline:
@@ -223,7 +229,7 @@ Rationale for putting band-less curation *above* aliases: a `report-only` entry 
 
 | # | Item | Kind | Rows | Risk | Status |
 |---|---|---|---|---|---|
-| **W4-1** | Sensitive-analyte chip suppressor + leakage test | policy | +0 | live defect closed | **blocked on §5 human decision** |
+| **W4-1** | Sensitive-analyte chip suppressor + leakage test | policy | +0 | live defect closed | **DECIDED 2026-07-20 — ready** |
 | **W4-2** | Missing refusal locks (`a-淀粉酶`, `髓系原始细胞群`, drug screens, MDRD eGFR) | policy | +0 | none | ready |
 | **W4-3** | `Base Excess` — new report-only entry | curation | +6 | **lowest in cycle** | ready |
 | **W4-4** | Blood `pH` — new report-only entry | curation | +6 | low | ready |
@@ -447,7 +453,7 @@ The PR description MUST:
 
 ### Per bucket
 
-**W4-1 — sensitive-analyte suppressor** (blocked on the §5 human decision)
+**W4-1 — sensitive-analyte suppressor** (decision recorded in §5)
 - [ ] The §5 decision is recorded in this file with a date and a named decider before any code lands.
 - [ ] Suppressor is name-keyed and **value-independent**; a separate registry, not a reference entry; matched by exact `normName`, no substring.
 - [ ] Leakage test in the style of `validation/b1VerdictLeakage.test.ts`: for each sensitive name, assert the chip is `Not assessed` for **four** cases — a positive value, a negative value, a numeric above the printed range, and a numeric below it. **All four are required**: together they prove the suppression is not itself a signal.

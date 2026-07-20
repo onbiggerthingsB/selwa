@@ -562,6 +562,14 @@ Reason: it is a user-visible clinical assertion with, by construction, an unmeas
 
 **Land: the schema field, the prompt instruction, `printedFlagDirection`, and the tests. Render nothing.** Rendering is a separate later item gated on a hand-transcribed fixture of ≥50 rows read off page images, with a measured false-positive rate stated as a number before any pixel ships.
 
+> **W7-SENSITIVE-POSITION-BLOCKER (recorded 2026-07-20):** before any chip,
+> badge, glyph, or other field derived from `printedFlagRaw` may render, the
+> rendering path must apply the shared exact-normalised sensitive-analyte name
+> registry from `lib/sensitiveAnalytes.ts`. Listed rows must render no position
+> marker for any raw flag token, including low or otherwise non-positive-looking
+> markers.
+> Until a component-level lock proves that property, printed flags remain dark.
+
 ### 7.1 Schema
 
 Add to `ExtractedRowSchema` (`lib/extractionSchema.ts:3-25`) and `ExtractedRow` (`lib/types.ts:66-73`):

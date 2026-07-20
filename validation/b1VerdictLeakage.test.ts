@@ -40,6 +40,10 @@ import {
 } from '@/lib/i18n';
 import { MIMIC_US_SAMPLE } from './real-corpus/us-sample';
 import { MEDREPBENCH_SAMPLE } from './real-corpus/sample';
+import {
+  SENSITIVE_ANALYTE_NAMES,
+  isSensitiveAnalyteName,
+} from '@/lib/sensitiveAnalytes';
 
 // Text that states a conclusion about the patient's value, or triages them.
 const BANNED: { re: RegExp; why: string }[] = [
@@ -267,7 +271,79 @@ const FORCING_ROWS: [string, string, string | null, string | null][] = [
   ['Creatinine', '1.0', 'mg/dL', '59-104'], // R16 on a high-stakes analyte
 ];
 
+const SENSITIVE_POSITION_FRAMES = [
+  { label: 'qualitative positive', value: 'POSITIVE', printedRange: 'NEGATIVE' },
+  { label: 'qualitative negative', value: 'NEGATIVE', printedRange: 'NEGATIVE' },
+  { label: 'numeric above', value: '3.4', printedRange: '0-1' },
+  { label: 'numeric below', value: '-1', printedRange: '0-1' },
+] as const;
+
+// Independent expected list: the test must not shrink if a production registry
+// member is accidentally deleted.
+const EXPECTED_SENSITIVE_ANALYTE_NAMES = [
+  'Cocaine, Urine',
+  'Methadone, Urine',
+  'Benzodiazepine Screen, Urine',
+  'Oxycodone',
+  'Opiate Screen, Urine',
+  'Amphetamine Screen, Urine',
+  'Barbiturate Screen, Urine',
+  '人类免疫缺陷 病毒抗体/抗原 (P24)',
+  '髓系原始细胞群',
+] as const;
+
 describe('B1 gate — no user-visible verdict about the patient’s own value', () => {
+  it('keeps every sensitive name/result visible while withholding position for every value direction', () => {
+    const leaks: string[] = [];
+
+    expect(SENSITIVE_ANALYTE_NAMES).toEqual(EXPECTED_SENSITIVE_ANALYTE_NAMES);
+    expect(isSensitiveAnalyteName('Cocaine Urine')).toBe(true);
+    expect(isSensitiveAnalyteName('人类免疫缺陷病毒抗体/抗原(P24)')).toBe(true);
+
+    for (const name of EXPECTED_SENSITIVE_ANALYTE_NAMES) {
+      expect(isSensitiveAnalyteName(name), `${name}: registry self-match`).toBe(true);
+      expect(
+        isSensitiveAnalyteName(`vendor ${name}`),
+        `${name}: substring matching must stay forbidden and fail open`,
+      ).toBe(false);
+
+      for (const frame of SENSITIVE_POSITION_FRAMES) {
+        const [section] = sectionsFor(
+          name,
+          frame.value,
+          null,
+          frame.printedRange,
+        );
+        const chip = {
+          en: resolveText(section.chip, 'en').text,
+          zh: resolveText(section.chip, 'zh').text,
+          bo: resolveText(section.chip, 'bo').text,
+        };
+
+        // The product decision withholds only the position, never the row itself.
+        expect(resolveText(section.name, 'en').text).toBe(name);
+        expect(section.valueText).toBe(frame.value);
+        expect(section.reportRange).toBe(frame.printedRange);
+
+        if (
+          section.tone !== 'unclassified' ||
+          chip.en !== 'Not assessed' ||
+          chip.zh !== '未评估' ||
+          chip.bo !== '未评估'
+        ) {
+          leaks.push(
+            `${name} / ${frame.label}: tone=${section.tone}, chips=${JSON.stringify(chip)}`,
+          );
+        }
+      }
+    }
+
+    expect(
+      leaks,
+      `sensitive patient-position leakage:\n${leaks.join('\n')}`,
+    ).toEqual([]);
+  });
+
   it('keeps surfaced flags and confirm-list membership independent of critical-but-plausible values', () => {
     // Option (b) permits value-dependent selection only when it truthfully signals
     // reading confidence (R13/R16), never when it reveals a clinical conclusion.

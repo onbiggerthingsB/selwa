@@ -13,6 +13,14 @@ import { describe, it, expect } from 'vitest';
 import { findEntry } from '@/lib/reference';
 import { groundExtraction } from '@/lib/grounding';
 
+function expectUnknownForEverySpecimen(name: string) {
+  expect(findEntry(name)).toBeNull();
+  expect(findEntry(name, 'unknown')).toBeNull();
+  expect(findEntry(name, null)).toBeNull();
+  expect(findEntry(name, 'blood')).toBeNull();
+  expect(findEntry(name, 'urine')).toBeNull();
+}
+
 describe('US English aliases — verified Blood-only names now resolve', () => {
   it('Troponin I resolves and regains its high-stakes confirm (the worst live gap)', () => {
     expect(findEntry('Troponin I')?.key).toBe('troponin_i');
@@ -52,14 +60,6 @@ describe('Chinese aliases — unit and panel corroborate these exact names', () 
 });
 
 describe('Chinese aliases — trace-element and sensitive names must STAY unknown', () => {
-  function expectUnknownForEverySpecimen(name: string) {
-    expect(findEntry(name)).toBeNull();
-    expect(findEntry(name, 'unknown')).toBeNull();
-    expect(findEntry(name, null)).toBeNull();
-    expect(findEntry(name, 'blood')).toBeNull();
-    expect(findEntry(name, 'urine')).toBeNull();
-  }
-
   it('钙(Ca) stays unknown — heavy-metals/trace-element panel in μg/ml, not serum calcium in mmol/L', () => {
     // Lock both sides of the boundary: bare serum names remain valid, while a future
     // "strip parenthetical suffixes" normalization must not turn 钙(Ca) into 钙 or Ca.
@@ -85,6 +85,35 @@ describe('Chinese aliases — trace-element and sensitive names must STAY unknow
 
   it('人类免疫缺陷病毒抗体/抗原(P24) stays unknown — sensitive HIV Ag/Ab result is deliberately uninterpreted', () => {
     expectUnknownForEverySpecimen('人类免疫缺陷病毒抗体/抗原(P24)');
+  });
+});
+
+describe('Policy refusals — normalization and alias passes must not unlock them', () => {
+  it('a-淀粉酶 stays unknown — canonical urine-amylase name has no unit or panel context to disambiguate it', () => {
+    // Follow-up, deliberately not done here: scope the still-resolving bare
+    // 淀粉酶 alias to blood in its own before/after change.
+    expect(findEntry('淀粉酶')?.key).toBe('amylase');
+    expectUnknownForEverySpecimen('a-淀粉酶');
+  });
+
+  it('髓系原始细胞群 stays unknown — a blast-population position creates prognostic shock without a clinician', () => {
+    expectUnknownForEverySpecimen('髓系原始细胞群');
+  });
+
+  it.each([
+    'Cocaine, Urine',
+    'Methadone, Urine',
+    'Benzodiazepine Screen, Urine',
+    'Oxycodone',
+    'Opiate Screen, Urine',
+    'Amphetamine Screen, Urine',
+    'Barbiturate Screen, Urine',
+  ])('%s stays unknown — urine drug-screen privacy refusal has no grounded band', (name) => {
+    expectUnknownForEverySpecimen(name);
+  });
+
+  it('Estimated GFR (MDRD equation) stays unknown — it is a blank label row and the MDRD frame does not match our eGFR entry', () => {
+    expectUnknownForEverySpecimen('Estimated GFR (MDRD equation)');
   });
 });
 
