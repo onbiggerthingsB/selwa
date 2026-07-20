@@ -7,7 +7,9 @@ export type Lang = (typeof LANGS)[number];
  * validation corpus can parse. This is intentionally narrower than the UI
  * display language set: Tibetan is scaffolded for display only in this tranche.
  */
-export type SourceLang = Extract<Lang, 'en' | 'zh'>;
+export const SOURCE_LANGS = ['en', 'zh'] as const satisfies readonly Lang[];
+
+export type SourceLang = (typeof SOURCE_LANGS)[number];
 
 export type ReviewStatus = 'reviewed' | 'unverified';
 
