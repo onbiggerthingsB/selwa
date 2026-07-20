@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { REFERENCE_LABS } from '@/data/reference-labs';
 import { disclaimers } from '@/lib/disclaimers';
-import { resolveText, type SourceLang } from '@/lib/i18n';
+import { resolveText, type Lang } from '@/lib/i18n';
 import { UI_COPY } from '@/lib/uiCopy';
 
 // Captured from clean pre-refactor HEAD 9c5100a85565bba784bac2ff488bd28a6e2720bb.
@@ -11,6 +11,7 @@ const REFERENCE_BASELINE = {
   count: 116,
   en: '3bd97e104803af27fc994e5e325c7fdae2b2112840a99ca7fb3e5063b7b47f37',
   zh: 'ec985ccea7ee893ff00abcc60caa903dcbcb968a464d71356bb449e3a51480e6',
+  bo: 'ec985ccea7ee893ff00abcc60caa903dcbcb968a464d71356bb449e3a51480e6',
 } as const;
 
 const DISCLAIMER_KEYS = [
@@ -25,6 +26,7 @@ const DISCLAIMER_BASELINE = {
   count: DISCLAIMER_KEYS.length,
   en: '6798d22c617d764288e7573731914552e1adaf886a212d650db9ca7ba20a80a4',
   zh: '26b37ac41f7ab7ca787474a8f0bd549f24937226f475fa873e7dffb3f0ccde4b',
+  bo: '26b37ac41f7ab7ca787474a8f0bd549f24937226f475fa873e7dffb3f0ccde4b',
 } as const;
 
 // Exact pre-refactor strings from the four former t(en, zh) helpers plus the
@@ -75,7 +77,7 @@ function sha256(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value), 'utf8').digest('hex');
 }
 
-function referenceText(lang: SourceLang) {
+function referenceText(lang: Lang) {
   return REFERENCE_LABS.map((entry) => ({
     // The clinical key is the stable semantic identity. A value moved between
     // analytes must fail this test even when the overall string set is unchanged.
@@ -86,7 +88,7 @@ function referenceText(lang: SourceLang) {
   }));
 }
 
-function disclaimerText(lang: SourceLang) {
+function disclaimerText(lang: Lang) {
   const text = disclaimers(lang);
   expect(text).toHaveLength(DISCLAIMER_KEYS.length);
   return text.map((value, index) => ({
@@ -96,7 +98,7 @@ function disclaimerText(lang: SourceLang) {
 }
 
 describe('pre-Tibetan EN/ZH localization baseline', () => {
-  it.each(['en', 'zh'] as const)(
+  it.each(['en', 'zh', 'bo'] as const)(
     'keeps every %s reference name and explanation byte-identical by semantic key',
     (lang) => {
       expect(REFERENCE_LABS).toHaveLength(REFERENCE_BASELINE.count);
@@ -104,7 +106,7 @@ describe('pre-Tibetan EN/ZH localization baseline', () => {
     },
   );
 
-  it.each(['en', 'zh'] as const)(
+  it.each(['en', 'zh', 'bo'] as const)(
     'keeps every %s disclaimer byte-identical by semantic key',
     (lang) => {
       expect(disclaimers(lang)).toHaveLength(DISCLAIMER_BASELINE.count);
@@ -112,7 +114,7 @@ describe('pre-Tibetan EN/ZH localization baseline', () => {
     },
   );
 
-  it.each(['en', 'zh'] as const)(
+  it.each(['en', 'zh', 'bo'] as const)(
     'keeps every migrated %s UI string byte-identical by semantic key',
     (lang) => {
       const actual = Object.fromEntries(
@@ -121,8 +123,9 @@ describe('pre-Tibetan EN/ZH localization baseline', () => {
           resolveText(UI_COPY[key as keyof typeof LEGACY_UI_COPY], lang).text,
         ]),
       );
+      const sourceLang = lang === 'bo' ? 'zh' : lang;
       const expected = Object.fromEntries(
-        Object.entries(LEGACY_UI_COPY).map(([key, value]) => [key, value[lang]]),
+        Object.entries(LEGACY_UI_COPY).map(([key, value]) => [key, value[sourceLang]]),
       );
 
       expect(actual).toEqual(expected);

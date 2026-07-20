@@ -255,9 +255,6 @@ describe('reference table integrity', () => {
         expect(resolveText(e.plain, lang).text.length).toBeGreaterThan(0);
         expect(resolveText(e.definition, lang).text.length).toBeGreaterThan(0);
       }
-      expect(e.name.bo).toEqual({ fallback: 'zh' });
-      expect(e.plain.bo).toEqual({ fallback: 'zh' });
-      expect(e.definition.bo).toEqual({ fallback: 'zh' });
       // B1 card definition (Codex blocker #2): every entry carries a direction-neutral definition.
       if (e.interpretation === 'ours') {
         expect(e.source.length).toBeGreaterThan(0);
