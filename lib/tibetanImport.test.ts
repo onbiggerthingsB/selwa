@@ -40,6 +40,7 @@ import {
 } from '@/lib/localizedTextCorpus';
 import { resolveText, type LocalizedText } from '@/lib/i18n';
 import { hashTibetanSource } from '@/lib/tibetanInvariants';
+import type { ReferenceEntry } from '@/lib/types';
 
 const fixtureRoots: string[] = [];
 const FALLBACK_ZH_SOURCE = ['fallback', "('zh')"].join('');
@@ -92,7 +93,27 @@ function corpus(root: string): LocalizedTextCorpus {
   return extractLocalizedTextCorpus({ repoRoot: root });
 }
 
-function importRow(entry: LocalizedTextCall, bo: string): ReviewedImportRow {
+function fixtureLabTable(
+  entries: readonly { key: string; unit: string; definitionEn: string; specimen: string; aliases: readonly string[] }[],
+): readonly ReferenceEntry[] {
+  return entries.map(({ key, unit, definitionEn, specimen, aliases }) => ({
+    key,
+    unit,
+    specimen,
+    aliases,
+    definition: {
+      en: { text: definitionEn, review: 'reviewed' },
+      zh: { text: definitionEn, review: 'reviewed' },
+      bo: { text: definitionEn, review: 'reviewed' },
+    },
+  })) as unknown as readonly ReferenceEntry[];
+}
+
+function importRow(
+  entry: LocalizedTextCall,
+  bo: string,
+  labTable?: readonly ReferenceEntry[],
+): ReviewedImportRow {
   const directDisplay = (lang: 'en' | 'zh'): string => {
     const variant = entry.variants[lang];
     if (variant.kind !== 'direct') throw new Error(`${entry.id}.${lang} is not direct.`);
@@ -109,7 +130,22 @@ function importRow(entry: LocalizedTextCall, bo: string): ReviewedImportRow {
     bo,
     key: entry.reference?.key,
   };
-  if (base.packet === 'glossary-names') return base;
+  if (base.packet === 'glossary-names') {
+    const reference = labTable?.find(({ key }) => key === entry.reference?.key);
+    if (!reference) return base;
+    // Mirror the importer's snapshot expectation so a name row built against the
+    // same injected table passes the PACKET check by construction.
+    return {
+      ...base,
+      unit: reference.unit,
+      context: `${resolveText(reference.definition, 'en').text} Specimen: ${reference.specimen}.`,
+      specimen: reference.specimen,
+      aliases: JSON.stringify({
+        unscoped: reference.aliases,
+        ...(reference.specimenAliases ?? {}),
+      }),
+    };
+  }
   const floor = buildFloorStringRows({
     calls: [entry],
     sourceFiles: [entry.sourceFile],
@@ -643,14 +679,54 @@ describe('fail-closed Tibetan round-trip importer', () => {
     ]);
     const root = fixture({ 'data/reference-labs.ts': source });
     const entries = corpus(root).calls;
+    const labTable = fixtureLabTable([
+      { key: 'one', unit: 'x', definitionEn: 'One.', specimen: 'blood', aliases: ['one-a'] },
+      { key: 'two', unit: 'y', definitionEn: 'Two.', specimen: 'blood', aliases: ['two-a'] },
+    ]);
     const duplicate = `${TIBETAN_WORD}${SHAD}`;
     const result = executeTibetanImport({
       repoRoot: root,
-      rows: entries.map((entry) => importRow(entry, duplicate)),
+      labTable,
+      rows: entries.map((entry) => importRow(entry, duplicate, labTable)),
     });
     expect(result).toMatchObject({ written: 0, refused: 2 });
     expect(result.rows.every((row) => row.diagnostics.some(({ check }) => check === 'B12')))
       .toBe(true);
+    expect(fileFor(root, 'data/reference-labs.ts')).toBe(source);
+  });
+
+  it('refuses a name row whose key is absent from the reference table', () => {
+    const source = referenceNameSource([{ key: 'ghost', en: 'Ghost', zh: '幽。' }]);
+    const root = fixture({ 'data/reference-labs.ts': source });
+    const entry = corpus(root).calls[0];
+    const labTable = fixtureLabTable([
+      { key: 'real', unit: 'x', definitionEn: 'Real.', specimen: 'blood', aliases: [] },
+    ]);
+    const result = executeTibetanImport({
+      repoRoot: root,
+      labTable,
+      rows: [importRow(entry, `${TIBETAN_WORD}${SHAD}`, labTable)],
+    });
+    expect(result).toMatchObject({ written: 0, refused: 1 });
+    expect(diagnostics(result)).toContain('unknown-reference-key');
+    expect(fileFor(root, 'data/reference-labs.ts')).toBe(source);
+  });
+
+  it('refuses a name row whose reviewer-visible context columns were tampered', () => {
+    const source = referenceNameSource([{ key: 'real', en: 'Real', zh: '甲。' }]);
+    const root = fixture({ 'data/reference-labs.ts': source });
+    const entry = corpus(root).calls[0];
+    const labTable = fixtureLabTable([
+      { key: 'real', unit: 'x', definitionEn: 'Real.', specimen: 'blood', aliases: ['a'] },
+    ]);
+    const tampered = {
+      ...importRow(entry, `${TIBETAN_WORD}${SHAD}`, labTable),
+      unit: 'TAMPERED',
+    };
+    const result = executeTibetanImport({ repoRoot: root, labTable, rows: [tampered] });
+    expect(result).toMatchObject({ written: 0, refused: 1 });
+    expect(diagnostics(result)).toContain('PACKET');
+    expect(diagnostics(result)).toContain('unit');
     expect(fileFor(root, 'data/reference-labs.ts')).toBe(source);
   });
 

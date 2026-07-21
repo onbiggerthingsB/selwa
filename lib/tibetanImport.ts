@@ -11,6 +11,7 @@ import path from 'node:path';
 import * as ts from 'typescript';
 import { HIGH_RISK_PAIRS } from '@/data/medical-lexicon';
 import { REFERENCE_LABS } from '@/data/reference-labs';
+import type { ReferenceEntry } from '@/lib/types';
 import { UNIT_CONVERSIONS } from '@/data/unit-conversions';
 import { DISCLAIMER_TEXTS } from '@/lib/disclaimers';
 import { resolveText } from '@/lib/i18n';
@@ -219,6 +220,11 @@ interface PlannedReplacement {
   end: number;
   expected: string;
   replacement: string;
+  // The reviewer's approved Tibetan, parsed. Carried so validateUpdatedSources can
+  // independently re-read the WRITTEN value after the edit and confirm it round-trips
+  // to exactly this — an escaping bug that silently altered the string is otherwise
+  // invisible to the structure-only after-write checks.
+  targetTemplates: readonly ParsedTargetTemplate[];
 }
 
 export interface TibetanImportPlan {
@@ -972,9 +978,11 @@ export function planTibetanImport(input: {
   sourceFiles: Readonly<Record<string, string>>;
   rows: readonly ReviewedImportRow[];
   unitVocabulary?: readonly string[];
+  labTable?: readonly ReferenceEntry[];
 }): TibetanImportPlan {
   const { corpus, sourceFiles, rows } = input;
   const unitVocabulary = input.unitVocabulary ?? TIBETAN_UNIT_VOCABULARY;
+  const labTable = input.labTable ?? REFERENCE_LABS;
   const calls = new Map<string, LocalizedTextCall[]>();
   for (const entry of corpus.calls) {
     const matches = calls.get(entry.id) ?? [];
@@ -1153,7 +1161,7 @@ export function planTibetanImport(input: {
         if (row.placeholders !== expected.placeholders) snapshotDifferences.push('placeholders');
       }
     } else {
-      const reference = REFERENCE_LABS.find(({ key }) => key === entry.reference?.key);
+      const reference = labTable.find(({ key }) => key === entry.reference?.key);
       if (reference) {
         const expected = {
           unit: reference.unit,
@@ -1168,6 +1176,11 @@ export function planTibetanImport(input: {
         if (row.context !== expected.context) snapshotDifferences.push('context');
         if (row.specimen !== expected.specimen) snapshotDifferences.push('specimen');
         if (row.aliases !== expected.aliases) snapshotDifferences.push('aliases');
+      } else {
+        // A glossary name row must correspond to a real reference entry; without
+        // one, its reviewer-visible context columns cannot be verified at all.
+        // Refuse rather than silently skip the snapshot check.
+        snapshotDifferences.push('unknown-reference-key');
       }
     }
     if (snapshotDifferences.length > 0) {
@@ -1286,6 +1299,7 @@ export function planTibetanImport(input: {
         end: located.end,
         expected: located.text,
         replacement,
+        targetTemplates: targets,
       },
     });
   });
@@ -1385,6 +1399,9 @@ function validateUpdatedSources(
   plan: TibetanImportPlan,
 ): void {
   const replacementIds = new Set(plan.replacements.map(({ id }) => id));
+  const approvedById = new Map(
+    plan.replacements.map(({ id, targetTemplates }) => [id, targetTemplates]),
+  );
   for (const [sourceFile, source] of Object.entries(updated)) {
     const before = corpus.calls.filter((entry) => entry.sourceFile === sourceFile);
     const after = extractLocalizedTextFromSource(sourceFile, source);
@@ -1409,8 +1426,37 @@ function validateUpdatedSources(
       if (bo.kind !== 'direct' || bo.review !== 'reviewed') {
         throw new Error(`${entry.id} did not stage as reviewed direct bo copy.`);
       }
+      // Independent after-write value check: re-read the WRITTEN bo and confirm it
+      // round-trips to exactly the reviewer's approved Tibetan. The parser un-escapes
+      // on re-extraction, so a faithful write reproduces the approved segments and
+      // placeholders; any escaping bug that altered the string trips this. A mismatch
+      // (or a missing approval) throws, so this can only ever fail closed.
+      const approved = approvedById.get(entry.id);
+      const written = staticTextTemplates(bo.expression);
+      if (!approved || !staticTemplatesEqual(written, approved)) {
+        throw new Error(`${entry.id} staged bo does not match the approved Tibetan.`);
+      }
     }
   }
+}
+
+function staticTemplatesEqual(
+  a: readonly StaticTextTemplate[],
+  b: readonly StaticTextTemplate[],
+): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((template, index) => {
+    const other = b[index];
+    // Compare the literal segments byte-for-byte — this is the reviewer's Tibetan and
+    // the value an escaping bug would corrupt. Compare placeholder COUNT only: the
+    // written expression restores the fresh ZH placeholder expressions, which
+    // legitimately differ from the reviewer's tokens, so their text is not compared.
+    return (
+      template.segments.length === other.segments.length
+      && template.segments.every((segment, i) => segment === other.segments[i])
+      && template.placeholders.length === other.placeholders.length
+    );
+  });
 }
 
 function directStaticText(entry: LocalizedTextCall, lang: 'bo' | 'zh'): string | null {
@@ -1575,6 +1621,7 @@ function commitUpdatedFiles(
 export function executeTibetanImport(input: {
   repoRoot: string;
   rows: readonly ReviewedImportRow[];
+  labTable?: readonly ReferenceEntry[];
 }): TibetanImportResult {
   const repoRoot = path.resolve(input.repoRoot);
   const corpus = extractLocalizedTextCorpus({ repoRoot });
@@ -1584,7 +1631,12 @@ export function executeTibetanImport(input: {
       readFileSync(path.join(repoRoot, sourceFile), 'utf8'),
     ]),
   );
-  const plan = planTibetanImport({ corpus, sourceFiles, rows: input.rows });
+  const plan = planTibetanImport({
+    corpus,
+    sourceFiles,
+    rows: input.rows,
+    labTable: input.labTable,
+  });
   const updated = applyTibetanImportPlan(sourceFiles, plan);
   validateUpdatedSources(corpus, updated, plan);
   const filesWritten = Object.keys(updated).sort();
