@@ -31,7 +31,7 @@ import { describe, it, expect } from 'vitest';
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary, type SummarySection } from '@/lib/summary';
 import { REFERENCE_LABS } from '@/data/reference-labs';
-import { resolveBounds } from '@/lib/reference';
+import { resolveBounds, findEntryMatch } from '@/lib/reference';
 import {
   LANGS,
   resolveText,
@@ -341,6 +341,25 @@ describe('B1 gate — no user-visible verdict about the patient’s own value', 
     expect(
       leaks,
       `sensitive patient-position leakage:\n${leaks.join('\n')}`,
+    ).toEqual([]);
+  });
+
+  it('never lets a sensitive name resolve to a curated entry (keeps the chip suppressor load-bearing)', () => {
+    // The suppressor withholds only the chip; typicalRange/source are gated on
+    // `curated && !bandNotComparable`, NOT on sensitivity. That is safe only while
+    // no sensitive name resolves to a curated 'ours' entry — otherwise a sensitive
+    // row would render our band + provenance beside a suppressed chip. Enforce the
+    // invariant mechanically so a future alias cannot silently open that path.
+    const resolved: string[] = [];
+    for (const name of EXPECTED_SENSITIVE_ANALYTE_NAMES) {
+      for (const specimen of ['unknown', 'blood', 'urine'] as const) {
+        const { entry } = findEntryMatch(name, specimen);
+        if (entry) resolved.push(`${name} [${specimen}] -> ${entry.key}`);
+      }
+    }
+    expect(
+      resolved,
+      `sensitive name resolved to a curated entry:\n${resolved.join('\n')}`,
     ).toEqual([]);
   });
 

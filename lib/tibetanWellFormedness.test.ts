@@ -85,6 +85,26 @@ describe('Tibetan Class A well-formedness', () => {
     },
     {
       check: 'A5' as const,
+      label: 'unassigned U+0FBD',
+      text: `${TIBETAN_KA}${String.fromCodePoint(0x0fbd)}`,
+    },
+    {
+      check: 'A5' as const,
+      label: 'unassigned U+0FCD',
+      text: `${TIBETAN_KA}${String.fromCodePoint(0x0fcd)}`,
+    },
+    {
+      check: 'A5' as const,
+      label: 'unassigned block tail U+0FDB',
+      text: `${TIBETAN_KA}${String.fromCodePoint(0x0fdb)}`,
+    },
+    {
+      check: 'A5' as const,
+      label: 'unassigned block end U+0FFF',
+      text: `${TIBETAN_KA}${String.fromCodePoint(0x0fff)}`,
+    },
+    {
+      check: 'A5' as const,
       label: 'precomposed U+0F77',
       text: `${TIBETAN_KA}${String.fromCodePoint(0x0f77)}`,
     },

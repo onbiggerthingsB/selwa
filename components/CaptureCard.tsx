@@ -574,10 +574,10 @@ export function CaptureCard({ lang }: { lang: Lang }) {
           </div>
           {failure?.cause === 'not-permitted' && (
             <p className="extracting-note" role="alert">
-              {resolveText(FAILURE_PRESENTATION['not-permitted'].message, 'en').text}
-              <span className="zh" lang="zh">
-                {resolveText(FAILURE_PRESENTATION['not-permitted'].message, 'zh').text}
-              </span>
+              <ConsentText
+                value={FAILURE_PRESENTATION['not-permitted'].message}
+                lang={lang}
+              />
             </p>
           )}
           <ul className="quality-tips">

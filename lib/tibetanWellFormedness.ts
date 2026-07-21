@@ -48,9 +48,16 @@ function isAllowedCodePoint(codePoint: number): boolean {
 
 function isForbiddenTibetanCodePoint(codePoint: number): boolean {
   return (
+    // Unassigned code points in the Tibetan block (Unicode 15.1). Enumerated as
+    // explicit deterministic ranges rather than \p{Cn} so the set cannot drift
+    // with the runtime's ICU Unicode version and silently loosen.
     codePoint === 0x0f48
     || (codePoint >= 0x0f6d && codePoint <= 0x0f70)
     || codePoint === 0x0f98
+    || codePoint === 0x0fbd
+    || codePoint === 0x0fcd
+    || (codePoint >= 0x0fdb && codePoint <= 0x0fff)
+    // Deprecated precomposed vowel signs (use the decomposed sequence instead).
     || codePoint === 0x0f77
     || codePoint === 0x0f79
   );
