@@ -412,3 +412,194 @@ figures are exact.
 This does not change the Tier-3 conclusion — 206 strings of directional clinical prose is still
 weeks of qualified reviewer time — but the exporter must emit **206, not 218**, or the reviewer is
 paid twice for 12 strings.
+
+---
+
+## W5 — reviewer packet + fail-closed importer
+
+> **READ THIS FIRST, OR A RETURN REPORT WILL LIE TO YOU.** This tranche writes **NO Tibetan** and
+> must not. It builds the *machine* that lets a human reviewer supply Tibetan safely in a later
+> tranche: three reviewer CSVs (empty `bo` column) plus a fail-closed round-trip importer. Because
+> nothing real is translated, **every real-corpus number stays frozen** — fallbacks 445, curated `bo`
+> 0, reviewed-`bo` 0, MedRepBench 22/37, MIMIC 111/212, `chipWrong` 0. Therefore **"all green, numbers
+> unchanged" is neither success nor failure by itself.** The entire value of this tranche is provable
+> only through **positive controls**: exporters that assert their exact row counts and that the
+> carry-forward rows are present, and an importer proven to actually write a synthetic byte *and* to
+> refuse a battery of bad rows. A do-nothing implementation — an exporter that emits headers only, an
+> importer that writes nothing — passes every negative test vacuously. That vacuous pass is the
+> signature failure mode of this whole track. Demand the controls.
+
+```
+Repo: /Users/likerun/Desktop/health-translator
+Branch: codex/remaining-work-cycle-ready @ ee2ba0b
+Baseline (VERIFIED, both commands run): npx vitest run --pool=threads -> 76 files / 764 tests green;
+npx tsc --noEmit clean; MedRepBench 22/37 · MIMIC 111/212 · chipWrong 0 BOTH corpora ·
+fallbacks 445 (439 prod + 6 test) · curated bo 0.
+
+Read docs/superpowers/specs/2026-07-20-tibetan-support.md §6. Implement W5 ONLY: three reviewer CSVs,
+a decisions file, and a fail-closed round-trip importer. Produce NO Tibetan. Every bo cell ships EMPTY.
+
+BUILD ON W4'S SHARED EXTRACTOR — DO NOT RE-IMPLEMENT IT.
+lib/localizedTextCorpus.ts already exists and is the single source of truth. Use it; do not write a
+second AST scanner. Verified API:
+  extractLocalizedTextCorpus({rootDir}) -> { calls, sourceFiles, curatedBo, excludedDirectBo }
+  today: 440 calls / 14 files · curatedBo 0 · excludedDirectBo 1 (lib/summary.ts:336, verbatim-ocr-echo).
+  Each LocalizedTextCall carries: id, sourceFile, start, end, line, column, sourceHash (sha256 of the
+  WHOLE defineText node — all three langs; this is the drift key), context, ownerProperty?,
+  reference?{key,field}, variants.
+W4's guard layer also exists and MUST be the thing the importer runs before writing:
+  lib/tibetanWellFormedness.ts -> auditTibetanWellFormedness(text) (Class A; A2 = CJK codepoint)
+  lib/tibetanInvariants.ts -> numberInvariantFindings (B1), intervalInvariantFindings (B2),
+    latinTokenInvariantFindings (B4), unitInvariantFindings(src,tgt,vocab) (B5),
+    clauseInvariantFindings (B7), placeholderInvariantFindings (B10), nameCollisionFindings (B12),
+    sourceDriftFindings / hashTibetanSource (B13). Empty findings = pass. Do NOT reimplement any check.
+
+WHERE IT LIVES (match the existing runnable-script convention; no codegen writes into data/ or lib/ today):
+  scripts/tibetan/export-packet.mts   -> writes the 3 CSVs + decisions.csv
+  scripts/tibetan/import-reviewed.mts <packet-dir> -> the fail-closed writer
+  lib/tibetanImport.ts                -> ALL safety-critical logic (node-locating, guard orchestration,
+                                         replacement) as PURE, unit-tested functions; the .mts files are
+                                         thin CLI wrappers. package.json: "tibetan:export"/"tibetan:import"
+                                         mirroring the tsx pattern of scripts/set-rate-limit.mts.
+
+THREE CSVs — PRE-REGISTERED ROW COUNTS (assert each in a test; a wrong count must go red):
+1. glossary-names.csv — EXACTLY 116 rows (reference.field==='name'; REFERENCE_LABS has 116 entries).
+   Columns: key, zh, en, unit, context, specimen, aliases, bo(EMPTY).
+   - zh <- resolveText(e.name,'zh').text (all 116 present & distinct); en <- resolveText(e.name,'en').text.
+   - unit <- e.unit (all 116 present; 6 are the literal 'as reported' — the urineReportOnly entries — NOT empty).
+   - context is DERIVED (ReferenceEntry has no short field): use resolveText(e.definition,'en').text
+     (direction-neutral one-liner). Do NOT use plain (that is Tier-3 directional prose). Concatenate
+     e.specimen to disambiguate specimen-scoped analytes (blood vs urine glucose).
+2. glossary-terms.csv — this is an AUTHORING task, not an extraction, and there is NO single constant to
+   read off. REPORT THE MEASURED COMPOSITION, never a round number:
+     comparators 6  (低于/高于/超过/达到/以上/以下 — NO existing constant; author this lexicon by hand)
+   + core negators 15 (RAW_MARKERS_ZH kind:'negation', data/medical-lexicon.ts:117-150)
+   + polarity pairs 12 (HIGH_RISK_PAIRS, data/medical-lexicon.ts:584-596)
+   + boilerplate 2  (CONFIRM_ZH lib/notesGuard.ts:21 & SHOWN_AS_WRITTEN_ZH :23; note CONFIRM_CLINICIAN_ZH
+                     lib/guard.ts:23 is BYTE-IDENTICAL to CONFIRM_ZH — dedupe to ONE row, do not review twice)
+   = 35 raw − 1 overlap (阴性 is in both negators and polarity) = 34 DISTINCT. If the 18 uncertainty
+   markers are folded in it grows past 45. Assert the component tally, not a single figure.
+3. floor-strings.csv — EXACTLY 105 rows. Reconciles: 440 total defineText − 334 reference − 1 OCR echo
+   (lib/summary.ts:336, the sole excludedDirectBo) = 105 = 99 original floor + 6 D3 consent (lib/consentCopy.ts).
+   Columns: id/key, zh, en, screen(derived from sourceFile/ownerProperty), leakage-note, bo(EMPTY).
+   - leakage-note is authored and load-bearing: e.g. lib/guard.ts:163's 参考资料 (deliberately NOT 我们的参考范围,
+     because the leakage gate bans implying we judged the value). Carry that reason as a cell or the reviewer
+     reproduces the banned reading.
+   - 8 floor strings are runtime-interpolated — carry a stable placeholder token ({unit}, {original}); B10
+     checks token count+order on import.
+
+TWO CARRY-FORWARD ROWS THAT MUST LAND IN THE PACKET (assert both present in a test):
+  #1 UNVERIFIED_TRANSLATION_LABEL (components/LocalizedText.tsx:13) is bo: fallback('zh') — the badge that
+     marks Tibetan UNVERIFIED currently renders IN CHINESE. It is Tier-0 floor copy and MUST be a row in
+     floor-strings.csv (id/context UNVERIFIED_TRANSLATION_LABEL). Without it the first reviewed Tibetan ships
+     under a Chinese badge. It is inside the 105.
+  #2 THE 秒 CONFLICT IS A REVIEWER DECISION, NOT AN ENGINEERING CHOICE. 秒 is a whitelisted UNIT in allowedUnits
+     (data/reference-labs.ts:2112/2203/3002, PT/APTT/TT). B5 (units verbatim) requires 秒 to survive in bo; A2
+     (zero CJK in bo) forbids it. This is unresolvable by the guard. Emit it as an explicit DECISION row in
+     decisions.csv (a policy question, NOT a translation row): "Does Tibetan copy preserve the printed unit 秒
+     verbatim — matching the report in the patient's hand, violating no-CJK — or substitute a Tibetan/Latin
+     token — satisfying no-CJK, diverging from the printed report?" The importer's refusal messages for any 秒
+     row must point at this decision by name.
+
+THE IMPORTER — FAIL CLOSED. Per row, run ALL checks BEFORE any byte is written; a row failing any check is
+written NOT AT ALL and reported. Identity + location procedure (belt-and-suspenders):
+  1. Re-run extractLocalizedTextCorpus() against the CURRENT working tree at import time; build Map<id,call>.
+  2. row.id absent from the fresh map -> REFUSE (target moved/deleted).
+  3. freshCall.sourceHash !== row.sourceHash -> REFUSE (source drift; this IS B13). The CSV's own zh/offsets are
+     display-only — never trust them for location.
+  4. Only then slice freshCall.start/end, re-parse that defineText node, confirm the bo initializer is EXACTLY
+     fallback('zh'); anything else (already reviewed/direct/other target) -> REFUSE-overwrite.
+  5. Replace ONLY the bo initializer fallback('zh') -> reviewed('<escaped bo>'), preserving trivia/indentation.
+     AST-anchored on node positions — NEVER a regex over the file (data/reference-labs.ts has bo: fallback('zh')
+     334x and a textual replace cannot tell them apart). Process rows within a file BACK-TO-FRONT by start
+     offset (or re-extract after every write) so earlier writes never invalidate later offsets.
+Per-row fail-closed table:
+  - bo cell empty/whitespace                -> SKIP, NOT a refusal. Count as "left for reviewer." No diagnostic.
+  - source drift (hash mismatch)            -> REFUSE, print expected vs got hash8, "re-export & re-review".
+  - id absent                               -> REFUSE.
+  - bo not fallback('zh')                    -> REFUSE-overwrite.
+  - Class A fails (incl A2 CJK)             -> REFUSE, name each failed check; CJK case names the codepoint.
+  - Class B fails (B1/B2/B4/B5/B7/B10)      -> REFUSE, name the check + the differing multiset. Run each check
+                                               against the SOURCE zh of the same freshCall, not the CSV zh.
+  - B12 name collision (REFERENCE_LABS.*.name rows only) -> REFUSE the colliding rows.
+The 秒 row surfaces as A2 (if reviewer kept 秒 -> CJK) OR B5 (if dropped -> unit multiset differs) — either way
+unwritable until the decisions.csv answer lands. State the all-or-nothing semantics you chose (per-row vs
+per-file) explicitly and test it.
+
+RE-BASELINE RITUAL — the importer PRINTS an exact, reviewable checklist and does NOT itself edit test files
+(so any baseline change is a deliberate, diffable human act). On a successful write it emits: the recomputed
+REFERENCE_BASELINE.bo / DISCLAIMER_BASELINE.bo hashes (lib/localizationBaseline.test.ts), the list of context
+strings now DIRECT (for DIRECT_BO_ALLOWLIST in lib/directBoAudit.test.ts, each needs a named reason), and the
+{id: hashTibetanSource(zh)} pairs for the B13 expectedHashes map. It prints; the human pastes and eyeballs.
+
+POSITIVE CONTROLS — MANDATORY. Without these the tranche passes vacuously.
+  EXPORTERS: assert glossary-names is exactly 116 rows; glossary-terms asserts the COMPONENT TALLY
+  (6/15/12/2, 34 distinct) not a round number; floor-strings is exactly 105; every bo column is empty;
+  the 6 CaptureCard/consentCopy consent strings ARE present in floor-strings.csv; UNVERIFIED_TRANSLATION_LABEL
+  IS present in floor-strings.csv; the 秒 DECISION row IS present in decisions.csv.
+  IMPORTER (all in temp fixture trees, never on the real repo):
+  - GUARD-BITE (anti-vacuous): a known-bad bo containing 钙 MUST be refused by THIS code path — proves the
+    importer actually calls the guards rather than passing every row.
+  - ROUND-TRIP (anti-do-nothing): export a temp fixture tree, fill exactly ONE row with a valid SYNTHETIC bo
+    (U+0F40-0F6C consonants + U+0F0B tsheg + U+0F0D shad, mechanically carrying over the source's
+    numbers/intervals/Latin/units/placeholders/clause-count so B1/B2/B4/B5/B7/B10 pass — a well-formedness
+    fixture, explicitly NOT a translation), import, then assert the file now contains bo: reviewed('<synthetic>')
+    byte-for-byte, resolveText(value,'bo') yields resolvedLang:'bo'/usedFallback:false/review:'reviewed', and a
+    RE-EXTRACT shows curatedBo grew by 1 and fallbackBo shrank by 1.
+  - FAIL-CLOSED BATTERY, each asserting REFUSAL + file byte-identical afterward: (a) sourceHash mismatch;
+    (b) id absent; (c) bo with a CJK char -> A2; (d) the 秒 case BOTH ways (kept -> A2, dropped -> B5);
+    (e) number altered -> B1; (f) placeholder dropped -> B10; (g) two *.name rows given identical bo -> B12;
+    (h) target already reviewed -> refuse-overwrite; (i) empty bo -> SKIPPED, file unchanged, NOT counted as refusal.
+  - ALL-OR-NOTHING: a batch with one passing + one refused row leaves the passing row written and the refused
+    untouched, and the exit surface reports both.
+  - IDEMPOTENCE: running the same CSV twice — the second run refuses every already-written row via the
+    "not fallback('zh')" guard rather than double-writing.
+
+DO NOT
+- Produce any Tibetan, or fill any bo cell in the shipped CSVs. Curated bo and reviewed bo both stay 0.
+- Re-implement the extractor or any Class A/B check. Build on lib/localizedTextCorpus.ts and W4's guard modules.
+- Use a regex / textual replace to write bo into source. AST-anchored on extractor node positions only.
+- Let the importer edit lib/localizationBaseline.test.ts, lib/directBoAudit.test.ts, or the B13 map itself.
+  It PRINTS the checklist; the human applies it.
+- Count an empty-bo row as a refusal, or write anything for it.
+- Resolve the 秒 policy yourself. It is a decisions.csv row for the reviewer.
+- Report glossary-terms as "~35". Report 6/15/12/2 = 34 distinct.
+- Emit a Tier-3 prose CSV or otherwise expand scope — the 206 directional-prose strings are a LATER packet
+  (see the §3 correction above), explicitly NOT this tranche.
+- Extend SourceLang to include 'bo', or weaken/soften any existing lock or guard to hit a number.
+
+PRE-REGISTERED
+- glossary-names 116 rows · glossary-terms 34 distinct (6+15+12+2 composition) · floor-strings 105 rows.
+- decisions.csv contains the 秒 policy row; floor-strings.csv contains UNVERIFIED_TRANSLATION_LABEL and the
+  6 consent strings.
+- NO Tibetan produced: curated bo 0, reviewed bo 0, fallbacks 445 — all UNCHANGED.
+- MedRepBench 22/37 · MIMIC 111/212 · chipWrong 0 both — UNCHANGED. Corpus 440 calls / 14 files — UNCHANGED.
+- git diff on data/ and lib/ RUNTIME paths shows ZERO changed lines (only NEW files added:
+  scripts/tibetan/*, lib/tibetanImport.ts, and their tests). The importer touches production source ONLY in
+  temp-tree tests.
+
+ACCEPTANCE: vitest green (--pool=threads; forks fails under load), tsc clean, the packet's row-count and
+carry-forward positive controls shown passing, the importer's round-trip + guard-bite + full fail-closed
+battery shown (each refusal printed, file verified byte-identical), corpus numbers frozen.
+
+DISCLOSURE: list every existing assertion you modified, weakened, moved or deleted, with file:line and
+before/after text. "Locks unmodified" is true only if that list is EMPTY — and for this tranche it SHOULD be
+empty, because W5 adds new files and edits no runtime path. If it is not empty, that is the finding to surface.
+```
+
+**Check on the way back — what a plausible-but-wrong, vacuously-green result looks like.** Because
+every real number is frozen by design, a return of "all green, fallbacks 445, curated `bo` 0, corpus
+unmoved" describes **both** a correct implementation **and** a do-nothing one. Separate them with the
+controls, not the numbers:
+- Ask for the **exporter row-count assertions** as executed output: 116 / (6+15+12+2=34) / 105, and
+  the two carry-forward presence checks (`UNVERIFIED_TRANSLATION_LABEL` and the 6 consent strings in
+  `floor-strings.csv`, the 秒 row in `decisions.csv`). An exporter that emits header rows only would
+  pass every corpus check while producing an empty packet.
+- Ask for the **importer round-trip** output specifically: the temp file showing `bo: reviewed('…')`
+  written and the re-extract showing `curatedBo` +1 / `fallbackBo` −1. Without it, an importer that
+  writes nothing passes the entire fail-closed battery — the exact vacuous pass this track keeps
+  hitting.
+- Ask for the **guard-bite** (`钙` refused): proof the fail-closed battery is exercising the real
+  guard code path and not a stubbed refusal that would also reject a *valid* row.
+- Confirm the 秒 conflict shipped as a **decision row for the reviewer**, not silently "resolved" by
+  dropping or keeping 秒 in code — that resolution is not the implementer's to make.
