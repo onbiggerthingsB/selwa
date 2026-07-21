@@ -2880,12 +2880,13 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     source: 'Corpus-observed printed reference range, MIMIC-IV / US hospital blood-gas panel: 1.12-1.32 mmol/L (curate-evidence.json, row name "Free Calcium", n=4, gold canonical "Ionized calcium"). Mayo Clinic Laboratories test catalog, Calcium, Ionized, Serum: reference interval approximately 1.12-1.30 mmol/L. The shipped 1.10-1.35 mmol/L is a deliberate cross-analyzer envelope around those two, NOT any single lab\'s printed interval. criticalLow/criticalHigh 0.80/1.60 mmol/L follow common hospital blood-gas panic-value practice and are explicitly NOT traceable to a single authoritative standard — treat as a convention, not a citation.',
   },
   {
-    // 'Urea Nitrogen' and 'Urea N' are DELIBERATELY NOT aliased. The curation pass proposed them;
+    // Bare 'Urea Nitrogen' and 'Urea N' are DELIBERATELY NOT aliased. The curation pass proposed them;
     // the raw MIMIC catalog refutes it — 'Urea Nitrogen' is carried in EIGHT fluids there (Blood,
     // Stool, Urine, Ascites, Pleural, Joint Fluid, Body Fluid, CSF), so it is the Glucose trap
     // exactly: a 24h urine urea nitrogen has nothing to do with this serum band. Only
-    // specimen-unambiguous spellings are aliased here ('BUN' = Blood Urea Nitrogen by name).
-    // data/english-aliases.test.ts locks 'Urea Nitrogen' as unrecognised.
+    // specimen-unambiguous spellings are unscoped here ('BUN' = Blood Urea Nitrogen by name).
+    // 'Urea Nitrogen' is accepted only when a printed blood specimen selects this frame below.
+    // data/english-aliases.test.ts locks bare 'Urea Nitrogen' as unrecognised.
     key: 'bun',
     name: defineText({
       en: reviewed('Blood urea nitrogen (BUN)'),
@@ -2895,6 +2896,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     specimen: 'blood',
     interpretation: 'ours',
     aliases: ['BUN', 'Blood Urea Nitrogen', 'Serum Urea Nitrogen'],
+    specimenAliases: { blood: ['Urea Nitrogen'] },
     unit: 'mg/dL', allowedUnits: ['mg/dL'],
     refLow: 6, refHigh: 20,
     criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,

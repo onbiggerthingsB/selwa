@@ -155,6 +155,7 @@ describe('US English aliases — specimen-ambiguous names must STAY unknown', ()
 
   it('Urea Nitrogen is NOT aliased — specimen-ambiguous AND the H1.5 urea-vs-BUN trap (x2.14)', () => {
     expect(findEntry('Urea Nitrogen')).toBeNull();
+    expect(findEntry('Urea Nitrogen', 'blood')?.key).toBe('bun');
   });
 
   it('bare "pH" must NOT resolve to the URINE entry — a blood-gas pH 7.1 is critical acidemia but sits inside urine 4-9', () => {
