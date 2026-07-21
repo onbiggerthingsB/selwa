@@ -470,6 +470,46 @@ describe('fail-closed Tibetan round-trip importer', () => {
     expect(fileFor(root)).toBe(source);
   });
 
+  it('escapes an apostrophe into the TS literal and re-extracts it byte-exact', () => {
+    // An ASCII apostrophe is the ONE metacharacter that passes every Class A + B
+    // check and reaches the writer, so singleQuoted() must escape it. This is the
+    // only positive coverage of the escaping path — the stated highest risk area.
+    const { root, entry } = simpleFixture();
+    const bo = `${TIBETAN_WORD}' 1-2 TSH mmol/L${SHAD}`;
+    const result = executeTibetanImport({
+      repoRoot: root,
+      rows: [importRow(entry, bo)],
+    });
+    expect(result).toMatchObject({ written: 1, refused: 0 });
+    expect(fileFor(root)).toContain("bo: reviewed('" + bo.replace("'", "\\'") + "')");
+    const after = corpus(root);
+    const reviewed = after.calls.find(({ id }) => id === entry.id)!.variants.bo;
+    const roundTripped = reviewed.kind === 'direct'
+      ? staticTextTemplates(reviewed.expression)[0].literalText
+      : '';
+    expect(roundTripped).toBe(bo);
+  });
+
+  it.each([
+    ['backtick', '`'],
+    ['dollar-brace', '${'],
+    ['backslash', '\\'],
+    ['newline', '\n'],
+    ['carriage-return', '\r'],
+    ['line-separator', String.fromCodePoint(0x2028)],
+    ['paragraph-separator', String.fromCodePoint(0x2029)],
+    ['nul', String.fromCodePoint(0x00)],
+  ])('refuses a bo carrying a %s and leaves the source byte-identical', (_label, payload) => {
+    const { root, entry, source } = simpleFixture();
+    const bo = `${TIBETAN_WORD}${payload} 1-2 TSH mmol/L${SHAD}`;
+    const result = executeTibetanImport({
+      repoRoot: root,
+      rows: [importRow(entry, bo)],
+    });
+    expect(result).toMatchObject({ written: 0, refused: 1 });
+    expect(fileFor(root)).toBe(source);
+  });
+
   it('refuses source drift with hash8 guidance and leaves bytes unchanged', () => {
     const { root, entry, source, bo } = simpleFixture();
     const result = executeTibetanImport({
@@ -686,8 +726,8 @@ describe('fail-closed Tibetan round-trip importer', () => {
       rows: [importRow(first, firstBo), importRow(second, secondBo)],
     });
     expect(result).toMatchObject({ written: 2, refused: 0 });
-    expect(fileFor(root)).toContain(`bo: reviewed('${firstBo}')`);
-    expect(fileFor(root)).toContain(`bo: reviewed('${secondBo}')`);
+    expect(fileFor(root)).toContain(`FIRST = defineText({ en: reviewed('First.'), zh: reviewed('第一。'), bo: reviewed('${firstBo}') })`);
+    expect(fileFor(root)).toContain(`SECOND = defineText({ en: reviewed('Second.'), zh: reviewed('第二。'), bo: reviewed('${secondBo}') })`);
   });
 
   it('is idempotently fail-closed: the same row refuses overwrite on its second run', () => {

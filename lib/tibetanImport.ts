@@ -681,7 +681,28 @@ function parseTargetTemplate(text: string): ParsedTargetTemplate {
 }
 
 function parseReviewedForms(rawBo: string, expectedCount: number): string[] {
-  if (expectedCount === 1) return [rawBo];
+  if (expectedCount === 1) {
+    // A single-form source takes one plain-text Tibetan string. A JSON string
+    // array here is a reviewer applying the multi-alternative format to the wrong
+    // row; committing it verbatim would write literal brackets and quotes into
+    // patient-facing copy. Refuse rather than write it. (Real Tibetan copy never
+    // parses as a JSON array, so this cannot false-refuse a legitimate string.)
+    const trimmed = rawBo.trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(trimmed);
+      } catch {
+        parsed = undefined;
+      }
+      if (Array.isArray(parsed)) {
+        throw new Error(
+          'This source takes a single plain-text Tibetan string, not a JSON array.',
+        );
+      }
+    }
+    return [rawBo];
+  }
   let value: unknown;
   try {
     value = JSON.parse(rawBo);
@@ -713,10 +734,19 @@ function singleQuoted(value: string): string {
 }
 
 function templateSegment(value: string): string {
+  // Kept symmetric with singleQuoted(): a raw CR/LF inside a template literal is
+  // normalized by the TS parser (CR/CRLF -> LF), and U+2028/U+2029 are line
+  // terminators, so any of them would silently alter the stored value. Escaping
+  // is defense-in-depth — Class A (A3) already refuses these upstream — but the
+  // writer must not depend on a guard in another module for correctness.
   return value
     .replaceAll('\\', '\\\\')
     .replaceAll('`', '\\`')
-    .replaceAll('${', '\\${');
+    .replaceAll('${', '\\${')
+    .replaceAll('\r', '\\r')
+    .replaceAll('\n', '\\n')
+    .replaceAll('\u2028', '\\u2028')
+    .replaceAll('\u2029', '\\u2029');
 }
 
 function renderedLeaf(
