@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "rate-limit:set": "tsx scripts/set-rate-limit.mts",
+    "tibetan:export": "tsx scripts/tibetan/export-packet.mts",
+    "tibetan:import": "tsx scripts/tibetan/import-reviewed.mts",
     "test": "vitest run",
     "test:watch": "vitest",
     "validate": "tsx validation/run.ts"
