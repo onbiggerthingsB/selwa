@@ -5,6 +5,13 @@ export const CONSENT_COPY = {
     en: reviewed('Before we read your report'),
     // The existing dialog has no separate Chinese accessible name. Preserve
     // that exact disclosure surface until reviewed copy is supplied.
+    // NOTE (surfaced 2026-07-21): this registers English text as reviewed Chinese,
+    // so a bo user's dialog aria-label reports data-resolved-lang="zh" over English.
+    // The truthful encoding (zh: fallback('en')) was rejected because it makes the
+    // string resolve bo→zh→en, breaking the product-wide "every bo string falls back
+    // to Chinese" invariant enforced by lib/directBoAudit.test.ts's auditBoFallback.
+    // Resolve by supplying reviewed Chinese here (see heading's 在读取您的化验单之前),
+    // which is an owner decision about the dialog's accessible name.
     zh: reviewed('Before we read your report'),
     bo: fallback('zh'),
   }),

@@ -4,6 +4,10 @@ import { CONSENT_COPY } from '@/lib/consentCopy';
 import { DISCLAIMER_TEXTS } from '@/lib/disclaimers';
 import { groundExtraction } from '@/lib/grounding';
 import { resolveText, type LocalizedText } from '@/lib/i18n';
+import {
+  extractLocalizedTextCorpus,
+  LOCALIZED_TEXT_SOURCE_DIRS,
+} from '@/lib/localizedTextCorpus';
 import { buildSummary } from '@/lib/summary';
 import { UI_COPY } from '@/lib/uiCopy';
 
@@ -146,5 +150,33 @@ describe('direct Tibetan localization audit', () => {
       audit.directBo.sort(),
       `Direct bo variants must be named in DIRECT_BO_ALLOWLIST:\n${audit.directBo.join('\n')}`,
     ).toEqual(allowed);
+  });
+
+  it('never lets a bo fallback land on a directly-unverified target (keeps D2 marker suppression sound)', () => {
+    // LocalizedText suppresses the "translation unreviewed" badge whenever a
+    // string is a language fallback (components/LocalizedText.tsx:73). That is
+    // only sound while every bo fallback resolves to REVIEWED copy: a bo fallback
+    // landing on a directly-unverified target would render unverified text with no
+    // badge, while zh users of the same string see one. Enforce corpus-wide over
+    // the static extractor, exempting deliberate empty absence-placeholders (which
+    // render nothing and so cannot mislead).
+    const corpus = extractLocalizedTextCorpus({
+      repoRoot: process.cwd(),
+      sourceDirs: LOCALIZED_TEXT_SOURCE_DIRS,
+    });
+    const unbadgedUnverified: string[] = [];
+    for (const call of corpus.calls) {
+      const bo = call.variants.bo;
+      if (bo.kind !== 'fallback') continue;
+      const target = call.variants[bo.target];
+      if (target.kind !== 'direct') continue; // chains onward to another fallback
+      if (target.review === 'reviewed') continue;
+      if (target.raw.trim() === '' || /text:\s*''/.test(target.raw)) continue; // empty absence-placeholder
+      unbadgedUnverified.push(`${call.id} -> ${bo.target} (${target.review})`);
+    }
+    expect(
+      unbadgedUnverified,
+      `bo fallback onto directly-unverified copy (renders unbadged):\n${unbadgedUnverified.join('\n')}`,
+    ).toEqual([]);
   });
 });
