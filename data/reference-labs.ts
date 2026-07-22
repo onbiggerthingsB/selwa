@@ -1880,6 +1880,45 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     source: 'Cutoff varies widely by assay (Roche ~115 IU/mL; others ~40 or <4) — MUST defer to printed cutoff',
   },
   {
+    key: 'crp',
+    name: defineText({
+      en: reviewed('C-reactive protein'),
+      zh: reviewed('C反应蛋白'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: ['CRP', 'C反应蛋白', 'C-反应蛋白', '全量程C反应蛋白'],
+    unit: 'mg/L',
+    allowedUnits: ['mg/L'],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed(
+        'An acute-phase blood protein made by the liver; a general (non-specific) marker of inflammation.',
+      ),
+      zh: reviewed('一种由肝脏生成的急性期血浆蛋白，是反映炎症的非特异性指标。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'C-reactive protein is an acute-phase protein made by the liver that rises during infection or inflammation and settles as it resolves; it is non-specific, flagging that inflammation is present somewhere without naming the cause. Conventional CRP reference intervals differ between laboratories, so read your value against the range printed on your own report.',
+      ),
+      zh: reviewed(
+        'C反应蛋白是由肝脏生成的急性期蛋白，在感染或炎症期间会升高，并随着炎症缓解而回落；它缺乏特异性，只能反映身体某处存在炎症，不能说明具体原因。常规C反应蛋白的参考区间因实验室而异，因此应将结果与您自己的报告上打印的范围对照阅读。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'Report-only: conventional CRP has no portable universal reference interval. Current official laboratory catalogs disagree: Mayo Clinic Laboratories reports <5.0 mg/L (https://www.mayocliniclabs.com/test-catalog/Overview/9731), Cambridge University Hospitals reports 0-6 mg/L (https://www.cuh.nhs.uk/our-services/pathology/pathology-tests/pathology-tests-a-to-z/biochemistry-tests/biochemistry-tests-a-c/), and Labcorp test 006627 reports an adult interval of 0-10 mg/L (https://www.labcorp.com/tests/006627/c-reactive-protein-crp-quantitative). Siemens Dimension RCRP Instructions for Use PN 11645602 states that each laboratory should determine its own reference interval and that its <=5.0 mg/L interval is guidance only (https://doclib.siem-healthineers.com/rest/v1/view?document-id=1015311). This app therefore reproduces only the interval printed by the reporting laboratory. highStakes:true is a confirmation safeguard, not a panic cutoff: NICE NG253 recommendation 1.8.2 includes CRP among urgent venous tests for people already assessed as high risk of severe illness or death from sepsis (https://www.nice.org.uk/guidance/NG253/chapter/managing-suspected-sepsis), while Mayo notes that concentrations above 100 mg/L are associated with severe stimuli including severe infection (sepsis). No reference or critical threshold is encoded.',
+  },
+  {
     key: 'hs_crp',
     name: defineText({
       en: reviewed('High-sensitivity C-reactive protein'),

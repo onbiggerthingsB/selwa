@@ -202,7 +202,7 @@ describe('Tibetan reviewer packet export', () => {
   });
 
   it('locks the three measured inventories and authored component tally', () => {
-    expect(packet.names).toHaveLength(116);
+    expect(packet.names).toHaveLength(117);
     expect(GLOSSARY_TERM_COMPONENT_COUNTS).toEqual({
       comparators: 6,
       coreNegators: 15,
@@ -229,9 +229,9 @@ describe('Tibetan reviewer packet export', () => {
       .toEqual(['core-negator', 'polarity']);
   });
 
-  it('exports all 116 distinct names with definition context, specimen, aliases, and units', () => {
-    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(116);
-    expect(new Set(packet.names.map(({ en }) => en))).toHaveLength(116);
+  it('exports all 117 distinct names with definition context, specimen, aliases, and units', () => {
+    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(117);
+    expect(new Set(packet.names.map(({ en }) => en))).toHaveLength(117);
     expect(packet.names.filter(({ unit }) => unit === 'as reported')).toHaveLength(6);
     for (const row of packet.names) {
       const entry = REFERENCE_LABS.find(({ key }) => key === row.key)!;
@@ -320,7 +320,7 @@ describe('Tibetan reviewer packet export', () => {
         parseCsv(readFileSync(path.join(output, fileName), 'utf8')),
       ]),
     );
-    expect(parsed.names.rows).toHaveLength(116);
+    expect(parsed.names.rows).toHaveLength(117);
     expect(parsed.terms.rows).toHaveLength(34);
     expect(parsed.floor.rows).toHaveLength(156);
     expect(parsed.decisions.rows).toHaveLength(1);
@@ -328,7 +328,7 @@ describe('Tibetan reviewer packet export', () => {
       expect(sheet.rows.every((row) => row.bo === '')).toBe(true);
     }
     const rows = readReviewedPacket(output);
-    expect(rows).toHaveLength(116 + 156);
+    expect(rows).toHaveLength(117 + 156);
     expect(rows.every(({ bo }) => bo === '')).toBe(true);
   });
 
@@ -360,7 +360,7 @@ describe('Tibetan reviewer packet export', () => {
   it('recomputes the exact current bo baseline hashes without editing their lock files', () => {
     const checklist = buildRebaselineChecklist(extractLocalizedTextCorpus({ repoRoot: process.cwd() }));
     expect(checklist).toEqual({
-      referenceBaselineBo: 'ec985ccea7ee893ff00abcc60caa903dcbcb968a464d71356bb449e3a51480e6',
+      referenceBaselineBo: '62915e7cefee1e523aa46a41712eb475d253575ec86e33787e401ec43894488f',
       disclaimerBaselineBo: '26b37ac41f7ab7ca787474a8f0bd549f24937226f475fa873e7dffb3f0ccde4b',
       directContexts: [],
       expectedHashes: {},

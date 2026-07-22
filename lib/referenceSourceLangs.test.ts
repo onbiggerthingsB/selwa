@@ -86,7 +86,7 @@ function observableIndex(): Map<string, string> {
 }
 
 describe('reference names index only source languages', () => {
-  it('keeps the source-language map bit-exact with the current 730-key index', () => {
+  it('keeps the source-language map bit-exact with the current 735-key index', () => {
     expect(SOURCE_LANGS).toEqual(['en', 'zh']);
     expect(LANGS).toEqual(['en', 'zh', 'bo']);
 
@@ -100,8 +100,8 @@ describe('reference names index only source languages', () => {
       afterKeys: after.size,
       ...indexDiff(before, after),
     }).toEqual({
-      beforeKeys: 730,
-      afterKeys: 730,
+      beforeKeys: 735,
+      afterKeys: 735,
       added: [],
       removed: [],
       repointed: [],
@@ -124,8 +124,8 @@ describe('reference names index only source languages', () => {
       actualKeys: actual.size,
       ...indexDiff(expected, actual),
     }).toEqual({
-      expectedKeys: 730,
-      actualKeys: 730,
+      expectedKeys: 735,
+      actualKeys: 735,
       added: [],
       removed: [],
       repointed: [],

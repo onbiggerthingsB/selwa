@@ -7,6 +7,7 @@ const SOURCED_REPORT_ONLY_KEYS = new Set([
   'anion_gap',
   'base_excess',
   'blood_ph',
+  'crp',
   'prothrombin_activity',
   'total_co2_calculated',
 ]);
@@ -29,6 +30,7 @@ describe('reference table integrity', () => {
       'anion_gap',
       'base_excess',
       'blood_ph',
+      'crp',
       'prothrombin_activity',
       'total_co2_calculated',
       'urine_amorphous_deposits',
@@ -137,6 +139,44 @@ describe('reference table integrity', () => {
       expect(findEntry(alias)?.key, alias).toBe('prothrombin_activity');
     }
     expect(findEntry('PT')?.key).toBe('prothrombin_time');
+  });
+
+  it('keeps conventional CRP distinct from high-sensitivity CRP', () => {
+    const crp = findEntry('CRP', 'blood');
+    const hsCrp = findEntry('超敏C反应蛋白');
+
+    expect(crp?.key).toBe('crp');
+    expect(findEntry('C反应蛋白', 'blood')?.key).toBe('crp');
+    expect(findEntry('C反应蛋白')?.key).toBe('crp');
+    expect(findEntry('C-反应蛋白')?.key).toBe('crp');
+    expect(findEntry('全量程C反应蛋白')?.key).toBe('crp');
+    expect(findEntry('CRP', 'urine')).toBeNull();
+
+    expect(findEntry('超敏C反应蛋白')?.key).toBe('hs_crp');
+    expect(findEntry('hs-CRP')?.key).toBe('hs_crp');
+    expect(findEntry('hsCRP')?.key).toBe('hs_crp');
+    expect(findEntry('高敏C反应蛋白')?.key).toBe('hs_crp');
+    expect(findEntry('超敏C-反应蛋白')?.key).toBe('hs_crp');
+
+    expect(crp?.interpretation).toBe('report-only');
+    expect([
+      crp?.refLow,
+      crp?.refHigh,
+      crp?.criticalLow,
+      crp?.criticalHigh,
+      crp?.absoluteLow,
+      crp?.absoluteHigh,
+    ]).toEqual([null, null, null, null, null, null]);
+    expect(crp?.highStakes).toBe(true);
+    expect(crp?.source).toMatch(/Mayo Clinic Laboratories reports <5\.0 mg\/L/);
+    expect(crp?.source).toMatch(/Cambridge University Hospitals reports 0-6 mg\/L/);
+    expect(crp?.source).toMatch(/Labcorp test 006627 reports an adult interval of 0-10 mg\/L/);
+    expect(crp?.source).toMatch(/Siemens Dimension RCRP/);
+    expect(crp?.source).toMatch(/NICE NG253/);
+
+    expect(hsCrp?.key).not.toBe(crp?.key);
+    expect(hsCrp?.interpretation).toBe('ours');
+    expect(hsCrp?.refHigh).toBe(3.0);
   });
 
   it('locks the inverse PT-activity direction and the no-harmonised-band rationale', () => {

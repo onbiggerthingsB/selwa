@@ -473,8 +473,8 @@ export function buildTibetanReviewPacket(
   // every UI feature (Feature 2 added 34), and a production tool must not crash when the app
   // gains a string. The duplicate-id and excludedDirectBo checks below still catch a corrupt
   // or unsafe corpus; curatedBo === 0 is asserted corpus-wide in the Tibetan test layer.
-  if (referenceCalls.length !== 334) {
-    throw new Error(`Expected 334 reference calls; got ${referenceCalls.length}.`);
+  if (referenceCalls.length !== 337) {
+    throw new Error(`Expected 337 reference calls; got ${referenceCalls.length}.`);
   }
   if (new Set(corpus.calls.map(({ id }) => id)).size !== corpus.calls.length) {
     throw new Error('Localized corpus contains duplicate semantic ids; refusing to export ambiguity.');
@@ -490,11 +490,11 @@ export function buildTibetanReviewPacket(
   const floor = buildFloorStringRows(corpus);
   const decisions = buildDecisionRows();
 
-  if (names.length !== 116) throw new Error(`Expected 116 glossary names; got ${names.length}.`);
+  if (names.length !== 117) throw new Error(`Expected 117 glossary names; got ${names.length}.`);
   if (terms.length !== 34) throw new Error(`Expected 34 distinct glossary terms; got ${terms.length}.`);
   // floor.length is NOT hard-asserted: the packet legitimately exports however many UI floor
   // strings exist, and that count grows with every feature. The reviewer simply receives all
-  // of them. names (116) and terms (34) stay exact — they are reference/authored, not UI.
+  // of them. names (117) and terms (34) stay exact — they are reference/authored, not UI.
   return {
     names,
     terms,

@@ -18,15 +18,14 @@ describe('static localized-text corpus', () => {
     const corpus = extractLocalizedTextCorpus();
     const fallbackBo = corpus.calls.filter((entry) => entry.variants.bo.kind === 'fallback');
 
-    // Topology tripwire. These totals grow with every UI feature (Feature 2 T4 added 12
-    // consent, error, and see-doctor strings in lib/adviceCopy.ts): 15 files,
-    // 479->491 calls, 478->490
+    // Topology tripwire. Conventional CRP adds one reference name, definition, and plain
+    // string: 15 files, 491->494 calls, 490->493
     // fallbacks. Rebaseline deliberately when a feature adds strings — and confirm, as the
     // two assertions below do, that the growth is all fallback and none of it is direct
     // (unreviewed) Tibetan.
     expect(corpus.sourceFiles).toHaveLength(15);
-    expect(corpus.calls).toHaveLength(491);
-    expect(fallbackBo).toHaveLength(490);
+    expect(corpus.calls).toHaveLength(494);
+    expect(fallbackBo).toHaveLength(493);
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(corpus.excludedDirectBo[0].reason).toBe('verbatim-ocr-echo');
@@ -64,10 +63,10 @@ describe('static localized-text corpus', () => {
       .filter((entry) => entry.reference?.field === 'name')
       .map((entry) => entry.reference!.key);
 
-    expect(reference).toHaveLength(334);
-    expect(fields).toEqual({ name: 116, plain: 102, definition: 116 });
-    expect(nameKeys).toHaveLength(116);
-    expect(new Set(nameKeys)).toHaveLength(116);
+    expect(reference).toHaveLength(337);
+    expect(fields).toEqual({ name: 117, plain: 103, definition: 117 });
+    expect(nameKeys).toHaveLength(117);
+    expect(new Set(nameKeys)).toHaveLength(117);
   });
 
   it('preserves every production placeholder expression and its order', () => {

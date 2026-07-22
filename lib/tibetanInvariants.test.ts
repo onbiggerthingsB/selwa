@@ -142,7 +142,7 @@ describe('Tibetan Class B source-output invariants', () => {
 
   it('reports the empty curated corpus and no unsupported authored forms', () => {
     const corpus = extractLocalizedTextCorpus();
-    expect(corpus.calls).toHaveLength(491); // grows with UI features; curatedBo===0 below is the safety check
+    expect(corpus.calls).toHaveLength(494); // grows with reference data; curatedBo===0 below is the safety check
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(pairs).toHaveLength(0);
@@ -304,9 +304,9 @@ describe('Tibetan Class B source-output invariants', () => {
       'bo',
     );
 
-    expect(referenceNames).toHaveLength(116);
-    expect(en).toHaveLength(116);
-    expect(zh).toHaveLength(116);
+    expect(referenceNames).toHaveLength(117);
+    expect(en).toHaveLength(117);
+    expect(zh).toHaveLength(117);
     expect(nameCollisionFindings(en)).toEqual([]);
     expect(nameCollisionFindings(zh)).toEqual([]);
     expect(
