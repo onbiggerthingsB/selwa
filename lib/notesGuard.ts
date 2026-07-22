@@ -174,7 +174,7 @@ const SUPPLEMENTAL_DRUGS: SuppDrug[] = [
   { id: 'trastuzumab', zh: ['曲妥珠单抗'], en: ['trastuzumab'] },
 ];
 
-function detectSupplementalDrugs(text: string, lang: SourceLang): string[] {
+export function detectSupplementalDrugs(text: string, lang: SourceLang): string[] {
   const hay = lang === 'en' ? text.toLowerCase() : text;
   const ids: string[] = [];
   for (const d of SUPPLEMENTAL_DRUGS) {
@@ -211,7 +211,7 @@ const FREQUENCY_CONCEPTS: Array<{ concept: string; zh: string[]; en: string[] }>
   { concept: 'qhs', zh: ['睡前', '每晚'], en: ['at bedtime', 'nightly', 'qhs', 'at night'] },
 ];
 
-function frequencyConcept(text: string, lang: SourceLang): string | null {
+export function frequencyConcept(text: string, lang: SourceLang): string | null {
   const hay = lang === 'en' ? text.toLowerCase() : text;
   // Longest-form ZH tokens are checked first within each concept; concept order
   // is fine because the lists are disjoint.

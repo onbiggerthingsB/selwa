@@ -1,0 +1,1 @@
+export const ADVICE_CONSENT_VERSION = 1;

@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ADVICE_BANNER_COPY,
   ADVICE_DISCLAIMERS,
   ADVICE_ENTRY_COPY,
   ADVICE_FORM_COPY,
+  ADVICE_HOTLINES,
+  ADVICE_HOTLINE_VERIFICATION_ACKNOWLEDGEMENT,
   ADVICE_REFERRAL,
+  ADVICE_REFUSAL_COPY,
   ADVICE_SCHOOL_COPY,
   ADVICE_UNAVAILABLE_COPY,
 } from '@/lib/adviceCopy';
@@ -15,7 +19,7 @@ const SCHOOL_COPY = Object.values(ADVICE_SCHOOL_COPY).flatMap(({ label, subtitle
   subtitle,
 ]);
 
-const ALL_ADVICE_COPY: readonly LocalizedText[] = [
+const T1_ADVICE_COPY: readonly LocalizedText[] = [
   ...Object.values(ADVICE_ENTRY_COPY),
   ...Object.values(ADVICE_FORM_COPY),
   ...Object.values(ADVICE_UNAVAILABLE_COPY),
@@ -23,12 +27,17 @@ const ALL_ADVICE_COPY: readonly LocalizedText[] = [
   ADVICE_REFERRAL,
   ...SCHOOL_COPY,
 ];
+const T2_T3_ADVICE_COPY: readonly LocalizedText[] = [
+  ...Object.values(ADVICE_BANNER_COPY),
+  ...Object.values(ADVICE_REFUSAL_COPY),
+];
+const ALL_ADVICE_COPY = [...T1_ADVICE_COPY, ...T2_T3_ADVICE_COPY];
 
 describe('advice copy', () => {
   it('keeps every T1 string reviewed in en/zh and explicitly falling back to zh for bo', () => {
-    expect(ALL_ADVICE_COPY).toHaveLength(34);
+    expect(T1_ADVICE_COPY).toHaveLength(34);
 
-    for (const copy of ALL_ADVICE_COPY) {
+    for (const copy of T1_ADVICE_COPY) {
       expect(copy.en).toMatchObject({ review: 'reviewed' });
       expect(copy.zh).toMatchObject({ review: 'reviewed' });
       expect(copy.bo).toEqual({ fallback: 'zh' });
@@ -39,6 +48,54 @@ describe('advice copy', () => {
         path: ['bo', 'zh'],
       });
     }
+  });
+
+  it('keeps every T2/T3 safety string reviewed in en/zh and falling back to zh for bo', () => {
+    expect(T2_T3_ADVICE_COPY).toHaveLength(5);
+
+    for (const copy of T2_T3_ADVICE_COPY) {
+      expect(copy.en).toMatchObject({ review: 'reviewed' });
+      expect(copy.zh).toMatchObject({ review: 'reviewed' });
+      expect(copy.bo).toEqual({ fallback: 'zh' });
+      expect(resolveText(copy, 'bo')).toMatchObject({
+        resolvedLang: 'zh',
+        usedFallback: true,
+        review: 'unverified',
+        path: ['bo', 'zh'],
+      });
+    }
+  });
+
+  it('locks the safety banners and dosing refusal to the reviewed specification copy', () => {
+    expect(resolveText(ADVICE_BANNER_COPY.emergency, 'en').text).toBe(
+      'If this is happening to you or someone near you right now, get emergency help immediately — in mainland China call 120 (ambulance); elsewhere call your local emergency number (for example 911 in the US). Do not wait for an answer on this page. Nothing below can replace emergency care.',
+    );
+    expect(resolveText(ADVICE_BANNER_COPY.emergency, 'zh').text).toBe(
+      '如果您或身边的人现在正出现这种情况，请立即寻求急救：中国大陆请拨打 120（急救电话），其他地区请拨打当地急救电话（如美国 911）。不要等待本页的回答。下方任何内容都不能替代急救。',
+    );
+    expect(resolveText(ADVICE_BANNER_COPY['emergency-self-harm'], 'en').text).toBe(
+      'You deserve support right now. In mainland China you can call the national psychological assistance hotline 12356; in the US or Canada call or text 988; elsewhere contact your local crisis line or emergency number. If you are in immediate danger, call emergency services (120 in mainland China). This page cannot help with this — a person can.',
+    );
+    expect(resolveText(ADVICE_BANNER_COPY['emergency-self-harm'], 'zh').text).toBe(
+      '此刻您值得获得支持。中国大陆可拨打全国心理援助热线 12356；美国或加拿大可拨打或发送短信至 988；其他地区请联系当地心理危机热线或急救电话。如有即时危险，请拨打急救电话（中国大陆 120）。本页无法为此提供帮助——但真实的人可以。',
+    );
+    expect(resolveText(ADVICE_REFUSAL_COPY.dosing, 'en').text).toBe(
+      "We can't show this answer because it included specific medication or remedy amounts, which this app never provides. For any medicine — including herbal or traditional remedies — and how much or how often to take it, please ask a doctor or pharmacist.",
+    );
+    expect(resolveText(ADVICE_REFUSAL_COPY.dosing, 'zh').text).toBe(
+      '此回答包含具体的用药或用量信息，本应用一律不提供此类内容，因此无法显示。任何药物（包括中药、藏药等传统药物）的品种、用量和服用频次，请咨询医生或药师。',
+    );
+  });
+
+  it('keeps hotline facts centralized behind a release-verification sentinel', () => {
+    expect(ADVICE_HOTLINES).toEqual({
+      mainlandChinaEmergency: '120',
+      mainlandChinaPsychologicalAssistance: '12356',
+      usCanadaCrisis: '988',
+    });
+    expect(ADVICE_HOTLINE_VERIFICATION_ACKNOWLEDGEMENT).toContain(
+      'VERIFY BEFORE RELEASE',
+    );
   });
 
   it('preserves the exact entry, disclaimer, and referral copy from the specification', () => {

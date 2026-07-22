@@ -18,14 +18,14 @@ describe('static localized-text corpus', () => {
     const corpus = extractLocalizedTextCorpus();
     const fallbackBo = corpus.calls.filter((entry) => entry.variants.bo.kind === 'fallback');
 
-    // Topology tripwire. These totals grow with every UI feature (Feature 2 added 34
-    // localized strings in lib/adviceCopy.ts): 14->15 files, 440->474 calls, 439->473
+    // Topology tripwire. These totals grow with every UI feature (Feature 2 T2+T3 added 5
+    // safety strings in lib/adviceCopy.ts): 15 files, 474->479 calls, 473->478
     // fallbacks. Rebaseline deliberately when a feature adds strings — and confirm, as the
     // two assertions below do, that the growth is all fallback and none of it is direct
     // (unreviewed) Tibetan.
     expect(corpus.sourceFiles).toHaveLength(15);
-    expect(corpus.calls).toHaveLength(474);
-    expect(fallbackBo).toHaveLength(473);
+    expect(corpus.calls).toHaveLength(479);
+    expect(fallbackBo).toHaveLength(478);
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(corpus.excludedDirectBo[0].reason).toBe('verbatim-ocr-echo');

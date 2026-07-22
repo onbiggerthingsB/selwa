@@ -5,6 +5,89 @@ import {
   type LocalizedText,
 } from '@/lib/i18n';
 
+// VERIFY BEFORE RELEASE: these safety-critical hotline facts must be rechecked
+// by the release owner at launch and on the project's recurring review cadence.
+const MAINLAND_CHINA_EMERGENCY_NUMBER = '120';
+const MAINLAND_CHINA_PSYCHOLOGICAL_ASSISTANCE_NUMBER = '12356';
+const US_CANADA_CRISIS_NUMBER = '988';
+
+export const ADVICE_HOTLINES = {
+  mainlandChinaEmergency: MAINLAND_CHINA_EMERGENCY_NUMBER,
+  mainlandChinaPsychologicalAssistance:
+    MAINLAND_CHINA_PSYCHOLOGICAL_ASSISTANCE_NUMBER,
+  usCanadaCrisis: US_CANADA_CRISIS_NUMBER,
+} as const;
+
+export const ADVICE_HOTLINE_VERIFICATION_ACKNOWLEDGEMENT =
+  'VERIFY BEFORE RELEASE: owner must re-verify every advice hotline number.';
+
+export const ADVICE_BANNER_COPY = {
+  emergency: defineText({
+    en: reviewed(
+      'If this is happening to you or someone near you right now, get emergency help immediately — in mainland China call '
+        + MAINLAND_CHINA_EMERGENCY_NUMBER
+        + ' (ambulance); elsewhere call your local emergency number (for example 911 in the US). Do not wait for an answer on this page. Nothing below can replace emergency care.',
+    ),
+    zh: reviewed(
+      '如果您或身边的人现在正出现这种情况，请立即寻求急救：中国大陆请拨打 '
+        + MAINLAND_CHINA_EMERGENCY_NUMBER
+        + '（急救电话），其他地区请拨打当地急救电话（如美国 911）。不要等待本页的回答。下方任何内容都不能替代急救。',
+    ),
+    bo: fallback('zh'),
+  }),
+  'emergency-self-harm': defineText({
+    en: reviewed(
+      'You deserve support right now. In mainland China you can call the national psychological assistance hotline '
+        + MAINLAND_CHINA_PSYCHOLOGICAL_ASSISTANCE_NUMBER
+        + '; in the US or Canada call or text '
+        + US_CANADA_CRISIS_NUMBER
+        + '; elsewhere contact your local crisis line or emergency number. If you are in immediate danger, call emergency services ('
+        + MAINLAND_CHINA_EMERGENCY_NUMBER
+        + ' in mainland China). This page cannot help with this — a person can.',
+    ),
+    zh: reviewed(
+      '此刻您值得获得支持。中国大陆可拨打全国心理援助热线 '
+        + MAINLAND_CHINA_PSYCHOLOGICAL_ASSISTANCE_NUMBER
+        + '；美国或加拿大可拨打或发送短信至 '
+        + US_CANADA_CRISIS_NUMBER
+        + '；其他地区请联系当地心理危机热线或急救电话。如有即时危险，请拨打急救电话（中国大陆 '
+        + MAINLAND_CHINA_EMERGENCY_NUMBER
+        + '）。本页无法为此提供帮助——但真实的人可以。',
+    ),
+    bo: fallback('zh'),
+  }),
+} as const satisfies Record<string, LocalizedText>;
+
+export const ADVICE_REFUSAL_COPY = {
+  dosing: defineText({
+    en: reviewed(
+      "We can't show this answer because it included specific medication or remedy amounts, which this app never provides. For any medicine — including herbal or traditional remedies — and how much or how often to take it, please ask a doctor or pharmacist.",
+    ),
+    zh: reviewed(
+      '此回答包含具体的用药或用量信息，本应用一律不提供此类内容，因此无法显示。任何药物（包括中药、藏药等传统药物）的品种、用量和服用频次，请咨询医生或药师。',
+    ),
+    bo: fallback('zh'),
+  }),
+  'tibetan-output': defineText({
+    en: reviewed(
+      "We can't show this answer because it contained Tibetan-language text that this safety system cannot verify. Please ask again in Chinese or English.",
+    ),
+    zh: reviewed(
+      '此回答包含本安全系统无法核验的藏文内容，因此无法显示。请使用中文或英文重新提问。',
+    ),
+    bo: fallback('zh'),
+  }),
+  'out-of-scope': defineText({
+    en: reviewed(
+      "We can't answer this here because this page is only for personal health questions. Please ask a question about your own health.",
+    ),
+    zh: reviewed(
+      '此页面仅用于个人健康问题，因此无法回答当前问题。请提出与您本人健康有关的问题。',
+    ),
+    bo: fallback('zh'),
+  }),
+} as const satisfies Record<string, LocalizedText>;
+
 export const ADVICE_ENTRY_COPY = {
   title: defineText({
     en: reviewed('Ask a health question'),
@@ -146,8 +229,16 @@ export const ADVICE_DISCLAIMERS = [
     bo: fallback('zh'),
   }),
   defineText({
-    en: reviewed("If symptoms are severe or getting worse quickly, don't wait for an answer here — in mainland China call 120; elsewhere call your local emergency number."),
-    zh: reviewed('如症状严重或迅速加重，请不要等待本页回答——中国大陆请拨打 120，其他地区请拨打当地急救电话。'),
+    en: reviewed(
+      "If symptoms are severe or getting worse quickly, don't wait for an answer here — in mainland China call "
+        + MAINLAND_CHINA_EMERGENCY_NUMBER
+        + '; elsewhere call your local emergency number.',
+    ),
+    zh: reviewed(
+      '如症状严重或迅速加重，请不要等待本页回答——中国大陆请拨打 '
+        + MAINLAND_CHINA_EMERGENCY_NUMBER
+        + '，其他地区请拨打当地急救电话。',
+    ),
     bo: fallback('zh'),
   }),
 ] as const satisfies readonly LocalizedText[];

@@ -33,7 +33,7 @@ describe('Tibetan Class A well-formedness', () => {
       );
     });
 
-    expect(corpus.calls).toHaveLength(474); // grows with UI features; curatedBo===0 below is the safety check
+    expect(corpus.calls).toHaveLength(479); // grows with UI features; curatedBo===0 below is the safety check
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(corpus.excludedDirectBo[0].reason).toBe('verbatim-ocr-echo');

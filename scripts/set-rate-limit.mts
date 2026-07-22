@@ -7,11 +7,12 @@ import {
 const TARGETS = new Set<DynamicRateLimitTarget>([
   'extract-burst',
   'translate-notes-burst',
+  'advice-burst',
   'daily-units',
 ]);
 
 const USAGE =
-  'Usage: npm run rate-limit:set -- <extract-burst|translate-notes-burst|daily-units> <positive integer|default>';
+  'Usage: npm run rate-limit:set -- <extract-burst|translate-notes-burst|advice-burst|daily-units> <positive integer|default>';
 
 function parseArguments(
   args: string[],

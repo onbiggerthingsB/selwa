@@ -2,10 +2,11 @@ import { createHmac } from 'node:crypto';
 import { Ratelimit, type Duration } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-export type PaidRoute = 'extract' | 'translate-notes';
+export type PaidRoute = 'extract' | 'translate-notes' | 'advice';
 export type DynamicRateLimitTarget =
   | 'extract-burst'
   | 'translate-notes-burst'
+  | 'advice-burst'
   | 'daily-units';
 
 export interface RateLimitConfig {
@@ -17,9 +18,11 @@ export interface RateLimitConfig {
   dailyWindowSeconds: number;
   extractBurst: number;
   translateNotesBurst: number;
+  adviceBurst: number;
   dailyUnits: number;
   extractCostUnits: number;
   translateNotesCostUnits: number;
+  adviceCostUnits: number;
   storeTimeoutMs: number;
 }
 
@@ -38,6 +41,7 @@ export interface SharedWindowLimiter {
 export interface PaidRouteLimiters {
   extractBurst: SharedWindowLimiter;
   translateNotesBurst: SharedWindowLimiter;
+  adviceBurst: SharedWindowLimiter;
   dailyCost: SharedWindowLimiter;
 }
 
@@ -66,9 +70,11 @@ const DEFAULTS = {
   dailyWindowSeconds: 86_400,
   extractBurst: 3,
   translateNotesBurst: 10,
+  adviceBurst: 5, // FLAGGED DEFAULT: tune from production traffic before public launch.
   dailyUnits: 60,
   extractCostUnits: 5,
   translateNotesCostUnits: 1,
+  adviceCostUnits: 3, // FLAGGED DEFAULT: three-school Opus generation; ~20/day at 60 units.
   storeTimeoutMs: 1_500,
 } as const;
 
@@ -99,7 +105,7 @@ function required(env: Env, name: string): string {
  * UPSTASH_REDIS_REST_URL. There is no prefix that produces the SDK's names.
  *
  * Hard-coding either convention breaks the other environment, and the failure is
- * invisible: the limiter fails closed, so both paid routes return 503 and it looks
+ * invisible: the limiter fails closed, so paid routes return 503 and it looks
  * exactly like an outage or a network block rather than a misnamed variable.
  *
  * So accept both, and — deliberately — do NOT accept a prefixed variant. If a prefix was
@@ -174,6 +180,11 @@ export function readRateLimitConfig(env: Env = process.env): RateLimitConfig {
       'RATE_LIMIT_TRANSLATE_NOTES_BURST',
       DEFAULTS.translateNotesBurst,
     ),
+    adviceBurst: positiveInteger(
+      env,
+      'RATE_LIMIT_ADVICE_BURST',
+      DEFAULTS.adviceBurst,
+    ),
     dailyUnits: positiveInteger(
       env,
       'RATE_LIMIT_DAILY_UNITS',
@@ -188,6 +199,11 @@ export function readRateLimitConfig(env: Env = process.env): RateLimitConfig {
       env,
       'RATE_LIMIT_TRANSLATE_NOTES_COST_UNITS',
       DEFAULTS.translateNotesCostUnits,
+    ),
+    adviceCostUnits: positiveInteger(
+      env,
+      'RATE_LIMIT_ADVICE_COST_UNITS',
+      DEFAULTS.adviceCostUnits,
     ),
     storeTimeoutMs: positiveInteger(
       env,
@@ -235,6 +251,14 @@ function createProductionLimiters(
       prefix: `${prefix}:translate-notes:burst`,
       limiter: Ratelimit.slidingWindow(
         config.translateNotesBurst,
+        duration(config.burstWindowSeconds),
+      ),
+    }),
+    adviceBurst: new Ratelimit({
+      ...common,
+      prefix: `${prefix}:advice:burst`,
+      limiter: Ratelimit.slidingWindow(
+        config.adviceBurst,
         duration(config.burstWindowSeconds),
       ),
     }),
@@ -298,19 +322,40 @@ function assertStoreResult(result: {
   if (result.reason === 'timeout') throw new RateLimitStoreUnavailableError();
 }
 
+const BURST_LIMITER_BY_ROUTE = {
+  extract: 'extractBurst',
+  'translate-notes': 'translateNotesBurst',
+  advice: 'adviceBurst',
+} as const satisfies Record<
+  PaidRoute,
+  keyof Pick<
+    PaidRouteLimiters,
+    'extractBurst' | 'translateNotesBurst' | 'adviceBurst'
+  >
+>;
+
+const COST_UNITS_BY_ROUTE = {
+  extract: 'extractCostUnits',
+  'translate-notes': 'translateNotesCostUnits',
+  advice: 'adviceCostUnits',
+} as const satisfies Record<
+  PaidRoute,
+  keyof Pick<
+    RateLimitConfig,
+    'extractCostUnits' | 'translateNotesCostUnits' | 'adviceCostUnits'
+  >
+>;
+
 export async function applyPaidRouteLimits(input: {
   route: PaidRoute;
   identifier: string;
   limiters: PaidRouteLimiters;
   config: Pick<
     RateLimitConfig,
-    'extractCostUnits' | 'translateNotesCostUnits'
+    'extractCostUnits' | 'translateNotesCostUnits' | 'adviceCostUnits'
   >;
 }): Promise<PaidRouteLimitDecision> {
-  const burst =
-    input.route === 'extract'
-      ? input.limiters.extractBurst
-      : input.limiters.translateNotesBurst;
+  const burst = input.limiters[BURST_LIMITER_BY_ROUTE[input.route]];
   const burstResult = await burst.limit(input.identifier);
   assertStoreResult(burstResult);
   if (!burstResult.success) {
@@ -321,10 +366,7 @@ export async function applyPaidRouteLimits(input: {
     };
   }
 
-  const rate =
-    input.route === 'extract'
-      ? input.config.extractCostUnits
-      : input.config.translateNotesCostUnits;
+  const rate = input.config[COST_UNITS_BY_ROUTE[input.route]];
   const dailyResult = await input.limiters.dailyCost.limit(input.identifier, {
     rate,
   });
@@ -428,11 +470,12 @@ export async function setDynamicRateLimitOverride(
   }
 
   const { limiters } = getProductionState();
-  const limiter =
-    target === 'extract-burst'
-      ? limiters.extractBurst
-      : target === 'translate-notes-burst'
-        ? limiters.translateNotesBurst
-        : limiters.dailyCost;
+  const limiterByTarget = {
+    'extract-burst': limiters.extractBurst,
+    'translate-notes-burst': limiters.translateNotesBurst,
+    'advice-burst': limiters.adviceBurst,
+    'daily-units': limiters.dailyCost,
+  } satisfies Record<DynamicRateLimitTarget, SharedWindowLimiter>;
+  const limiter = limiterByTarget[target];
   await limiter.setDynamicLimit({ limit });
 }

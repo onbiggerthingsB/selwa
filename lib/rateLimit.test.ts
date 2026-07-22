@@ -22,6 +22,7 @@ const REQUIRED_ENV = {
 const COSTS = {
   extractCostUnits: 5,
   translateNotesCostUnits: 1,
+  adviceCostUnits: 3,
 } as const;
 
 /**
@@ -90,12 +91,14 @@ function fakeLimiters(input: {
   now: () => number;
   extractBurst?: number;
   translateNotesBurst?: number;
+  adviceBurst?: number;
   dailyUnits?: number;
   burstWindowMs?: number;
   dailyWindowMs?: number;
 }): PaidRouteLimiters & {
   extractBurst: FakeWindowLimiter;
   translateNotesBurst: FakeWindowLimiter;
+  adviceBurst: FakeWindowLimiter;
   dailyCost: FakeWindowLimiter;
 } {
   return {
@@ -107,6 +110,12 @@ function fakeLimiters(input: {
     ),
     translateNotesBurst: new FakeWindowLimiter(
       input.translateNotesBurst ?? 100,
+      input.burstWindowMs ?? 60_000,
+      input.now,
+      'sliding',
+    ),
+    adviceBurst: new FakeWindowLimiter(
+      input.adviceBurst ?? 100,
       input.burstWindowMs ?? 60_000,
       input.now,
       'sliding',
@@ -165,9 +174,11 @@ describe('readRateLimitConfig', () => {
       dailyWindowSeconds: 86_400,
       extractBurst: 3,
       translateNotesBurst: 10,
+      adviceBurst: 5,
       dailyUnits: 60,
       extractCostUnits: 5,
       translateNotesCostUnits: 1,
+      adviceCostUnits: 3,
       storeTimeoutMs: 1_500,
     });
   });
@@ -181,9 +192,11 @@ describe('readRateLimitConfig', () => {
         RATE_LIMIT_DAILY_WINDOW_SECONDS: '43200',
         RATE_LIMIT_EXTRACT_BURST: '2',
         RATE_LIMIT_TRANSLATE_NOTES_BURST: '8',
+        RATE_LIMIT_ADVICE_BURST: '4',
         RATE_LIMIT_DAILY_UNITS: '40',
         RATE_LIMIT_EXTRACT_COST_UNITS: '7',
         RATE_LIMIT_TRANSLATE_NOTES_COST_UNITS: '2',
+        RATE_LIMIT_ADVICE_COST_UNITS: '6',
         RATE_LIMIT_STORE_TIMEOUT_MS: '900',
       }),
     ).toMatchObject({
@@ -192,9 +205,11 @@ describe('readRateLimitConfig', () => {
       dailyWindowSeconds: 43_200,
       extractBurst: 2,
       translateNotesBurst: 8,
+      adviceBurst: 4,
       dailyUnits: 40,
       extractCostUnits: 7,
       translateNotesCostUnits: 2,
+      adviceCostUnits: 6,
       storeTimeoutMs: 900,
     });
   });
@@ -204,9 +219,11 @@ describe('readRateLimitConfig', () => {
     'RATE_LIMIT_DAILY_WINDOW_SECONDS',
     'RATE_LIMIT_EXTRACT_BURST',
     'RATE_LIMIT_TRANSLATE_NOTES_BURST',
+    'RATE_LIMIT_ADVICE_BURST',
     'RATE_LIMIT_DAILY_UNITS',
     'RATE_LIMIT_EXTRACT_COST_UNITS',
     'RATE_LIMIT_TRANSLATE_NOTES_COST_UNITS',
+    'RATE_LIMIT_ADVICE_COST_UNITS',
     'RATE_LIMIT_STORE_TIMEOUT_MS',
   ])('rejects non-positive %s', (name) => {
     expect(() =>
@@ -286,7 +303,7 @@ describe('IP identifiers', () => {
 });
 
 describe('applyPaidRouteLimits', () => {
-  it('enforces independent burst limits for both paid routes', async () => {
+  it('enforces independent burst limits for the existing paid routes', async () => {
     const now = 1_000;
     const limiters = fakeLimiters({
       now: () => now,
@@ -317,6 +334,34 @@ describe('applyPaidRouteLimits', () => {
     expect(now).toBe(1_000);
   });
 
+  it('routes advice to a burst bucket separate from both existing routes', async () => {
+    const limiters = fakeLimiters({
+      now: () => 1_500,
+      extractBurst: 1,
+      translateNotesBurst: 1,
+      adviceBurst: 1,
+    });
+    const input = { identifier: 'same-ip', limiters, config: COSTS };
+
+    await expect(
+      applyPaidRouteLimits({ ...input, route: 'advice' }),
+    ).resolves.toEqual({ allowed: true });
+    await expect(
+      applyPaidRouteLimits({ ...input, route: 'advice' }),
+    ).resolves.toMatchObject({ allowed: false, window: 'burst' });
+
+    await expect(
+      applyPaidRouteLimits({ ...input, route: 'extract' }),
+    ).resolves.toEqual({ allowed: true });
+    await expect(
+      applyPaidRouteLimits({ ...input, route: 'translate-notes' }),
+    ).resolves.toEqual({ allowed: true });
+
+    expect(limiters.adviceBurst.calls).toHaveLength(2);
+    expect(limiters.extractBurst.calls).toHaveLength(1);
+    expect(limiters.translateNotesBurst.calls).toHaveLength(1);
+  });
+
   it('charges a shared daily pool by route cost', async () => {
     const limiters = fakeLimiters({ now: () => 2_000, dailyUnits: 6 });
     const input = { identifier: 'same-ip', limiters, config: COSTS };
@@ -335,6 +380,31 @@ describe('applyPaidRouteLimits', () => {
       { identifier: 'same-ip', rate: 5 },
       { identifier: 'same-ip', rate: 1 },
       { identifier: 'same-ip', rate: 1 },
+    ]);
+  });
+
+  it('debits advice at three units from the daily pool shared by every route', async () => {
+    const limiters = fakeLimiters({ now: () => 2_500, dailyUnits: 9 });
+    const input = { identifier: 'same-ip', limiters, config: COSTS };
+
+    await expect(
+      applyPaidRouteLimits({ ...input, route: 'extract' }),
+    ).resolves.toEqual({ allowed: true });
+    await expect(
+      applyPaidRouteLimits({ ...input, route: 'advice' }),
+    ).resolves.toEqual({ allowed: true });
+    await expect(
+      applyPaidRouteLimits({ ...input, route: 'translate-notes' }),
+    ).resolves.toEqual({ allowed: true });
+    await expect(
+      applyPaidRouteLimits({ ...input, route: 'advice' }),
+    ).resolves.toMatchObject({ allowed: false, window: 'daily' });
+
+    expect(limiters.dailyCost.calls).toEqual([
+      { identifier: 'same-ip', rate: 5 },
+      { identifier: 'same-ip', rate: 3 },
+      { identifier: 'same-ip', rate: 1 },
+      { identifier: 'same-ip', rate: 3 },
     ]);
   });
 
@@ -381,6 +451,30 @@ describe('applyPaidRouteLimits', () => {
     await expect(applyPaidRouteLimits(input)).resolves.toEqual({ allowed: true });
   });
 
+  it('allows advice again after its full sliding window has elapsed', async () => {
+    let now = 20_000;
+    const limiters = fakeLimiters({
+      now: () => now,
+      adviceBurst: 1,
+      burstWindowMs: 60_000,
+    });
+    const input = {
+      route: 'advice' as const,
+      identifier: 'same-ip',
+      limiters,
+      config: COSTS,
+    };
+
+    await expect(applyPaidRouteLimits(input)).resolves.toEqual({ allowed: true });
+    await expect(applyPaidRouteLimits(input)).resolves.toMatchObject({
+      allowed: false,
+      window: 'burst',
+    });
+
+    now = 80_001;
+    await expect(applyPaidRouteLimits(input)).resolves.toEqual({ allowed: true });
+  });
+
   it('allows daily spend again after the daily window resets', async () => {
     let now = 10_000;
     const limiters = fakeLimiters({
@@ -420,6 +514,7 @@ describe('applyPaidRouteLimits', () => {
     const limiters: PaidRouteLimiters = {
       extractBurst: timeoutLimiter,
       translateNotesBurst: timeoutLimiter,
+      adviceBurst: timeoutLimiter,
       dailyCost: {
         limit: dailyLimit,
         setDynamicLimit: vi.fn(),
@@ -435,6 +530,41 @@ describe('applyPaidRouteLimits', () => {
       }),
     ).rejects.toBeInstanceOf(RateLimitStoreUnavailableError);
     expect(dailyLimit).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when the advice burst store request times out', async () => {
+    const dailyLimit = vi.fn();
+    const timeoutLimiter: SharedWindowLimiter = {
+      limit: vi.fn().mockResolvedValue({
+        success: true,
+        reset: 60_000,
+        reason: 'timeout',
+      }),
+      setDynamicLimit: vi.fn(),
+    };
+    const unusedLimiter: SharedWindowLimiter = {
+      limit: vi.fn(),
+      setDynamicLimit: vi.fn(),
+    };
+
+    await expect(
+      applyPaidRouteLimits({
+        route: 'advice',
+        identifier: 'same-ip',
+        limiters: {
+          extractBurst: unusedLimiter,
+          translateNotesBurst: unusedLimiter,
+          adviceBurst: timeoutLimiter,
+          dailyCost: {
+            limit: dailyLimit,
+            setDynamicLimit: vi.fn(),
+          },
+        },
+        config: COSTS,
+      }),
+    ).rejects.toBeInstanceOf(RateLimitStoreUnavailableError);
+    expect(dailyLimit).not.toHaveBeenCalled();
+    expect(unusedLimiter.limit).not.toHaveBeenCalled();
   });
 
   it('fails closed when the daily store request times out', async () => {
@@ -458,6 +588,7 @@ describe('applyPaidRouteLimits', () => {
         limiters: {
           extractBurst: allowedBurst,
           translateNotesBurst: allowedBurst,
+          adviceBurst: allowedBurst,
           dailyCost: timedOutDaily,
         },
         config: COSTS,
@@ -682,12 +813,14 @@ describe('setDynamicRateLimitOverride', () => {
 
       await freshModule.setDynamicRateLimitOverride('extract-burst', 2);
       await freshModule.setDynamicRateLimitOverride('translate-notes-burst', 7);
+      await freshModule.setDynamicRateLimitOverride('advice-burst', 5);
       await freshModule.setDynamicRateLimitOverride('daily-units', 41);
       await freshModule.setDynamicRateLimitOverride('extract-burst', false);
 
       expect(created.map(({ prefix }) => prefix)).toEqual([
         'health-translator:unit-test:paid-api:v1:extract:burst',
         'health-translator:unit-test:paid-api:v1:translate-notes:burst',
+        'health-translator:unit-test:paid-api:v1:advice:burst',
         'health-translator:unit-test:paid-api:v1:daily-cost',
       ]);
       expect(created[0].setDynamicLimit).toHaveBeenNthCalledWith(1, {
@@ -697,7 +830,8 @@ describe('setDynamicRateLimitOverride', () => {
         limit: false,
       });
       expect(created[1].setDynamicLimit).toHaveBeenCalledWith({ limit: 7 });
-      expect(created[2].setDynamicLimit).toHaveBeenCalledWith({ limit: 41 });
+      expect(created[2].setDynamicLimit).toHaveBeenCalledWith({ limit: 5 });
+      expect(created[3].setDynamicLimit).toHaveBeenCalledWith({ limit: 41 });
     } finally {
       vi.doUnmock('@upstash/ratelimit');
       vi.doUnmock('@upstash/redis');
