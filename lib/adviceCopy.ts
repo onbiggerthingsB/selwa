@@ -4,6 +4,7 @@ import {
   reviewed,
   type LocalizedText,
 } from '@/lib/i18n';
+import type { AdviceBannerId } from '@/lib/adviceGuard';
 
 // VERIFY BEFORE RELEASE: these safety-critical hotline facts must be rechecked
 // by the release owner at launch and on the project's recurring review cadence.
@@ -56,7 +57,16 @@ export const ADVICE_BANNER_COPY = {
     ),
     bo: fallback('zh'),
   }),
-} as const satisfies Record<string, LocalizedText>;
+  'see-doctor': defineText({
+    en: reviewed(
+      'Please discuss this question with a doctor or another qualified health professional, especially if symptoms continue or get worse.',
+    ),
+    zh: reviewed(
+      '请就此问题咨询医生或其他合格的医疗专业人员，尤其是在症状持续或加重时。',
+    ),
+    bo: fallback('zh'),
+  }),
+} as const satisfies Record<AdviceBannerId, LocalizedText>;
 
 export const ADVICE_REFUSAL_COPY = {
   dosing: defineText({
@@ -178,13 +188,13 @@ export const ADVICE_FORM_COPY = {
     bo: fallback('zh'),
   }),
   loading: defineText({
-    en: reviewed('Checking availability'),
-    zh: reviewed('正在检查功能是否可用'),
+    en: reviewed('Preparing your answer'),
+    zh: reviewed('正在准备回答'),
     bo: fallback('zh'),
   }),
   loadingNote: defineText({
-    en: reviewed('The three perspectives will appear here when the protected answer service is available.'),
-    zh: reviewed('安全回答服务开放后，三个医学视角的内容将显示在这里。'),
+    en: reviewed('This can take a moment while the protected service prepares all three perspectives.'),
+    zh: reviewed('安全回答服务正在准备三个医学视角的内容，请稍候。'),
     bo: fallback('zh'),
   }),
   tibetanAnswerLanguages: defineText({
@@ -195,17 +205,105 @@ export const ADVICE_FORM_COPY = {
 } as const satisfies Record<string, LocalizedText>;
 
 export const ADVICE_UNAVAILABLE_COPY = {
-  heading: defineText({
-    en: reviewed('Health suggestions are not available yet.'),
-    zh: reviewed('健康建议功能暂不可用。'),
+  message: defineText({
+    en: reviewed('The answer service is temporarily unavailable. Please try again later.'),
+    zh: reviewed('回答服务暂时不可用。请稍后重试。'),
     bo: fallback('zh'),
   }),
-  body: defineText({
-    en: reviewed('The page is ready, but the answer service will stay unavailable until its safety checks are in place.'),
-    zh: reviewed('页面已经准备好，但在安全检查机制就绪之前，回答服务不会开放。'),
+  action: defineText({
+    en: reviewed('Try again'),
+    zh: reviewed('重试'),
     bo: fallback('zh'),
   }),
 } as const satisfies Record<string, LocalizedText>;
+
+export const ADVICE_CONSENT_COPY = {
+  dialogLabel: defineText({
+    en: reviewed('Before you ask'),
+    zh: reviewed('在提问之前'),
+    bo: fallback('zh'),
+  }),
+  heading: defineText({
+    en: reviewed('Before you ask'),
+    zh: reviewed('在提问之前'),
+    bo: fallback('zh'),
+  }),
+  body1: defineText({
+    en: reviewed(
+      "This page gives health suggestions written by an AI (Anthropic's Claude), from three perspectives: Chinese medicine, Tibetan medicine, and Western medicine. They are general information and ideas to discuss with a professional — not a diagnosis, not a treatment plan, and not a substitute for seeing a doctor.",
+    ),
+    zh: reviewed(
+      '本页面由 AI（Anthropic 的 Claude）从中医、藏医、西医三个视角给出健康建议。这些是一般性信息，供您与专业人员讨论——不是诊断，不是治疗方案，也不能替代就医。',
+    ),
+    bo: fallback('zh'),
+  }),
+  body2: defineText({
+    en: reviewed(
+      "Your question — including any health details you type in it — is sent to Anthropic (a US company) to generate the answer. We don't save your question on our servers, it is never used for advertising, and Anthropic does not use it to train its models, though it may hold it briefly (up to 30 days) for safety checks.",
+    ),
+    zh: reviewed(
+      '您的提问（包括其中的健康信息）会发送给美国公司 Anthropic 以生成回答。我们不会将您的提问保存在服务器上，绝不用于广告；Anthropic 不会用它训练模型，但可能为安全检查短暂保留（最多 30 天）。',
+    ),
+    bo: fallback('zh'),
+  }),
+  body3: defineText({
+    en: reviewed(
+      "The AI can be wrong, even when it sounds confident, and no person reviews its answers before you see them. It will never tell you what medicine to take or how much. In an emergency, don't ask here — call "
+        + MAINLAND_CHINA_EMERGENCY_NUMBER
+        + ' (mainland China) or your local emergency number.',
+    ),
+    zh: reviewed(
+      'AI 可能出错，即使听起来很有把握；回答在您看到之前没有经过人工审核。它绝不会告诉您该吃什么药、吃多少。遇到紧急情况请勿在此提问——请拨打 '
+        + MAINLAND_CHINA_EMERGENCY_NUMBER
+        + '（中国大陆）或当地急救电话。',
+    ),
+    bo: fallback('zh'),
+  }),
+  agree: defineText({
+    en: reviewed('I understand — ask my question'),
+    zh: reviewed('我已了解，开始提问'),
+    bo: fallback('zh'),
+  }),
+  back: defineText({
+    en: reviewed('Back'),
+    zh: reviewed('返回'),
+    bo: fallback('zh'),
+  }),
+} as const satisfies Record<string, LocalizedText>;
+
+const ADVICE_RETRY_COPY = ADVICE_UNAVAILABLE_COPY.action;
+
+export const ADVICE_ERROR_COPY = {
+  'rate-limited': {
+    message: defineText({
+      en: reviewed('Too many questions have been sent from this network. Please wait before trying again.'),
+      zh: reviewed('当前网络提交的问题过多。请稍后再试。'),
+      bo: fallback('zh'),
+    }),
+    action: ADVICE_RETRY_COPY,
+  },
+  'too-long': {
+    message: defineText({
+      en: reviewed('This question is too long. Please shorten it before trying again.'),
+      zh: reviewed('这个问题太长。请缩短后再试。'),
+      bo: fallback('zh'),
+    }),
+    action: defineText({
+      en: reviewed('Edit question'),
+      zh: reviewed('修改问题'),
+      bo: fallback('zh'),
+    }),
+  },
+  'could-not-answer': {
+    message: defineText({
+      en: reviewed("We couldn't prepare an answer. Please try again."),
+      zh: reviewed('我们无法生成回答。请重试。'),
+      bo: fallback('zh'),
+    }),
+    action: ADVICE_RETRY_COPY,
+  },
+  unavailable: ADVICE_UNAVAILABLE_COPY,
+} as const;
 
 export const ADVICE_DISCLAIMERS = [
   defineText({

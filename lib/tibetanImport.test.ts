@@ -224,7 +224,7 @@ describe('Tibetan reviewer packet export', () => {
       comparator: 6,
       polarity: 12,
     });
-    expect(packet.floor).toHaveLength(144); // 139 + 5 T2/T3 safety strings; grows with every UI feature
+    expect(packet.floor).toHaveLength(156); // 139 + 5 T2/T3 + 12 T4 safety strings; grows with every UI feature
     expect(packet.terms.find(({ term }) => term === '阴性')?.categories.split(' | ').sort())
       .toEqual(['core-negator', 'polarity']);
   });
@@ -322,13 +322,13 @@ describe('Tibetan reviewer packet export', () => {
     );
     expect(parsed.names.rows).toHaveLength(116);
     expect(parsed.terms.rows).toHaveLength(34);
-    expect(parsed.floor.rows).toHaveLength(144);
+    expect(parsed.floor.rows).toHaveLength(156);
     expect(parsed.decisions.rows).toHaveLength(1);
     for (const sheet of [parsed.names, parsed.terms, parsed.floor]) {
       expect(sheet.rows.every((row) => row.bo === '')).toBe(true);
     }
     const rows = readReviewedPacket(output);
-    expect(rows).toHaveLength(116 + 144);
+    expect(rows).toHaveLength(116 + 156);
     expect(rows.every(({ bo }) => bo === '')).toBe(true);
   });
 

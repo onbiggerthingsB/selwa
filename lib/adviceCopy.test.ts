@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   ADVICE_BANNER_COPY,
+  ADVICE_CONSENT_COPY,
   ADVICE_DISCLAIMERS,
   ADVICE_ENTRY_COPY,
+  ADVICE_ERROR_COPY,
   ADVICE_FORM_COPY,
   ADVICE_HOTLINES,
   ADVICE_HOTLINE_VERIFICATION_ACKNOWLEDGEMENT,
@@ -28,10 +30,23 @@ const T1_ADVICE_COPY: readonly LocalizedText[] = [
   ...SCHOOL_COPY,
 ];
 const T2_T3_ADVICE_COPY: readonly LocalizedText[] = [
-  ...Object.values(ADVICE_BANNER_COPY),
+  ADVICE_BANNER_COPY.emergency,
+  ADVICE_BANNER_COPY['emergency-self-harm'],
   ...Object.values(ADVICE_REFUSAL_COPY),
 ];
-const ALL_ADVICE_COPY = [...T1_ADVICE_COPY, ...T2_T3_ADVICE_COPY];
+const T4_ADVICE_COPY: readonly LocalizedText[] = [
+  ...Object.values(ADVICE_CONSENT_COPY),
+  ADVICE_BANNER_COPY['see-doctor'],
+  ADVICE_ERROR_COPY['rate-limited'].message,
+  ADVICE_ERROR_COPY['too-long'].message,
+  ADVICE_ERROR_COPY['too-long'].action,
+  ADVICE_ERROR_COPY['could-not-answer'].message,
+];
+const ALL_ADVICE_COPY = [
+  ...T1_ADVICE_COPY,
+  ...T2_T3_ADVICE_COPY,
+  ...T4_ADVICE_COPY,
+];
 
 describe('advice copy', () => {
   it('keeps every T1 string reviewed in en/zh and explicitly falling back to zh for bo', () => {
@@ -54,6 +69,22 @@ describe('advice copy', () => {
     expect(T2_T3_ADVICE_COPY).toHaveLength(5);
 
     for (const copy of T2_T3_ADVICE_COPY) {
+      expect(copy.en).toMatchObject({ review: 'reviewed' });
+      expect(copy.zh).toMatchObject({ review: 'reviewed' });
+      expect(copy.bo).toEqual({ fallback: 'zh' });
+      expect(resolveText(copy, 'bo')).toMatchObject({
+        resolvedLang: 'zh',
+        usedFallback: true,
+        review: 'unverified',
+        path: ['bo', 'zh'],
+      });
+    }
+  });
+
+  it('keeps every T4 string reviewed in en/zh and falling back to zh for bo', () => {
+    expect(T4_ADVICE_COPY).toHaveLength(12);
+
+    for (const copy of T4_ADVICE_COPY) {
       expect(copy.en).toMatchObject({ review: 'reviewed' });
       expect(copy.zh).toMatchObject({ review: 'reviewed' });
       expect(copy.bo).toEqual({ fallback: 'zh' });
