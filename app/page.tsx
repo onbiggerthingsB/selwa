@@ -1,5 +1,6 @@
 'use client';
 import { CaptureCard } from '@/components/CaptureCard';
+import { AdviceEntryCard } from '@/components/AdviceEntryCard';
 import { SavedVisits } from '@/components/SavedVisits';
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { LocalizedText } from '@/components/LocalizedText';
@@ -50,6 +51,7 @@ export default function Home() {
         </aside>
       )}
       <CaptureCard lang={lang} />
+      <AdviceEntryCard lang={lang} />
       <SavedVisits lang={lang} />
       <InstallPrompt />
     </main>

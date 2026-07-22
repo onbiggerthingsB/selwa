@@ -467,12 +467,12 @@ export function buildTibetanReviewPacket(
 ): TibetanReviewPacket {
   const corpus = extractLocalizedTextCorpus({ repoRoot });
   const referenceCalls = corpus.calls.filter((entry) => entry.reference);
-  if (corpus.calls.length !== 440) {
-    throw new Error(`Expected 440 localized calls; got ${corpus.calls.length}.`);
-  }
-  if (corpus.sourceFiles.length !== 14) {
-    throw new Error(`Expected 14 localized source files; got ${corpus.sourceFiles.length}.`);
-  }
+  // Assert only the STABLE, meaningful invariant: the reference-derived corpus (names +
+  // definitions) must be intact, since that is what a broken extraction would drop. Do NOT
+  // hard-assert the total call / source-file / floor counts — those grow legitimately with
+  // every UI feature (Feature 2 added 34), and a production tool must not crash when the app
+  // gains a string. The duplicate-id and excludedDirectBo checks below still catch a corrupt
+  // or unsafe corpus; curatedBo === 0 is asserted corpus-wide in the Tibetan test layer.
   if (referenceCalls.length !== 334) {
     throw new Error(`Expected 334 reference calls; got ${referenceCalls.length}.`);
   }
@@ -492,7 +492,9 @@ export function buildTibetanReviewPacket(
 
   if (names.length !== 116) throw new Error(`Expected 116 glossary names; got ${names.length}.`);
   if (terms.length !== 34) throw new Error(`Expected 34 distinct glossary terms; got ${terms.length}.`);
-  if (floor.length !== 105) throw new Error(`Expected 105 floor strings; got ${floor.length}.`);
+  // floor.length is NOT hard-asserted: the packet legitimately exports however many UI floor
+  // strings exist, and that count grows with every feature. The reviewer simply receives all
+  // of them. names (116) and terms (34) stay exact — they are reference/authored, not UI.
   return {
     names,
     terms,
