@@ -1,8 +1,32 @@
 import { describe, it, expect } from 'vitest';
+import { groundExtraction } from '@/lib/grounding';
+import { resolveText } from '@/lib/i18n';
+import { buildSummary } from '@/lib/summary';
 import { MEDREPBENCH_SAMPLE } from './sample';
 import { MIMIC_US_SAMPLE } from './us-sample';
+import { LHASA_FIELD_SAMPLE } from './field-lhasa';
 import { splitCorpus } from './corpus';
 import { scoreRealCorpus } from './realContentBench';
+
+function fieldChip(itemName: string): string {
+  const item = LHASA_FIELD_SAMPLE[0].items.find((candidate) => candidate.item_name === itemName);
+  if (!item) throw new Error(`Missing Lhasa field fixture row: ${itemName}`);
+  const report = groundExtraction(
+    {
+      rows: [
+        {
+          name: item.item_name,
+          value: item.item_value,
+          unit: item.item_unit,
+          printedRange: item.item_range,
+          confidence: 'high',
+        },
+      ],
+    },
+    'unknown',
+  );
+  return resolveText(buildSummary(report, 'en').sections[0].chip, 'en').text;
+}
 
 describe('real-content grounding harness', () => {
   it('scores the committed sample and returns sane numbers', () => {
@@ -56,5 +80,44 @@ describe('real-content grounding harness', () => {
     expect(s.classifiedDetail[0].needsConfirm).toBe(false);
     expect(s.classifiedDetail[0].needsReview).toBe(true);
     expect(s.confidentlyWrong).toHaveLength(0);
+  });
+});
+
+describe('de-identified Lhasa CBC+CRP grounding regression', () => {
+  it('locks the measured field-report coverage and report-relative chip safety', () => {
+    const s = scoreRealCorpus(LHASA_FIELD_SAMPLE);
+    expect(s.reports).toBe(1);
+    expect(s.items).toBe(27);
+    expect(s.recognized).toBe(17);
+    expect(s.classified).toBe(17);
+    expect(s.abstained).toBe(10);
+    expect(s.chipScorable).toBe(27);
+    expect(s.chipCorrect).toBe(27);
+    expect(s.chipAbstained).toBe(0);
+    expect(s.chipWrong).toBe(0);
+    expect(s.chipWrongDetail).toEqual([]);
+    expect(s.confidentlyWrong).toEqual([]);
+  });
+
+  it.each([
+    ['嗜酸性粒细胞绝对值', 'Below your report’s range'],
+    ['嗜酸性粒细胞百分比', 'Below your report’s range'],
+    ['C反应蛋白', 'Above your report’s range'],
+    ['超敏C反应蛋白', 'Above your report’s range'],
+  ] as const)('%s reproduces the printed flag in the correct direction', (itemName, expectedChip) => {
+    const item = LHASA_FIELD_SAMPLE[0].items.find((candidate) => candidate.item_name === itemName);
+    expect(item).toBeDefined();
+    const s = scoreRealCorpus([
+      {
+        image: `field-flag-probe-${itemName}`,
+        kind: 'field-lhasa-flag-probe',
+        items: [item!],
+      },
+    ]);
+    expect(s.chipScorable).toBe(1);
+    expect(s.chipCorrect).toBe(1);
+    expect(s.chipAbstained).toBe(0);
+    expect(s.chipWrong).toBe(0);
+    expect(fieldChip(itemName)).toBe(expectedChip);
   });
 });

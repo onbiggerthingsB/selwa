@@ -6,6 +6,7 @@
 // Coverage work develops on TRAIN and is gated on HELD-OUT (which it never sees).
 import { MEDREPBENCH_SAMPLE } from './sample';
 import { MIMIC_US_SAMPLE } from './us-sample';
+import { LHASA_FIELD_SAMPLE } from './field-lhasa';
 import { splitCorpus } from './corpus';
 import { scoreRealCorpus, type RealCorpusSummary } from './realContentBench';
 import type { RealReport } from './sample';
@@ -85,6 +86,7 @@ console.log(
 );
 report('MedRepBench — Chinese reports, SI units (stress corpus)', MEDREPBENCH_SAMPLE);
 const us = report('MIMIC-IV demo — real US hospital labs, conventional units (BEACHHEAD)', MIMIC_US_SAMPLE);
+report('Field — de-identified Lhasa CBC+CRP (grounding regression)', LHASA_FIELD_SAMPLE);
 
 if (us.confidentlyWrong.length) {
   console.log('\n⚠ confidently-wrong on US data (safety gate):');
