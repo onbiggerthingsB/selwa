@@ -1,6 +1,5 @@
 'use client';
 import { CaptureCard } from '@/components/CaptureCard';
-import { AdviceEntryCard } from '@/components/AdviceEntryCard';
 import { SavedVisits } from '@/components/SavedVisits';
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { LocalizedText } from '@/components/LocalizedText';
@@ -51,7 +50,11 @@ export default function Home() {
         </aside>
       )}
       <CaptureCard lang={lang} />
-      <AdviceEntryCard lang={lang} />
+      {/* Feature 2 (advice portal) entry removed 2026-07-25 — safety quarantine (C3).
+          The verified defect: the deterministic advice guard checks only lexical/structural
+          signals (emergency keywords, dosing, Tibetan script, model-set outOfScope) and never
+          medical truth, so harmful and false prose reached users. components/AdviceEntryCard.tsx
+          is preserved unmodified as research; re-adding it here re-opens the harm surface. */}
       <SavedVisits lang={lang} />
       <InstallPrompt />
     </main>

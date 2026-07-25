@@ -21,6 +21,9 @@ describe('AdviceEntryCard', () => {
     localStorage.clear();
   });
 
+  // PRESERVED RESEARCH: the component is no longer rendered anywhere (Feature 2 was quarantined
+  // 2026-07-25 — see app/advice/page.tsx). These two direct-render tests keep the T1-T4 copy work
+  // verified on the branch. The quarantine itself is asserted by the last test in this file.
   it('is a secondary link to the separate advice page with honest English framing', () => {
     render(<AdviceEntryCard lang="en" />);
 
@@ -41,16 +44,20 @@ describe('AdviceEntryCard', () => {
     expect(link).toHaveTextContent('来自中医、藏医、西医的一般性建议——不是诊断。');
   });
 
-  it('keeps the lab translator first and adds advice as the secondary home control', () => {
+  // QUARANTINE PROOF. Feature 2's home entry was removed 2026-07-25 because the advice guard
+  // enforces only lexical/structural floors and never medical truth, so harmful and false prose
+  // reached users. Re-adding <AdviceEntryCard /> to app/page.tsx fails this test loudly rather
+  // than silently re-opening the harm surface.
+  it('is no longer rendered on the home page (Feature 2 quarantine)', () => {
     const { container } = render(<Home />);
 
     const labEntry = screen.getByRole('button', { name: /Take a photo of your lab report/i });
-    const adviceEntry = screen.getByRole('link', { name: 'Ask a health question' });
     expect(labEntry).toHaveClass('capture-card');
-    expect(adviceEntry).toHaveClass('advice-entry-card');
-    expect(
-      labEntry.compareDocumentPosition(adviceEntry) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(container.querySelectorAll('.capture-card, .advice-entry-card')).toHaveLength(2);
+
+    expect(screen.queryByRole('link', { name: 'Ask a health question' })).toBeNull();
+    expect(screen.queryByRole('link', { name: '咨询健康问题' })).toBeNull();
+    expect(container.querySelectorAll('.advice-entry-card')).toHaveLength(0);
+    expect(container.querySelectorAll('a[href="/advice"]')).toHaveLength(0);
+    expect(container.querySelectorAll('.capture-card')).toHaveLength(1);
   });
 });

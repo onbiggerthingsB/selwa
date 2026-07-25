@@ -98,7 +98,93 @@ function reqWith(
   } as unknown as Parameters<typeof POST>[0];
 }
 
-describe('POST /api/advice', () => {
+describe('POST /api/advice is quarantined', () => {
+  beforeEach(() => {
+    parse.mockReset();
+    parse.mockResolvedValue({ parsed_output: MODEL_OUTPUT });
+    getAnthropic.mockClear();
+    enforcePaidRouteRateLimit.mockReset();
+    enforcePaidRouteRateLimit.mockResolvedValue(null);
+    preScreenQuestion.mockReset();
+    preScreenQuestion.mockReturnValue({ block: false, categories: [] });
+    applyAdviceSafetyFloors.mockReset();
+    applyAdviceSafetyFloors.mockReturnValue(GUARDED_RESULT);
+  });
+
+  // The load-bearing control for the Feature 2 quarantine (2026-07-25). The verified defect: the
+  // guard enforces only lexical/structural floors and never medical truth, so harmful and false
+  // prose reached users. This suite pins the refusal as UNCONDITIONAL and, critically, as
+  // happening before any side effect — a valid, fully-consented, well-formed request must still
+  // never have its body read or reach the model.
+  it('410s a fully valid, consented request before every side effect', async () => {
+    const bodyReader = vi.fn(async () => validBody());
+
+    const res = await POST(reqWith(validBody(), { bodyReader }));
+
+    expect(res.status).toBe(410);
+    await expect(res.json()).resolves.toEqual({
+      error: 'Advice feature disabled',
+      errorZh: '健康咨询功能已停用',
+    });
+    expect(res.headers.get('Cache-Control')).toBe('no-store');
+
+    expect(bodyReader).not.toHaveBeenCalled();
+    expect(getAnthropic).not.toHaveBeenCalled();
+    expect(enforcePaidRouteRateLimit).not.toHaveBeenCalled();
+    expect(preScreenQuestion).not.toHaveBeenCalled();
+    expect(parse).not.toHaveBeenCalled();
+    expect(applyAdviceSafetyFloors).not.toHaveBeenCalled();
+  });
+
+  // Proves the quarantine is not the consent gate wearing a new status code: without a consent
+  // header the pre-quarantine route returned 403, so a 410 here means the refusal precedes and
+  // supersedes consent entirely.
+  it.each([null, '', '   ', '1', String(ADVICE_CONSENT_VERSION)])(
+    '410s regardless of the consent header (%j)',
+    async (adviceConsent) => {
+      const res = await POST(reqWith(validBody(), { adviceConsent }));
+
+      expect(res.status).toBe(410);
+      await expect(res.json()).resolves.toEqual({
+        error: 'Advice feature disabled',
+        errorZh: '健康咨询功能已停用',
+      });
+    },
+  );
+
+  // The 410 guard lives inside POST, so it is method-scoped: a sibling handler added to this file
+  // later (export async function GET…) would NOT inherit the quarantine and would reach the model,
+  // with every other test still green. Adversarial probing confirmed that exact bypass. Pin the
+  // module's exported surface so adding one is impossible without failing here.
+  it('exports no request handler other than the quarantined POST', async () => {
+    const routeModule = await import('./route');
+    const handlers = ['GET', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'] as const;
+
+    expect(
+      handlers.filter((method) => method in routeModule),
+      'a sibling handler would bypass the quarantine, which only guards POST',
+    ).toEqual([]);
+    expect(typeof routeModule.POST).toBe('function');
+  });
+
+  // A malformed or hostile request must not reach the parsing/validation branches either.
+  it('410s without reading a body that would throw', async () => {
+    const bodyReader = vi.fn(async () => {
+      throw new Error('the question must never be read while quarantined');
+    });
+
+    const res = await POST(reqWith(null, { bodyReader }));
+
+    expect(res.status).toBe(410);
+    expect(bodyReader).not.toHaveBeenCalled();
+  });
+});
+
+// PRESERVED RESEARCH (T1-T4), skipped by the quarantine above. These 41 tests documented the
+// pre-quarantine contract and are kept so the work stays on the branch and reviewable; they cannot
+// pass while the unconditional 410 stands. Un-skipping them requires deleting FEATURE_2_QUARANTINED
+// in ./route.ts, which the quarantine suite above would then catch.
+describe.skip('POST /api/advice (pre-quarantine research)', () => {
   beforeEach(() => {
     parse.mockReset();
     parse.mockResolvedValue({ parsed_output: MODEL_OUTPUT });

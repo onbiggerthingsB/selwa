@@ -42,7 +42,9 @@ routes that can spend Anthropic credits:
 
 - `POST /api/extract`
 - `POST /api/translate-notes`
-- `POST /api/advice`
+- `POST /api/advice` — **QUARANTINED 2026-07-25: returns `410` unconditionally.** The refusal is
+  the first statement in the handler, so this route no longer reads a body, calls the model, or
+  consumes any rate-limit allowance. The rate-limit config and tests are retained deliberately.
 
 The consent assertion is checked first and remains unchanged. Consent is an integrity
 control, not authentication. After consent succeeds, the route checks its limits
@@ -172,6 +174,12 @@ curl -i -H 'x-ht-consent-version: 2' -H 'content-type: application/json' --data 
 npm run rate-limit:set -- translate-notes-burst default
 ```
 
+> **OBSOLETE — Feature 2 quarantine, 2026-07-25.** The commands below no longer exercise rate
+> limiting. `POST /api/advice` now returns `410 {"error":"Advice feature disabled","errorZh":"健康咨询功能已停用"}`
+> unconditionally, before the consent check, the rate limiter, and the body read — so all three
+> curls return `410`, none consumes an allowance, and validation is unreachable. Retained as the
+> pre-quarantine procedure in case the route is ever restored.
+
 The advice route can be checked without a model call by sending an empty question so
 the allowed request stops at validation:
 
@@ -184,7 +192,9 @@ npm run rate-limit:set -- advice-burst default
 ```
 
 A request without the consent header must continue to return `403` before consuming a
-rate-limit allowance.
+rate-limit allowance — true for `/api/extract` and `/api/translate-notes`. **Not for
+`/api/advice` while quarantined:** it returns `410` regardless of the consent header, because the
+refusal precedes and supersedes the consent gate.
 
 ## Safety model (one paragraph)
 Claude extracts printed rows only. `lib/grounding.ts` joins each row to the curated table (`data/reference-labs.ts`), checks units, classifies numerically (`lib/classify.ts`), and runs the deterministic guard (`lib/guard.ts`, rules R1–R12). Unknown analytes and unit mismatches abstain; high-stakes/critical values are re-confirmed by the user and flagged for a clinician. `lib/summary.ts` renders a templated bilingual summary from the table — the model never assigns meaning, ranges, or a diagnosis.

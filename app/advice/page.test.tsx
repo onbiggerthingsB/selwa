@@ -20,7 +20,11 @@ import { ADVICE_CONSENT_HEADER } from '@/lib/consentGate';
 import type { AdviceResult } from '@/lib/adviceGuard';
 import { MAX_ADVICE_QUESTION_CHARS } from '@/lib/adviceSchema';
 import { LANG_PREFERENCE_KEY } from '@/lib/langPreference';
-import AdvicePage from './page';
+// PRESERVED RESEARCH: Feature 2 was quarantined 2026-07-25 (see app/advice/page.tsx). The portal
+// implementation now lives in AdvicePageResearch.tsx and is no longer routable; these tests keep
+// exercising it so the T1-T4 work stays verified on the branch. The proof that /advice itself is
+// unreachable lives in app/advice/quarantine.test.tsx.
+import AdvicePage from './AdvicePageResearch';
 
 const NORMAL_RESULT = {
   presentation: 'normal',

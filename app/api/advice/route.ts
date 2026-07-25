@@ -17,7 +17,34 @@ import { enforcePaidRouteRateLimit } from '@/lib/rateLimit';
 export const runtime = 'nodejs'; // REQUIRED: the SDK breaks on the edge runtime
 export const dynamic = 'force-dynamic'; // never cache an advice handler
 
+// SAFETY QUARANTINE of Feature 2 — 2026-07-25. This is the load-bearing control: hiding the home
+// entry and 404ing /advice are defence in depth, but a PWA-cached or already-open client can still
+// POST here. Verified by running the shipped guard: applyAdviceSafetyFloors enforces only lexical
+// and structural floors (emergency lexicon, dosing patterns, Tibetan script, the model's own
+// outOfScope flag) and never medical truth, so a multi-day food-and-water-avoidance plan and a
+// definite "not cancer, no biopsy needed" both returned presentation:'normal' with the prose
+// copied verbatim, and "exercise through crushing chest pain" returned a banner with the harmful
+// schools still populated underneath.
+//
+// Typed `boolean` rather than the literal `true` on purpose: a literal would let TypeScript mark
+// the entire handler below as unreachable, and this is a DISABLE, not a delete — the T1-T4
+// implementation must keep compiling as preserved research. Re-enabling requires deleting this
+// constant AND the quarantine tests in ./route.test.ts, so it cannot happen silently.
+const FEATURE_2_QUARANTINED: boolean = true;
+
 export async function POST(req: NextRequest) {
+  // FIRST statement, before the consent header is read, before the rate limiter's Redis round-trip,
+  // before req.json(), and before getAnthropic() constructs a client. Nothing about the request is
+  // inspected: the refusal is unconditional. 410 rather than the route's existing 403 shape so the
+  // quarantine is distinguishable from a consent failure — a refactor that restored the consent
+  // path would otherwise re-enable the portal for consenting users without failing a test.
+  if (FEATURE_2_QUARANTINED) {
+    return NextResponse.json(
+      { error: 'Advice feature disabled', errorZh: '健康咨询功能已停用' },
+      { status: 410, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
   const consent = checkConsentVersion(
     req.headers.get(ADVICE_CONSENT_HEADER),
     ADVICE_CONSENT_VERSION,
