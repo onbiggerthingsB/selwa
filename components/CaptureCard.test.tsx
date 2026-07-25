@@ -398,6 +398,25 @@ describe('CaptureCard extraction failures', () => {
     });
   });
 
+  // Defence in depth behind the route's 422: a schema-valid but EMPTY extraction must land on
+  // Retake, never on a result screen. An empty report shown as a successful read is false
+  // reassurance by omission.
+  it('treats a 200 response with zero extracted rows as unreadable', async () => {
+    const { json, response } = successfulResponse({ data: { rows: [] } });
+    mocks.fetch.mockResolvedValue(response);
+
+    await uploadAndSubmit();
+    const alert = await screen.findByRole('alert');
+
+    expectUnreadablePresentation(alert);
+    expect(json).toHaveBeenCalledTimes(1);
+    expect(mocks.push).not.toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith('capture submission failed', {
+      status: 200,
+      cause: 'unreadable',
+    });
+  });
+
   it('preserves a quality override when retrying the same photo after a 502', async () => {
     const { response } = failedResponse(502, 'Could not read the report');
     mocks.fetch.mockResolvedValue(response);

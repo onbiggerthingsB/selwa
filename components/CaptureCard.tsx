@@ -354,7 +354,10 @@ export function CaptureCard({ lang }: { lang: Lang }) {
         ? payload.data
         : undefined;
     const parsed = LabExtractionSchema.safeParse(data);
-    if (!parsed.success) {
+    // Defence in depth for the route's zero-row refusal: an empty extraction is unreadable, not an
+    // empty report. Reuses the shipped "unreadable" -> Retake path rather than navigating to a
+    // result screen that would show nothing and read as reassurance.
+    if (!parsed.success || parsed.data.rows.length === 0) {
       failSubmission('unreadable', res.status, overrideQuality);
       return;
     }
