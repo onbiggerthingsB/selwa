@@ -46,6 +46,44 @@ export const REVIEW_PACKET_FILES = {
   decisions: 'decisions.csv',
 } as const;
 
+// THE TWO-PERSON RULE. Tibetan copy cannot be machine-verified — no COMET metric exists for
+// Tibetan, health-domain d-BLEU is ~9.4, and TLUE (EMNLP 2025) found Tibetan experts approved only
+// 28.74% of Claude's Tibetan at BLEU 34.8: fluent but wrong. So the only gate on meaning is human,
+// and a single human reviewing their own translation is not a gate at all. Two independent
+// reviewers must agree before anything enters the app.
+//
+// WHAT THIS ENFORCES, HONESTLY. This is an honest-participant control, NOT an anti-collusion or
+// identity system. A solo operator can export two packets, paste the same bo column into both, type
+// a second name, and pass every check here. No local tool can prevent that. What it does buy:
+//   • the one-packet import path no longer exists, so importing before a second review is a
+//     deliberate act of fabrication rather than the default;
+//   • a recorded claim of two named reviewers that lands in git history and PR review;
+//   • mechanical guarantees independent of the two-person story — a row-set completeness gate that
+//     catches silent row deletion, and cross-packet source equality that catches a reviewer
+//     approving Tibetan against a falsified zh/context column;
+//   • fail-closed disagreement: the importer NEVER picks a winner between two translations.
+// The rule itself remains process, enforced by review; this code makes violating it deliberate and
+// visible. Do not add cryptography or signatures — they would imply a guarantee we cannot make.
+export const MANIFEST_FILE = 'manifest.csv';
+export const INSTRUCTIONS_FILE = 'INSTRUCTIONS.md';
+
+export interface PacketManifest {
+  packetId: string;
+  reviewerName: string;
+  reviewerContact: string;
+  reviewDate: string;
+}
+
+/** Reviewers' spreadsheet tools prepend a BOM; without this a trivial U+FEFF breaks the header. */
+function stripBom(text: string): string {
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+}
+
+/** NFC → trim → casefold → collapse whitespace. Used only to compare reviewer identities. */
+function normalizeIdentity(value: string): string {
+  return value.normalize('NFC').trim().toLowerCase().replace(/\s+/gu, ' ');
+}
+
 export const SECONDS_POLICY_DECISION_ID = 'printed-unit-miao-policy';
 
 const COMPARATOR_TERMS = [
@@ -557,6 +595,92 @@ function decisionCsv(packet: TibetanReviewPacket): string {
   );
 }
 
+const REVIEWER_INSTRUCTIONS = `# 藏语审核说明 / Tibetan review instructions
+
+## 中文
+
+您收到的是**两份独立审核**中的一份。另一位审核员收到内容相同的另一份。
+**在两份都提交之前，请不要与对方讨论答案**——两份独立的答案是我们唯一的质量保证。
+
+1. 只填写 \`bo\` 这一列，以及 \`${MANIFEST_FILE}\` 里的姓名、联系方式、日期。
+2. **不要动 \`${REVIEW_PACKET_FILES.terms}\`**——那是给您参考的术语表。在里面填任何内容都会导致整批导入被拒绝。
+3. **不要增加、删除或重新排序任何一行**，也不要修改除 \`bo\` 以外的任何一列。
+4. 如果 \`alternatives\` 列要求 N 个变体，请填写一个包含 N 个字符串的 JSON 数组，例如 \`["第一种","第二种"]\`。
+5. 请用 Google Sheets 或 LibreOffice 编辑，并导出为 **UTF-8 CSV**（Excel 的 CSV 导出常常损坏藏文）。
+6. 完成后请把**整个文件夹**返回。
+
+如果某一条您不确定，请**留空**。留空只是暂不收录；填错则可能被病人看到。
+
+## English
+
+You have one of **two independent review packets**. Another reviewer has the other.
+**Do not discuss answers with the other reviewer until both are submitted** — two independent
+answers are the only quality guarantee we have.
+
+1. Fill in only the \`bo\` column, plus name/contact/date in \`${MANIFEST_FILE}\`.
+2. **Do not touch \`${REVIEW_PACKET_FILES.terms}\`** — it is reference material. Any entry there
+   aborts the entire import.
+3. **Do not add, delete, or reorder rows**, and do not edit any column other than \`bo\`.
+4. Where the \`alternatives\` column asks for N variants, give a JSON array of exactly N strings,
+   e.g. \`["first","second"]\`.
+5. Edit in Google Sheets or LibreOffice and export as **UTF-8 CSV** (Excel's CSV export corrupts
+   Tibetan).
+6. Return the whole folder.
+
+If you are unsure about an entry, **leave it empty**. Empty means "not yet published"; wrong means
+a patient may read it.
+`;
+
+function manifestCsv(packetId: string): string {
+  return serializeCsv(
+    ['packet-id', 'reviewer-name', 'reviewer-contact', 'review-date'],
+    [{ 'packet-id': packetId, 'reviewer-name': '', 'reviewer-contact': '', 'review-date': '' }],
+  );
+}
+
+export function readPacketManifest(packetDirectory: string): PacketManifest {
+  const manifestPath = path.join(packetDirectory, MANIFEST_FILE);
+  let raw: string;
+  try {
+    raw = readFileSync(manifestPath, 'utf8');
+  } catch {
+    throw new Error(
+      `${MANIFEST_FILE} is missing from ${packetDirectory}. Every packet must carry the manifest `
+      + 'identifying who reviewed it. Nothing was imported.',
+    );
+  }
+  const parsed = parseCsv(stripBom(raw));
+  requiredColumns(parsed, MANIFEST_FILE, [
+    'packet-id',
+    'reviewer-name',
+    'reviewer-contact',
+    'review-date',
+  ]);
+  if (parsed.rows.length !== 1) {
+    throw new Error(
+      `${MANIFEST_FILE} must hold exactly one row, found ${parsed.rows.length}. Nothing was imported.`,
+    );
+  }
+  const [row] = parsed.rows;
+  const manifest: PacketManifest = {
+    packetId: row['packet-id'].trim(),
+    reviewerName: row['reviewer-name'].trim(),
+    reviewerContact: row['reviewer-contact'].trim(),
+    reviewDate: row['review-date'].trim(),
+  };
+  if (manifest.packetId.length === 0) {
+    throw new Error(`${MANIFEST_FILE} has an empty packet-id. Nothing was imported.`);
+  }
+  // A freshly exported, unfilled manifest fails here on purpose: an unnamed review is not a review.
+  if (manifest.reviewerName.length === 0 || manifest.reviewerContact.length === 0) {
+    throw new Error(
+      `${MANIFEST_FILE} in ${packetDirectory} is missing reviewer-name or reviewer-contact. `
+      + 'An anonymous packet cannot evidence a second opinion. Nothing was imported.',
+    );
+  }
+  return manifest;
+}
+
 export function writeTibetanReviewPacket(
   repoRoot: string,
   packetDirectory: string,
@@ -571,6 +695,10 @@ export function writeTibetanReviewPacket(
     decisionCsv(packet),
     'utf8',
   );
+  // Re-exporting over a filled directory deliberately mints a NEW packet-id: the answers in it were
+  // reviewed against the old source, so they must not silently carry over as a fresh review.
+  writeFileSync(path.join(packetDirectory, MANIFEST_FILE), manifestCsv(randomUUID()), 'utf8');
+  writeFileSync(path.join(packetDirectory, INSTRUCTIONS_FILE), REVIEWER_INSTRUCTIONS, 'utf8');
   return packet;
 }
 
@@ -590,10 +718,12 @@ export function readReviewedPacket(packetDirectory: string): ReviewedImportRow[]
   const termsPath = path.join(packetDirectory, REVIEW_PACKET_FILES.terms);
   const floorPath = path.join(packetDirectory, REVIEW_PACKET_FILES.floor);
   const decisionsPath = path.join(packetDirectory, REVIEW_PACKET_FILES.decisions);
-  const names = parseCsv(readFileSync(namesPath, 'utf8'));
-  const terms = parseCsv(readFileSync(termsPath, 'utf8'));
-  const floor = parseCsv(readFileSync(floorPath, 'utf8'));
-  const decisions = parseCsv(readFileSync(decisionsPath, 'utf8'));
+  // stripBom: reviewers work in Google Sheets / LibreOffice, which prepend U+FEFF on CSV export.
+  // Without this the BOM concatenates into the first header name and requiredColumns throws.
+  const names = parseCsv(stripBom(readFileSync(namesPath, 'utf8')));
+  const terms = parseCsv(stripBom(readFileSync(termsPath, 'utf8')));
+  const floor = parseCsv(stripBom(readFileSync(floorPath, 'utf8')));
+  const decisions = parseCsv(stripBom(readFileSync(decisionsPath, 'utf8')));
   requiredColumns(
     names,
     REVIEW_PACKET_FILES.names,
@@ -1661,12 +1791,298 @@ export function executeTibetanImport(input: {
   };
 }
 
+export interface DualDisagreement {
+  id: string;
+  packet: ReviewPacketKind;
+  reason: 'disagreement' | 'coverage-mismatch' | 'context-mismatch';
+  a: string;
+  b: string;
+}
+
+export interface DualAgreementPlan {
+  agreed: readonly ReviewedImportRow[];
+  refused: readonly DualDisagreement[];
+  skipped: readonly ReviewedImportRow[];
+}
+
+/** NFC + outer trim only. Deliberately NOT tsheg- or inner-whitespace-insensitive: tsheg placement
+ *  changes segmentation, so a tsheg difference is a real disagreement, not a formatting one. */
+function canonicalBo(value: string): string {
+  return value.normalize('NFC').trim();
+}
+
+/** Two hand-typed JSON arrays may differ only in spacing. Compare element-wise; re-serialize on
+ *  agreement so the written form is deterministic rather than whichever packet we happened to read
+ *  first. Returns null when the cell is not a JSON string array. */
+function parseAlternativeArray(value: string): string[] | null {
+  const trimmed = value.trim();
+  if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'string')) return null;
+  return parsed.map((item) => canonicalBo(item));
+}
+
+/** Every reviewer-visible column except bo. If these differ across packets, one reviewer approved
+ *  Tibetan against a different (falsified or stale) source than the other. */
+const CROSS_PACKET_SOURCE_COLUMNS = [
+  'zh',
+  'en',
+  'key',
+  'unit',
+  'context',
+  'specimen',
+  'aliases',
+  'screen',
+  'leakageNote',
+  'alternatives',
+  'placeholders',
+  'sourceHash',
+] as const;
+
+/**
+ * The dual gate. Pairs two independently reviewed packets and decides, per row, whether the two
+ * reviewers agree. FAILS CLOSED: it never picks a winner between two differing translations —
+ * legitimate synonymy is a human adjudication, not something code may resolve by preference.
+ */
+export function planDualAgreement(
+  rowsA: readonly ReviewedImportRow[],
+  rowsB: readonly ReviewedImportRow[],
+): DualAgreementPlan {
+  // Must precede pairing: the per-row IDENTITY duplicate guard runs later, so a Map keyed by id
+  // would silently keep last-wins and quietly drop a reviewer's answer.
+  for (const [label, rows] of [['A', rowsA], ['B', rowsB]] as const) {
+    const seen = new Set<string>();
+    for (const row of rows) {
+      const key = `${row.packet}:${row.id}`;
+      if (row.id.length > 0 && seen.has(key)) {
+        throw new Error(
+          `Packet ${label} contains duplicate row id ${row.id} in ${row.packet}. Nothing was imported.`,
+        );
+      }
+      seen.add(key);
+    }
+  }
+
+  const byKeyB = new Map(rowsB.map((row) => [`${row.packet}:${row.id}`, row]));
+  const agreed: ReviewedImportRow[] = [];
+  const refused: DualDisagreement[] = [];
+  const skipped: ReviewedImportRow[] = [];
+
+  for (const rowA of rowsA) {
+    const key = `${rowA.packet}:${rowA.id}`;
+    const rowB = byKeyB.get(key);
+    if (!rowB) continue; // row-set equality is enforced by the completeness gate before this runs
+
+    const mismatched = CROSS_PACKET_SOURCE_COLUMNS.find(
+      (column) => (rowA[column] ?? '') !== (rowB[column] ?? ''),
+    );
+    if (mismatched) {
+      refused.push({
+        id: rowA.id,
+        packet: rowA.packet,
+        reason: 'context-mismatch',
+        a: String(rowA[mismatched] ?? ''),
+        b: String(rowB[mismatched] ?? ''),
+      });
+      continue;
+    }
+
+    const aFilled = rowA.bo.trim().length > 0;
+    const bFilled = rowB.bo.trim().length > 0;
+    if (!aFilled && !bFilled) {
+      skipped.push(rowA);
+      continue;
+    }
+    if (aFilled !== bFilled) {
+      // Fail closed. One reviewer proposing and the other silent is exactly the single-opinion
+      // situation this whole mechanism exists to refuse.
+      refused.push({
+        id: rowA.id,
+        packet: rowA.packet,
+        reason: 'coverage-mismatch',
+        a: rowA.bo,
+        b: rowB.bo,
+      });
+      continue;
+    }
+
+    const altA = parseAlternativeArray(rowA.bo);
+    const altB = parseAlternativeArray(rowB.bo);
+    if (altA && altB) {
+      if (altA.length === altB.length && altA.every((item, index) => item === altB[index])) {
+        agreed.push({ ...rowA, bo: JSON.stringify(altA) });
+      } else {
+        refused.push({ id: rowA.id, packet: rowA.packet, reason: 'disagreement', a: rowA.bo, b: rowB.bo });
+      }
+      continue;
+    }
+
+    const canonA = canonicalBo(rowA.bo);
+    if (canonA === canonicalBo(rowB.bo)) {
+      // Forward the canonical form, not either raw cell, so A5 NFC-stability holds even if a
+      // reviewer typed decomposed codepoints.
+      agreed.push({ ...rowA, bo: canonA });
+    } else {
+      refused.push({ id: rowA.id, packet: rowA.packet, reason: 'disagreement', a: rowA.bo, b: rowB.bo });
+    }
+  }
+
+  return { agreed, refused, skipped };
+}
+
+/**
+ * Row-set completeness. Catches a reviewer who deleted rows (their packet then diverges from the
+ * other) and fabricated rows (ids the corpus does not contain). Missing-from-both is source DRIFT,
+ * not tampering — a defineText added since export — and is reported, not thrown, so it does not
+ * preempt the per-row B13 "re-export and re-review" diagnostics.
+ */
+export function planPacketCompleteness(input: {
+  repoRoot: string;
+  rowsA: readonly ReviewedImportRow[];
+  rowsB: readonly ReviewedImportRow[];
+  labTable?: readonly ReferenceEntry[];
+}): { drift: readonly string[] } {
+  const corpus = extractLocalizedTextCorpus({ repoRoot: path.resolve(input.repoRoot) });
+  const labTable = input.labTable ?? REFERENCE_LABS;
+  const labKeys = new Set(labTable.map(({ key }) => key));
+
+  const expected = new Set<string>();
+  for (const call of corpus.calls) {
+    if (call.reference?.field === 'name') {
+      if (labKeys.has(call.reference.key)) expected.add(`glossary-names:${call.id}`);
+      continue;
+    }
+    if (call.reference) continue;
+    if (corpus.excludedDirectBo.some((excluded) => excluded.entry.id === call.id)) continue;
+    expected.add(`floor-strings:${call.id}`);
+  }
+
+  const keysOf = (rows: readonly ReviewedImportRow[]) =>
+    new Set(rows.map((row) => `${row.packet}:${row.id}`));
+  const keysA = keysOf(input.rowsA);
+  const keysB = keysOf(input.rowsB);
+
+  const onlyA = [...keysA].filter((key) => !keysB.has(key));
+  const onlyB = [...keysB].filter((key) => !keysA.has(key));
+  if (onlyA.length > 0 || onlyB.length > 0) {
+    throw new Error(
+      'The two packets do not cover the same rows — one of them had rows added or deleted. '
+      + `Only in A: ${onlyA.join(', ') || '(none)'}. Only in B: ${onlyB.join(', ') || '(none)'}. `
+      + 'Nothing was imported.',
+    );
+  }
+
+  const fabricated = [...keysA].filter((key) => !expected.has(key));
+  if (fabricated.length > 0) {
+    throw new Error(
+      `The packets contain ${fabricated.length} row(s) with no matching source string: `
+      + `${fabricated.join(', ')}. Nothing was imported.`,
+    );
+  }
+
+  return { drift: [...expected].filter((key) => !keysA.has(key)) };
+}
+
+export interface DualImportResult extends TibetanImportResult {
+  disagreements: readonly DualDisagreement[];
+  drift: readonly string[];
+  reviewers: readonly string[];
+}
+
+/**
+ * Import Tibetan approved by TWO independent reviewers. There is deliberately no single-packet
+ * path: see the two-person rule note at the top of this file for what that does and does not buy.
+ *
+ * NOTE: executeTibetanImport stays exported for in-memory tests. Calling it directly bypasses this
+ * gate — the same trust level as editing this file. The control governs the packet/CLI path, which
+ * is the only path a human uses.
+ */
 export function importReviewedPacket(
   repoRoot: string,
-  packetDirectory: string,
-): TibetanImportResult {
-  return executeTibetanImport({
+  packetDirectoryA: string,
+  packetDirectoryB: string,
+  options: { labTable?: readonly ReferenceEntry[] } = {},
+): DualImportResult {
+  const manifestA = readPacketManifest(packetDirectoryA);
+  const manifestB = readPacketManifest(packetDirectoryB);
+
+  if (manifestA.packetId === manifestB.packetId) {
+    throw new Error(
+      'Both packets carry the same packet-id, so they are the same exported packet — either the '
+      + 'same directory was passed twice, or one was copied over the other. A copy is not a second '
+      + 'opinion. Nothing was imported.',
+    );
+  }
+  if (normalizeIdentity(manifestA.reviewerName) === normalizeIdentity(manifestB.reviewerName)) {
+    throw new Error(
+      `Both packets name the same reviewer (${manifestA.reviewerName}). Medical translation needs `
+      + 'two independent reviewers; nobody may approve their own work. Nothing was imported.',
+    );
+  }
+  if (normalizeIdentity(manifestA.reviewerContact) === normalizeIdentity(manifestB.reviewerContact)) {
+    throw new Error(
+      'Both packets give the same reviewer contact, so they are not two independent reviewers. '
+      + 'Nothing was imported.',
+    );
+  }
+
+  const rowsA = readReviewedPacket(packetDirectoryA);
+  const rowsB = readReviewedPacket(packetDirectoryB);
+  const { drift } = planPacketCompleteness({
     repoRoot,
-    rows: readReviewedPacket(packetDirectory),
+    rowsA,
+    rowsB,
+    labTable: options.labTable,
   });
+  const dual = planDualAgreement(rowsA, rowsB);
+
+  const result = executeTibetanImport({
+    repoRoot,
+    rows: dual.agreed,
+    labTable: options.labTable,
+  });
+
+  const refusedRows: ImportRowResult[] = dual.refused.map((disagreement) => ({
+    id: disagreement.id,
+    packet: disagreement.packet,
+    status: 'refused' as const,
+    diagnostics: [
+      {
+        check: 'DUAL',
+        message:
+          disagreement.reason === 'disagreement'
+            ? 'The two reviewers submitted different Tibetan for this row. The importer does not '
+              + 'choose between them: agree on one form, put it in BOTH packets, and re-import.'
+            : disagreement.reason === 'coverage-mismatch'
+              ? 'Only one reviewer filled this row. One opinion is not a review; either both fill '
+                + 'it or both leave it empty.'
+              : 'The two packets disagree about the SOURCE text for this row, so at least one '
+                + 'reviewer judged against a different original. Re-export and re-review.',
+      },
+    ],
+  }));
+
+  // Rows both reviewers left empty never reach executeTibetanImport, so account for them here or
+  // they vanish from the tally and an untouched packet looks like a no-op with nothing in it.
+  const skippedRows: ImportRowResult[] = dual.skipped.map((row) => ({
+    id: row.id,
+    packet: row.packet,
+    status: 'skipped' as const,
+    diagnostics: [],
+  }));
+
+  return {
+    ...result,
+    rows: [...result.rows, ...refusedRows, ...skippedRows],
+    refused: result.refused + refusedRows.length,
+    skipped: result.skipped + skippedRows.length,
+    disagreements: dual.refused,
+    drift,
+    reviewers: [manifestA.reviewerName, manifestB.reviewerName],
+  };
 }

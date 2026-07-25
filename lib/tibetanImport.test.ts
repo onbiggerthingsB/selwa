@@ -17,6 +17,8 @@ import path from 'node:path';
 import { REFERENCE_LABS } from '@/data/reference-labs';
 import {
   GLOSSARY_TERM_COMPONENT_COUNTS,
+  INSTRUCTIONS_FILE,
+  MANIFEST_FILE,
   REVIEW_PACKET_FILES,
   SECONDS_POLICY_DECISION_ID,
   buildFloorStringRows,
@@ -181,6 +183,94 @@ function simpleFixture(): { root: string; entry: LocalizedTextCall; source: stri
 
 function fileFor(root: string, relativeFile = 'lib/fixture.ts'): string {
   return readFileSync(path.join(root, relativeFile), 'utf8');
+}
+
+interface PacketDirOptions {
+  floor?: readonly Record<string, string>[];
+  names?: readonly Record<string, string>[];
+  manifest?: { packetId?: string; name?: string; contact?: string; date?: string } | null;
+  decisionId?: string;
+}
+
+const FLOOR_COLUMNS = [
+  'id', 'zh', 'en', 'screen', 'leakage-note', 'sourceHash', 'alternatives', 'placeholders', 'bo',
+];
+const NAME_COLUMNS = [
+  'key', 'zh', 'en', 'unit', 'context', 'specimen', 'aliases', 'id', 'sourceHash', 'bo',
+];
+
+/** Writes one reviewer's packet directory on disk. manifest: null omits the manifest entirely. */
+function writePacketDir(directory: string, options: PacketDirOptions = {}): void {
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(
+    path.join(directory, REVIEW_PACKET_FILES.names),
+    serializeCsv(NAME_COLUMNS, [...(options.names ?? [])]),
+    'utf8',
+  );
+  writeFileSync(
+    path.join(directory, REVIEW_PACKET_FILES.terms),
+    serializeCsv(['term', 'categories', 'english-or-note', 'bo'], []),
+    'utf8',
+  );
+  writeFileSync(
+    path.join(directory, REVIEW_PACKET_FILES.floor),
+    serializeCsv(FLOOR_COLUMNS, [...(options.floor ?? [])]),
+    'utf8',
+  );
+  writeFileSync(
+    path.join(directory, REVIEW_PACKET_FILES.decisions),
+    serializeCsv(
+      ['id', 'question', 'status', 'decision', 'notes'],
+      [{
+        id: options.decisionId ?? SECONDS_POLICY_DECISION_ID,
+        question: 'Fixture policy question',
+        status: 'unresolved',
+        decision: '',
+        notes: '',
+      }],
+    ),
+    'utf8',
+  );
+  if (options.manifest === null) return;
+  const manifest = options.manifest ?? {};
+  writeFileSync(
+    path.join(directory, MANIFEST_FILE),
+    serializeCsv(['packet-id', 'reviewer-name', 'reviewer-contact', 'review-date'], [{
+      'packet-id': manifest.packetId ?? `packet-${path.basename(directory)}`,
+      'reviewer-name': manifest.name ?? `Reviewer ${path.basename(directory)}`,
+      'reviewer-contact': manifest.contact ?? `${path.basename(directory)}@example.org`,
+      'review-date': manifest.date ?? '2026-07-25',
+    }]),
+    'utf8',
+  );
+}
+
+/** The common case: one floor row, reviewed independently by two people. */
+function writeFloorPacketPair(
+  root: string,
+  floorRow: Record<string, string>,
+  boA: string,
+  boB: string,
+  overrides: { a?: PacketDirOptions; b?: PacketDirOptions } = {},
+): { dirA: string; dirB: string } {
+  const dirA = path.join(root, 'packet-a');
+  const dirB = path.join(root, 'packet-b');
+  writePacketDir(dirA, { floor: [{ ...floorRow, bo: boA }], ...overrides.a });
+  writePacketDir(dirB, { floor: [{ ...floorRow, bo: boB }], ...overrides.b });
+  return { dirA, dirB };
+}
+
+function floorCsvRow(floor: ReturnType<typeof buildFloorStringRows>[number]): Record<string, string> {
+  return {
+    id: floor.id,
+    zh: floor.zh,
+    en: floor.en,
+    screen: floor.screen,
+    'leakage-note': floor.leakageNote,
+    sourceHash: floor.sourceHash,
+    alternatives: floor.alternatives,
+    placeholders: floor.placeholders,
+  };
 }
 
 function diagnostics(result: ReturnType<typeof executeTibetanImport>): string {
@@ -427,71 +517,256 @@ describe('fail-closed Tibetan round-trip importer', () => {
     expect(formatRebaselineChecklist(result.checklist!)).toContain('B13 expectedHashes');
   });
 
-  it('round-trips a filled reviewer row through the actual CSV packet boundary', () => {
+  it('round-trips a row both reviewers agreed on through the actual CSV packet boundary', () => {
     const { root, bo } = simpleFixture();
     const floor = buildFloorStringRows(corpus(root))[0];
-    const packetDirectory = path.join(root, 'review-packet');
-    mkdirSync(packetDirectory, { recursive: true });
-    writeFileSync(
-      path.join(packetDirectory, REVIEW_PACKET_FILES.names),
-      serializeCsv(
-        ['key', 'zh', 'en', 'unit', 'context', 'specimen', 'aliases', 'id', 'sourceHash', 'bo'],
-        [],
-      ),
-      'utf8',
-    );
-    writeFileSync(
-      path.join(packetDirectory, REVIEW_PACKET_FILES.terms),
-      serializeCsv(['term', 'categories', 'english-or-note', 'bo'], []),
-      'utf8',
-    );
-    writeFileSync(
-      path.join(packetDirectory, REVIEW_PACKET_FILES.floor),
-      serializeCsv(
-        [
-          'id',
-          'zh',
-          'en',
-          'screen',
-          'leakage-note',
-          'sourceHash',
-          'alternatives',
-          'placeholders',
-          'bo',
-        ],
-        [{
-          id: floor.id,
-          zh: floor.zh,
-          en: floor.en,
-          screen: floor.screen,
-          'leakage-note': floor.leakageNote,
-          sourceHash: floor.sourceHash,
-          alternatives: floor.alternatives,
-          placeholders: floor.placeholders,
-          bo,
-        }],
-      ),
-      'utf8',
-    );
-    writeFileSync(
-      path.join(packetDirectory, REVIEW_PACKET_FILES.decisions),
-      serializeCsv(
-        ['id', 'question', 'status', 'decision', 'notes'],
-        [{
-          id: SECONDS_POLICY_DECISION_ID,
-          question: 'Fixture policy question',
-          status: 'unresolved',
-          decision: '',
-          notes: '',
-        }],
-      ),
-      'utf8',
-    );
+    const { dirA, dirB } = writeFloorPacketPair(root, floorCsvRow(floor), bo, bo);
 
-    const result = importReviewedPacket(root, packetDirectory);
+    const result = importReviewedPacket(root, dirA, dirB);
     expect(result).toMatchObject({ written: 1, refused: 0, skipped: 0 });
     expect(fileFor(root)).toContain(`bo: reviewed('${bo}')`);
     expect(corpus(root).curatedBo).toHaveLength(1);
+  });
+
+  // THE TWO-PERSON RULE. Tibetan cannot be machine-verified, so two independent humans agreeing is
+  // the only gate on meaning. These tests are the tripwires: any change that re-admits a
+  // single-packet path, drops the manifest checks, lets a partial packet through, or silently picks
+  // a winner between two translations turns them red.
+  //
+  // Scope, honestly: this is an honest-participant control. A solo operator can paste the same bo
+  // column into both packets and type a second name — no test here can catch that, and none claims
+  // to. What these pin is that doing so is a deliberate act rather than the default.
+  describe('two-person rule', () => {
+    function agreedFixture() {
+      const { root, bo } = simpleFixture();
+      const floor = buildFloorStringRows(corpus(root))[0];
+      return { root, bo, floor, row: floorCsvRow(floor) };
+    }
+
+    it('refuses the same directory passed twice', () => {
+      const { root, bo, row } = agreedFixture();
+      const dir = path.join(root, 'packet-a');
+      writePacketDir(dir, { floor: [{ ...row, bo }] });
+      const before = fileFor(root);
+
+      expect(() => importReviewedPacket(root, dir, dir)).toThrow(/same packet-id/u);
+      expect(fileFor(root)).toBe(before);
+    });
+
+    it('refuses a copied packet, even with the reviewer name changed', () => {
+      const { root, bo, row } = agreedFixture();
+      // A copied directory carries the ORIGINAL packet-id: a copy is not a second opinion.
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, bo, {
+        a: { manifest: { packetId: 'shared-id', name: 'Reviewer A', contact: 'a@example.org' } },
+        b: { manifest: { packetId: 'shared-id', name: 'Reviewer B', contact: 'b@example.org' } },
+      });
+      const before = fileFor(root);
+
+      expect(() => importReviewedPacket(root, dirA, dirB)).toThrow(/same packet-id/u);
+      expect(fileFor(root)).toBe(before);
+    });
+
+    it.each([
+      { label: 'identical names', a: 'Tenzin Norbu', b: 'Tenzin Norbu' },
+      { label: 'casing and whitespace only', a: 'Tenzin Norbu', b: '  tenzin   norbu ' },
+    ])('refuses self-approval — $label', ({ a, b }) => {
+      const { root, bo, row } = agreedFixture();
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, bo, {
+        a: { manifest: { packetId: 'id-a', name: a, contact: 'a@example.org' } },
+        b: { manifest: { packetId: 'id-b', name: b, contact: 'b@example.org' } },
+      });
+      const before = fileFor(root);
+
+      expect(() => importReviewedPacket(root, dirA, dirB)).toThrow(/same reviewer/u);
+      expect(fileFor(root)).toBe(before);
+    });
+
+    it('refuses two packets sharing one contact address', () => {
+      const { root, bo, row } = agreedFixture();
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, bo, {
+        a: { manifest: { packetId: 'id-a', name: 'Reviewer A', contact: 'shared@example.org' } },
+        b: { manifest: { packetId: 'id-b', name: 'Reviewer B', contact: 'shared@example.org' } },
+      });
+
+      expect(() => importReviewedPacket(root, dirA, dirB)).toThrow(/same reviewer contact/u);
+    });
+
+    it.each([
+      { label: 'no manifest at all', manifest: null },
+      { label: 'an unfilled manifest', manifest: { name: '', contact: '' } },
+    ])('refuses a packet with $label', ({ manifest }) => {
+      const { root, bo, row } = agreedFixture();
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, bo, {
+        b: { manifest: manifest as never },
+      });
+
+      expect(() => importReviewedPacket(root, dirA, dirB)).toThrow(/Nothing was imported/u);
+      expect(corpus(root).curatedBo).toHaveLength(0);
+    });
+
+    it('fails closed on disagreement and never picks a winner', () => {
+      const { root, bo, row } = agreedFixture();
+      const other = `${bo}${String.fromCodePoint(0x0f0b)}${String.fromCodePoint(0x0f42)}`;
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, other);
+      const before = fileFor(root);
+
+      const result = importReviewedPacket(root, dirA, dirB);
+
+      expect(result).toMatchObject({ written: 0, refused: 1 });
+      expect(diagnostics(result)).toContain('DUAL');
+      expect(result.disagreements[0]).toMatchObject({ reason: 'disagreement' });
+      // Both candidate forms are surfaced so a human can adjudicate; neither is written.
+      expect(result.disagreements[0].a).toBe(bo);
+      expect(result.disagreements[0].b).toBe(other);
+      expect(fileFor(root)).toBe(before);
+      expect(corpus(root).curatedBo).toHaveLength(0);
+    });
+
+    it('refuses a row only one reviewer filled', () => {
+      const { root, bo, row } = agreedFixture();
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, '');
+
+      const result = importReviewedPacket(root, dirA, dirB);
+
+      expect(result).toMatchObject({ written: 0, refused: 1 });
+      expect(result.disagreements[0]).toMatchObject({ reason: 'coverage-mismatch' });
+      expect(corpus(root).curatedBo).toHaveLength(0);
+    });
+
+    it('skips a row both reviewers left empty, writing nothing', () => {
+      const { root, row } = agreedFixture();
+      const { dirA, dirB } = writeFloorPacketPair(root, row, '', '');
+      const before = fileFor(root);
+
+      const result = importReviewedPacket(root, dirA, dirB);
+
+      expect(result).toMatchObject({ written: 0, refused: 0, skipped: 1 });
+      expect(fileFor(root)).toBe(before);
+    });
+
+    // Canonicalisation is NFC + OUTER TRIM only. Trailing whitespace is the realistic spreadsheet
+    // artefact; NFD is deliberately untested here because A5 already rejects the NFC-unstable
+    // Tibetan codepoints that decompose, so it cannot arise in an importable string.
+    it('treats a stray trailing space as agreement and writes the trimmed form', () => {
+      const { root, bo, row } = agreedFixture();
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, `${bo}  `);
+
+      const result = importReviewedPacket(root, dirA, dirB);
+
+      expect(result).toMatchObject({ written: 1, refused: 0 });
+      expect(fileFor(root)).toContain(`bo: reviewed('${bo}')`);
+    });
+
+    it('refuses when the two packets disagree about the SOURCE text', () => {
+      const { root, bo, row } = agreedFixture();
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, bo, {
+        b: { floor: [{ ...row, zh: '被篡改的原文', bo }] },
+      });
+
+      const result = importReviewedPacket(root, dirA, dirB);
+
+      expect(result).toMatchObject({ written: 0, refused: 1 });
+      expect(result.disagreements[0]).toMatchObject({ reason: 'context-mismatch' });
+      expect(corpus(root).curatedBo).toHaveLength(0);
+    });
+
+    it('refuses when one reviewer silently deleted a row', () => {
+      const { root, bo, row } = agreedFixture();
+      const dirA = path.join(root, 'packet-a');
+      const dirB = path.join(root, 'packet-b');
+      writePacketDir(dirA, { floor: [{ ...row, bo }] });
+      writePacketDir(dirB, { floor: [] }); // the row is simply gone
+      const before = fileFor(root);
+
+      expect(() => importReviewedPacket(root, dirA, dirB)).toThrow(/do not cover the same rows/u);
+      expect(fileFor(root)).toBe(before);
+    });
+
+    it('refuses a fabricated row that matches no source string', () => {
+      const { root, bo, row } = agreedFixture();
+      const invented = { ...row, id: 'lib/fixture.ts:9999:INVENTED', bo };
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, bo, {
+        a: { floor: [{ ...row, bo }, invented] },
+        b: { floor: [{ ...row, bo }, invented] },
+      });
+
+      expect(() => importReviewedPacket(root, dirA, dirB)).toThrow(/no matching source string/u);
+    });
+
+    it('reports source drift as a notice without failing the import', () => {
+      const { root, bo, row } = agreedFixture();
+      // Neither packet covers this row: it appeared after export. That is drift, not tampering.
+      const extra = localizedSource([{ owner: 'ADDED', en: "'Added later.'", zh: "'后加的。'" }]);
+      writeFileSync(path.join(root, 'lib', 'added.ts'), extra, 'utf8');
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, bo);
+
+      const result = importReviewedPacket(root, dirA, dirB);
+
+      expect(result.written).toBe(1);
+      expect(result.drift.length).toBeGreaterThan(0);
+    });
+
+    it('throws on a duplicate row id before pairing can silently drop an answer', () => {
+      const { root, bo, row } = agreedFixture();
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, bo, {
+        a: { floor: [{ ...row, bo }, { ...row, bo: 'ཁ' }] },
+      });
+
+      expect(() => importReviewedPacket(root, dirA, dirB)).toThrow(/duplicate row id/u);
+    });
+
+    it('reports both reviewers by name', () => {
+      const { root, bo, row } = agreedFixture();
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, bo, {
+        a: { manifest: { packetId: 'id-a', name: 'Reviewer One', contact: 'one@example.org' } },
+        b: { manifest: { packetId: 'id-b', name: 'Reviewer Two', contact: 'two@example.org' } },
+      });
+
+      const result = importReviewedPacket(root, dirA, dirB);
+      expect(result.reviewers).toEqual(['Reviewer One', 'Reviewer Two']);
+    });
+
+    it('tolerates the BOM that reviewers spreadsheet tools prepend', () => {
+      const { root, bo, row } = agreedFixture();
+      const { dirA, dirB } = writeFloorPacketPair(root, row, bo, bo);
+      for (const dir of [dirA, dirB]) {
+        const floorPath = path.join(dir, REVIEW_PACKET_FILES.floor);
+        writeFileSync(floorPath, `﻿${readFileSync(floorPath, 'utf8')}`, 'utf8');
+        const manifestPath = path.join(dir, MANIFEST_FILE);
+        writeFileSync(manifestPath, `﻿${readFileSync(manifestPath, 'utf8')}`, 'utf8');
+      }
+
+      expect(importReviewedPacket(root, dirA, dirB)).toMatchObject({ written: 1 });
+    });
+
+    it('ships a filled manifest and instructions with every exported packet', () => {
+      const root = fixture({});
+      const output = path.join(root, 'packet');
+      writeTibetanReviewPacket(process.cwd(), output);
+
+      const manifest = parseCsv(readFileSync(path.join(output, MANIFEST_FILE), 'utf8'));
+      expect(manifest.columns).toEqual([
+        'packet-id', 'reviewer-name', 'reviewer-contact', 'review-date',
+      ]);
+      expect(manifest.rows).toHaveLength(1);
+      expect(manifest.rows[0]['packet-id'].length).toBeGreaterThan(0);
+      // Unfilled on export; the reviewer supplies identity. An unnamed review is not a review.
+      expect(manifest.rows[0]['reviewer-name']).toBe('');
+
+      const instructions = readFileSync(path.join(output, INSTRUCTIONS_FILE), 'utf8');
+      expect(instructions).toContain('bo');
+      expect(instructions).toContain('两份独立审核');
+    });
+
+    it('mints a different packet-id for each exported packet', () => {
+      const root = fixture({});
+      writeTibetanReviewPacket(process.cwd(), path.join(root, 'a'));
+      writeTibetanReviewPacket(process.cwd(), path.join(root, 'b'));
+      const idOf = (dir: string) =>
+        parseCsv(readFileSync(path.join(root, dir, MANIFEST_FILE), 'utf8')).rows[0]['packet-id'];
+
+      expect(idOf('a')).not.toBe(idOf('b'));
+    });
   });
 
   it('proves guard bite by refusing a CJK 钙 through the real Class A path', () => {
