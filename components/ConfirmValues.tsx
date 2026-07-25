@@ -69,7 +69,7 @@ export function ConfirmValues({
           r.needsConfirm ? (
             <li key={i} className="confirm-row">
               <div className="confirm-name">
-                {r.entry ? (
+                {r.entry && r.action === 'classify' ? (
                   (() => {
                     const names = resolvePrimarySecondary(r.entry.name, lang);
                     return (

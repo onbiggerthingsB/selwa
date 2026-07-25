@@ -6,14 +6,15 @@ describe('findEntry', () => {
     expect(findEntry('空腹血糖')?.key).toBe('fasting_glucose');
   });
   it('matches an English abbreviation case-insensitively', () => {
-    expect(findEntry('glu')?.key).toBe('fasting_glucose');
+    expect(findEntry('glu', 'blood')?.key).toBe('fasting_glucose');
     expect(findEntry('LDL-C')?.key).toBe('ldl_cholesterol');
   });
-  it('lets explicit specimen context safely refine a legacy unscoped collision', () => {
-    expect(findEntry('GLU')?.key).toBe('fasting_glucose');
-    expect(findEntry('GLU', 'unknown')?.key).toBe('fasting_glucose');
+  it('requires explicit specimen context to resolve the GLU collision', () => {
+    expect(findEntry('GLU')).toBeNull();
+    expect(findEntry('GLU', 'unknown')).toBeNull();
+    expect(findEntry('GLU', null)).toBeNull();
     expect(findEntry('GLU', 'urine')?.key).toBe('urine_glucose');
-    expect(findEntry('GLU', 'blood')).toBeNull();
+    expect(findEntry('GLU', 'blood')?.key).toBe('fasting_glucose');
   });
   it('matches the canonical English name', () => {
     expect(findEntry('Potassium')?.key).toBe('potassium');

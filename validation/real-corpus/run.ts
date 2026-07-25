@@ -6,6 +6,7 @@
 // Coverage work develops on TRAIN and is gated on HELD-OUT (which it never sees).
 import { MEDREPBENCH_SAMPLE } from './sample';
 import { MIMIC_US_SAMPLE } from './us-sample';
+import { LHASA_FIELD_SAMPLE } from './field-lhasa';
 import { splitCorpus } from './corpus';
 import { scoreRealCorpus, type RealCorpusSummary } from './realContentBench';
 import type { RealReport } from './sample';
@@ -18,7 +19,8 @@ function line(label: string, s: RealCorpusSummary): void {
   console.log(
     `${label.padEnd(9)} rows ${String(s.items).padStart(4)} · ` +
       `CHIP ${pct(s.chipCoverage).padStart(6)} (${s.chipReproduced} reproduced / ${s.chipDeferred} defer) · ` +
-      `R6 ${pct(s.r6Coverage).padStart(6)} (${s.highStakesConfirmed}/${s.highStakesRows} high-stakes confirmed)`,
+      `analyte-confirm ${pct(s.analyteConfirmCoverage).padStart(6)} ` +
+      `(${s.recognizedHighStakesConfirmRows}/${s.recognizedHighStakesRows} recognised high-stakes rows)`,
   );
 }
 
@@ -52,9 +54,10 @@ function report(title: string, corpus: RealReport[]): RealCorpusSummary {
   goldLine('combined', all);
   goldLine('  heldout', scoreRealCorpus(heldout));
   console.log(
-    `combined  R6-gold      ${pct(all.r6CoverageGold).padStart(6)} ` +
-      `(${all.goldHighStakesConfirmed}/${all.goldHighStakesRows} gold-high-stakes rows confirmed) ` +
-      `vs self-graded R6 ${pct(all.r6Coverage)} (${all.highStakesConfirmed}/${all.highStakesRows})`,
+    `combined  analyte-confirm gold ${pct(all.analyteConfirmCoverageGold).padStart(6)} ` +
+      `(${all.goldHighStakesConfirmRows}/${all.goldHighStakesRows} gold-high-stakes rows) ` +
+      `vs self-graded ${pct(all.analyteConfirmCoverage)} ` +
+      `(${all.recognizedHighStakesConfirmRows}/${all.recognizedHighStakesRows})`,
   );
   console.log(
     `combined  scope        ${all.goldAnalyteRows} analyte rows / ${all.goldNonAnalyteRows} non-analyte rows ` +
@@ -77,13 +80,21 @@ function report(title: string, corpus: RealReport[]): RealCorpusSummary {
 }
 
 console.log('\nGrounding on REAL content — Prove-the-Number, Half A (image-free, no API)');
+console.log(
+  'analyte-confirm = user-facing reading checks plus curated high-stakes membership; ' +
+    'R3/R11/R17 remain internal review signals',
+);
 report('MedRepBench — Chinese reports, SI units (stress corpus)', MEDREPBENCH_SAMPLE);
 const us = report('MIMIC-IV demo — real US hospital labs, conventional units (BEACHHEAD)', MIMIC_US_SAMPLE);
+report('Field — de-identified Lhasa CBC+CRP (grounding regression)', LHASA_FIELD_SAMPLE);
 
 if (us.confidentlyWrong.length) {
   console.log('\n⚠ confidently-wrong on US data (safety gate):');
   for (const d of us.confidentlyWrong) console.log(`  ${d.name} ${d.value} ${d.unit} ours=${d.ourClass} report=${d.datasetFlag}`);
 } else {
-  console.log('\n✓ US safety gate: 0 confidently-wrong rows (disagreements are all confirm-flagged).');
+  console.log(
+    '\n✓ US safety gate: 0 confidently-wrong rows ' +
+      '(disagreements are protected by confirmation or internal review).',
+  );
 }
 console.log('');

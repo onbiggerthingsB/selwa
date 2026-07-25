@@ -68,6 +68,7 @@ export interface ExtractedRow {
   value: string | null; // kept as string to preserve exact decimal
   unit: string | null;
   printedRange: string | null; // reference range as printed on the report, if any
+  printedFlagRaw?: string | null; // model-supplied abnormality marker, verbatim; absent for legacy rows
   confidence: 'low' | 'medium' | 'high';
   specimen?: 'urine' | 'blood' | 'unknown' | null; // absent/null === unknown
 }
@@ -80,6 +81,9 @@ export interface GroundedRow {
   classification: Classification;
   action: GuardAction;
   needsConfirm: boolean;
+  // Internal clinical-review signal. It protects suppression and safety metrics,
+  // but never controls membership in the user-facing ConfirmValues list.
+  needsReview: boolean;
   flags: GuardFlag[];
 }
 

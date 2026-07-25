@@ -1,7 +1,11 @@
 import type { Classification, ReferenceEntry, Sex } from '@/lib/types';
 import { resolveBounds } from '@/lib/reference';
 
-const NUMERIC = /^[+]?\d+(\.\d+)?$/;
+// Deliberately narrower than reference.parseScalar: parseValue feeds our
+// classification path, while parseScalar reproduces the report's own frame and
+// accepts scientific notation, leading-dot decimals, and trailing report flags.
+// Keep ranges and separators out of this parser even though signed scalars are valid.
+const NUMERIC = /^[+-]?\d+(\.\d+)?$/;
 
 export function parseValue(raw: string | null): number | null {
   if (raw == null) return null;

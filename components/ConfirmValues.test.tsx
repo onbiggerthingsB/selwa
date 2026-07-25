@@ -86,7 +86,7 @@ describe('ConfirmValues result-shape input', () => {
     expect(screen.getAllByText('请逐字核对报告上打印的结果和符号。')).toHaveLength(2);
   });
 
-  it('uses marked Chinese fallback as the bo primary and keeps English secondary', () => {
+  it('uses explicit Chinese fallback as the bo primary and keeps English secondary', () => {
     const { container } = render(
       <ConfirmValues
         report={report}
@@ -102,15 +102,77 @@ describe('ConfirmValues result-shape input', () => {
     expect(localizedNames).toHaveLength(2);
     expect(localizedNames[0]).toHaveAttribute('data-requested-lang', 'bo');
     expect(localizedNames[0]).toHaveAttribute('data-resolved-lang', 'zh');
-    expect(localizedNames[0]).toHaveTextContent('空腹血糖翻译未经审核');
+    expect(localizedNames[0]).toHaveTextContent(/^空腹血糖$/);
     expect(localizedNames[1]).toHaveAttribute('data-requested-lang', 'en');
     expect(localizedNames[1]).toHaveAttribute('data-resolved-lang', 'en');
     expect(localizedNames[1]).toHaveTextContent(/^Fasting plasma glucose$/);
 
     expect(screen.getByText('请核对这些结果')).toBeInTheDocument();
     expect(screen.getByLabelText('结果 0')).toBeInTheDocument();
-    const markers = screen.getAllByText('翻译未经审核');
-    expect(markers.length).toBeGreaterThan(0);
-    expect(markers.every((marker) => marker.getAttribute('lang') === 'zh')).toBe(true);
+    expect(screen.queryByText('翻译未经审核')).toBeNull();
+    expect(
+      container.querySelectorAll('[data-translation-review="unverified"]'),
+    ).toHaveLength(0);
+  });
+
+  it('shows the verbatim report name when a specimen-scoped match abstains', () => {
+    const grounded = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'pH',
+            value: '7.1',
+            unit: 'pH',
+            printedRange: '7.35-7.45',
+            confidence: 'high',
+            specimen: 'urine',
+          },
+        ],
+      },
+      'unknown',
+    );
+    const row = grounded.rows[0];
+    expect(row.entry?.key).toBe('urine_ph');
+    expect(row.action).toBe('abstain');
+    expect(row.flags.map((flag) => flag.id)).toContain(
+      'R18-SPECIMEN-MATCH-UNCORROBORATED',
+    );
+
+    // R18 itself does not force confirmation. Set only the display gate here to
+    // exercise ConfirmValues' defensive name boundary without changing guard logic.
+    const reportWithConfirm = {
+      ...grounded,
+      rows: [{ ...row, needsConfirm: true }],
+      generatedAt: 0,
+    };
+    render(
+      <ConfirmValues
+        report={reportWithConfirm}
+        lang="en"
+        onConfirmed={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('pH')).toBeInTheDocument();
+    expect(screen.queryByText('Urine pH')).toBeNull();
+  });
+
+  it('does not add internal review-only rows to the editable confirmation list', () => {
+    const onConfirmed = vi.fn();
+    const reviewOnly = {
+      ...report,
+      rows: report.rows.map((row, index) => ({
+        ...row,
+        needsConfirm: false,
+        needsReview: index === 0,
+      })),
+    };
+
+    const { container } = render(
+      <ConfirmValues report={reviewOnly} lang="en" onConfirmed={onConfirmed} />,
+    );
+
+    expect(container.querySelector('.confirm')).toBeNull();
+    expect(onConfirmed).toHaveBeenCalledWith(reviewOnly);
   });
 });

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { groundExtraction } from './grounding';
+import { buildSummary } from './summary';
 import type { LabExtraction } from '@/lib/extractionSchema';
 import { resolveText } from '@/lib/i18n';
 
@@ -50,7 +51,7 @@ describe('groundExtraction', () => {
   });
 
   it('auto-converts a convertible unit mismatch and flags the conversion (R2b)', () => {
-    const ex = { rows: [{ name: 'GLU', value: '99', unit: 'mg/dL', printedRange: null, confidence: 'high' as const }] };
+    const ex = { rows: [{ name: 'GLU', value: '99', unit: 'mg/dL', printedRange: null, confidence: 'high' as const, specimen: 'blood' as const }] };
     const { rows } = groundExtraction(ex, 'unknown');
     const glu = rows.find((r) => r.entry?.key === 'fasting_glucose')!;
     expect(glu.classification).toBe('normal');          // 99 mg/dL = 5.49 mmol/L
@@ -536,5 +537,140 @@ describe('report-only urinalysis grounding', () => {
     expect(row.action).toBe('classify');
     expect(row.classification).toBe('unclassified');
     expect(row.flags.map((f) => f.id)).not.toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+  });
+});
+
+describe('report-only high-stakes grounding', () => {
+  it('preserves and renders a signed Base Excess value of -5 rather than its mirror image', () => {
+    const report = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Base Excess',
+            value: '-5',
+            unit: 'mmol/L',
+            printedRange: null,
+            confidence: 'high',
+            specimen: 'blood',
+          },
+        ],
+      },
+      'unknown',
+    );
+    const row = report.rows[0];
+    const section = buildSummary(report, 'en').sections[0];
+
+    expect(row.entry?.key).toBe('base_excess');
+    expect(row.valueNum).toBe(-5);
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(true);
+    expect(section.valueText).toBe('-5 mmol/L');
+  });
+
+  it('uses explicit blood context for bare pH and carries it into confirmation', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'pH',
+            value: '7.40',
+            unit: 'units',
+            printedRange: '7.35-7.45',
+            confidence: 'high',
+            specimen: 'blood',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('blood_ph');
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect(row.matchedVia).toBe('specimen-scoped');
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(true);
+  });
+
+  it('grounds calculated total CO2 separately from bicarbonate and requires confirmation', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Calculated Total CO2',
+            value: '19',
+            unit: 'mEq/L',
+            printedRange: '21-30',
+            confidence: 'high',
+            specimen: 'blood',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('total_co2_calculated');
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect(row.entry?.key).not.toBe('bicarbonate');
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(true);
+  });
+
+  it('grounds Anion Gap without an owned band and requires confirmation', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'Anion Gap',
+            value: '21',
+            unit: 'mEq/L',
+            printedRange: '8-20',
+            confidence: 'high',
+            specimen: 'blood',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('anion_gap');
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect([
+      row.entry?.refLow,
+      row.entry?.refHigh,
+      row.entry?.criticalLow,
+      row.entry?.criticalHigh,
+      row.entry?.absoluteLow,
+      row.entry?.absoluteHigh,
+    ]).toEqual([null, null, null, null, null, null]);
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(true);
+  });
+
+  it('carries PT activity into the confirmation gate before the ordinary R6 path', () => {
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name: 'PT%',
+            value: '86.40',
+            unit: '%',
+            printedRange: '70-140',
+            confidence: 'high',
+            specimen: 'blood',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+
+    expect(row.entry?.key).toBe('prothrombin_activity');
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect(row.entry?.highStakes).toBe(true);
+    expect(row.action).toBe('classify');
+    expect(row.classification).toBe('unclassified');
+    expect(row.needsConfirm).toBe(true);
+    expect(row.flags.map((flag) => flag.id)).not.toContain(
+      'R5-LOW-OCR-CONFIDENCE-NUMERIC',
+    );
   });
 });

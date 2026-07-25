@@ -14,9 +14,12 @@ import {
   defineText,
   fallback,
   reviewed,
+  unverified,
   type Lang,
   type LocalizedText,
 } from '@/lib/i18n';
+import { isSensitiveAnalyteName } from '@/lib/sensitiveAnalytes';
+import { canonicalToDisplayConversion } from '@/lib/convert';
 
 export type { Lang } from '@/lib/i18n';
 export type ReportStatus = 'below' | 'within' | 'above' | 'outside' | 'none';
@@ -99,20 +102,23 @@ const ABSTAIN_LABEL: Record<Classification, LocalizedText> = {
   unclassified: NOT_ASSESSED,
 };
 
-function emptyText(): LocalizedText {
-  return defineText({
-    en: reviewed(''),
-    zh: reviewed(''),
-    bo: fallback('zh'),
-  });
-}
+// Empty content is absence, not reviewed clinical copy. Keeping it outside the
+// review taxonomy prevents future localization audits from counting placeholders
+// as human-reviewed strings.
+const EMPTY_LOCALIZED_TEXT: LocalizedText = defineText({
+  en: { text: '' },
+  zh: { text: '' },
+  bo: fallback('zh'),
+});
 
 // B1 RULE (see validation/b1VerdictLeakage.test.ts): a user-visible message may describe only
 // (a) our confidence in the READING, or (b) the REPORT'S OWN information — never a conclusion
 // about the patient's value derived from our table. Speakable flags are limited to our reading,
-// our supported scope, or the report's own content (for example R6 and R13 reading checks).
-// Clinical guard conclusions (R3/R4/R11/R12/R2b) stay INTERNAL: they still drive needsConfirm
-// and feed the confirm-burden metrics, but are not spoken.
+// our supported scope, or the report's own content (for example R6's analyte-level check and
+// R13's reading check).
+// Clinical guard conclusions stay INTERNAL. R3/R11/R17 feed safety metrics through
+// needsReview; R4/R12/R2b remain context flags. None are spoken or select rows for
+// the OCR-framed confirmation screen.
 // The guard computes; the summary decides what is speakable.
 //   R16 — "the range doesn't appear to use the same units as the value; check your report"
 //         (about the REPORT'S OWN content + our ability to read it — not a verdict on the value.
@@ -190,12 +196,78 @@ function valueText(row: GroundedRow): string {
   return `${v}${u}`;
 }
 
-function formatRefRange(entry: ReferenceEntry, sex: Sex, age?: number): string {
-  const { low, high } = resolveBounds(entry, sex, age);
-  const u = entry.unit;
-  if (low !== null && high !== null) return `${low}–${high} ${u}`;
-  if (high !== null) return `< ${high} ${u}`;
-  if (low !== null) return `≥ ${low} ${u}`;
+const CONVERTED_BOUND_SIGNIFICANT_DIGITS = 4;
+
+interface DisplayBound {
+  value: number;
+  text: string;
+}
+
+/**
+ * Converted bounds use at most four significant digits. Lower bounds round up
+ * and upper bounds round down, so formatting can narrow a band slightly but can
+ * never widen it. Exact trailing zeroes are removed (35, not 35.0000).
+ */
+function roundConvertedBound(value: number, side: 'low' | 'high'): DisplayBound | null {
+  if (!Number.isFinite(value)) return null;
+  if (value === 0) return { value: 0, text: '0' };
+
+  const magnitude = Math.floor(Math.log10(Math.abs(value)));
+  const exponent = magnitude - (CONVERTED_BOUND_SIGNIFICANT_DIGITS - 1);
+  const step = 10 ** exponent;
+  if (!Number.isFinite(step) || step === 0) return null;
+
+  const scaled = value / step;
+  const roundedSteps = side === 'low' ? Math.ceil(scaled) : Math.floor(scaled);
+  const rounded = roundedSteps * step;
+  const normalized = Object.is(rounded, -0) ? 0 : rounded;
+  const decimals = Math.max(0, -exponent);
+  if (decimals > 100) return null;
+  const text = normalized
+    .toFixed(decimals)
+    .replace(/(\.\d*?[1-9])0+$/, '$1')
+    .replace(/\.0+$/, '');
+
+  return { value: normalized, text };
+}
+
+function formatRefRange(
+  entry: ReferenceEntry,
+  displayUnit: string | null,
+  sex: Sex,
+  age?: number,
+): string {
+  const conversion = canonicalToDisplayConversion(displayUnit, entry);
+  if (!conversion) return '';
+
+  const bounds = resolveBounds(entry, sex, age);
+  let low: DisplayBound | null =
+    bounds.low === null ? null : { value: bounds.low, text: String(bounds.low) };
+  let high: DisplayBound | null =
+    bounds.high === null ? null : { value: bounds.high, text: String(bounds.high) };
+
+  if (conversion.converted) {
+    low =
+      bounds.low === null
+        ? null
+        : roundConvertedBound(bounds.low * conversion.factor, 'low');
+    high =
+      bounds.high === null
+        ? null
+        : roundConvertedBound(bounds.high * conversion.factor, 'high');
+    if ((bounds.low !== null && low === null) || (bounds.high !== null && high === null)) {
+      return '';
+    }
+  }
+
+  // Inward rounding can collapse an extremely narrow interval. Suppression is
+  // safer than displaying an inverted or fabricated band.
+  if (low !== null && high !== null && low.value > high.value) return '';
+
+  const unitSuffix = displayUnit ? ` ${displayUnit}` : '';
+  if (low !== null && high !== null) return `${low.text}–${high.text}${unitSuffix}`;
+  if (high !== null) return `< ${high.text}${unitSuffix}`;
+  if (low !== null) return `≥ ${low.text}${unitSuffix}`;
   return '';
 }
 
@@ -213,9 +285,9 @@ export function buildSummary(
     // analyte. Gating it on recognition discarded ~28 points of deliverable coverage (US:
     // recognition ~47% vs rows-with-a-printed-range ~75%) on rows where we can faithfully
     // reproduce what the report already says.
-    // The suppressors are the two cases where we have POSITIVE EVIDENCE that one side of the
-    // comparison is unusable — asserting a position from an input we believe is wrong is worse
-    // than deferring:
+    // The arithmetic suppressors are the two cases where we have POSITIVE EVIDENCE that one side
+    // of the comparison is unusable — asserting a position from an input we believe is wrong is
+    // worse than deferring:
     //   R13 — the VALUE was misread.
     //   R16 — the printed RANGE cannot be in the unit we assumed (Codex #5), so raw-value-vs-raw-
     //         range is comparing two different units. This produced inverted chips on real
@@ -225,11 +297,21 @@ export function buildSummary(
     const unusable = row.flags.some(
       (f) => f.id === 'R13-IMPLAUSIBLE-VALUE' || f.id === 'R16-PRINTED-RANGE-UNIT-SUSPECT',
     );
-    const rs: ReportStatus = unusable ? 'none' : reportStatus(row);
+    // Separate product-policy boundary: named sensitive rows keep their name and
+    // verbatim result, but never show a patient-position signal. This is keyed on
+    // the name alone and therefore suppresses every value direction, including a
+    // negative/normal-looking result. Exact-normalised matching intentionally
+    // fails open for unknown vendor spellings and OCR variants.
+    const sensitivePosition = isSensitiveAnalyteName(row.extracted.name);
+    const rs: ReportStatus = unusable || sensitivePosition ? 'none' : reportStatus(row);
     const defer = rs === 'none';
     // R17 does NOT suppress the chip: the chip is the report's own arithmetic and stays correct
     // whatever specimen the row is. What it suppresses is OUR band being shown beside it.
     const bandNotComparable = row.flags.some((f) => f.id === 'R17-BAND-NOT-COMPARABLE');
+    const typicalRange =
+      curated && !bandNotComparable
+        ? formatRefRange(entry!, row.extracted.unit, report.sex, report.age)
+        : '';
 
     let tone: string;
     let chip: LocalizedText;
@@ -246,33 +328,40 @@ export function buildSummary(
 
     return {
       key: entry?.key ?? `row-${i}`,
-      name: entry
+      // A matched entry is not enough to trust its curated name: an abstention
+      // means the guard could not safely establish that the entry describes this
+      // row. Keep the report's verbatim name and mark it unverified.
+      name: handled
         ? entry.name
         : defineText({
-            en: reviewed(row.extracted.name),
-            zh: reviewed(row.extracted.name),
-            bo: fallback('zh'),
+            en: unverified(row.extracted.name),
+            zh: unverified(row.extracted.name),
+            bo: unverified(row.extracted.name),
           }),
       valueText: valueText(row),
       tone,
       chip,
       // CARD: the direction-neutral definition (never the directional plain — that is glossary-only).
-      plain: handled ? entry!.definition : emptyText(),
+      plain: handled ? entry!.definition : EMPTY_LOCALIZED_TEXT,
       // GLOSSARY: the fuller description, surfaced separately (not beneath the chip).
-      glossary: handled ? entry!.plain : emptyText(),
+      glossary: handled ? entry!.plain : EMPTY_LOCALIZED_TEXT,
       flags: row.flags
         .filter((f) => SURFACING_FLAGS.has(f.id))
         .map((f) => ({ severity: f.severity, message: f.message })),
-      // The report's OWN range is the report's information — it surfaces whenever we reproduced
-      // a comparison from it, known analyte or not (decoupled). Our curated range + the plain
-      // education below DO need the table, so they stay gated on recognition.
-      reportRange: !defer ? (row.extracted.printedRange ?? '') : '',
+      // The report's OWN range is faithfully reproduced whenever present, even
+      // when we cannot parse it or compute a position from it. Our curated range
+      // and education still require a safely handled entry.
+      reportRange: row.extracted.printedRange ?? '',
       // R17: our band does not overlap the report's printed range, so it is almost certainly not
       // measuring this row (usually a different SPECIMEN under the same name — the urine-vs-serum
       // β2-microglobulin case). Presenting it as "Typical range" beside the patient's number is a
       // wrong-range claim, so we withhold it and its provenance rather than guess the specimen.
-      typicalRange: curated && !bandNotComparable ? formatRefRange(entry!, report.sex, report.age) : '',
-      source: curated && !bandNotComparable ? (entry!.source ?? '') : '',
+      // The same rule applies to units: valueText stays verbatim in the report's frame, so our
+      // band is converted into that frame with a reviewed reverse factor. If no such factor
+      // exists, showing a canonical-unit band beside the report-unit value would be a wrong-range
+      // claim; withhold both the band and its provenance rather than guess.
+      typicalRange,
+      source: typicalRange ? (entry!.source ?? '') : '',
     };
   });
 

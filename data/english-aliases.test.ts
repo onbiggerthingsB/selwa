@@ -13,6 +13,14 @@ import { describe, it, expect } from 'vitest';
 import { findEntry } from '@/lib/reference';
 import { groundExtraction } from '@/lib/grounding';
 
+function expectUnknownForEverySpecimen(name: string) {
+  expect(findEntry(name)).toBeNull();
+  expect(findEntry(name, 'unknown')).toBeNull();
+  expect(findEntry(name, null)).toBeNull();
+  expect(findEntry(name, 'blood')).toBeNull();
+  expect(findEntry(name, 'urine')).toBeNull();
+}
+
 describe('US English aliases — verified Blood-only names now resolve', () => {
   it('Troponin I resolves and regains its high-stakes confirm (the worst live gap)', () => {
     expect(findEntry('Troponin I')?.key).toBe('troponin_i');
@@ -39,6 +47,36 @@ describe('US English aliases — verified Blood-only names now resolve', () => {
     expect(findEntry('Calcium')?.key).toBe('calcium_total'); // MIMIC qualifies urine as "24 hr Calcium"
     expect(findEntry('Calcium, Total')?.key).toBe('calcium_total');
   });
+
+  it.each([
+    ['Sodium, Whole Blood', 'sodium', '131', '133-145'],
+    ['Potassium, Whole Blood', 'potassium', '4.9', '3.3-5.1'],
+  ])('%s resolves by its explicit matrix name and reaches confirmation', (
+    name,
+    key,
+    value,
+    printedRange,
+  ) => {
+    expect(findEntry(name)?.key).toBe(key);
+    const row = groundExtraction(
+      {
+        rows: [
+          {
+            name,
+            value,
+            unit: 'mEq/L',
+            printedRange,
+            confidence: 'high',
+          },
+        ],
+      },
+      'unknown',
+    ).rows[0];
+    expect(row.entry?.key).toBe(key);
+    expect(row.entry?.highStakes).toBe(true);
+    expect(row.matchedVia).toBe('exact');
+    expect(row.needsConfirm).toBe(true);
+  });
 });
 
 describe('Chinese aliases — unit and panel corroborate these exact names', () => {
@@ -52,14 +90,6 @@ describe('Chinese aliases — unit and panel corroborate these exact names', () 
 });
 
 describe('Chinese aliases — trace-element and sensitive names must STAY unknown', () => {
-  function expectUnknownForEverySpecimen(name: string) {
-    expect(findEntry(name)).toBeNull();
-    expect(findEntry(name, 'unknown')).toBeNull();
-    expect(findEntry(name, null)).toBeNull();
-    expect(findEntry(name, 'blood')).toBeNull();
-    expect(findEntry(name, 'urine')).toBeNull();
-  }
-
   it('钙(Ca) stays unknown — heavy-metals/trace-element panel in μg/ml, not serum calcium in mmol/L', () => {
     // Lock both sides of the boundary: bare serum names remain valid, while a future
     // "strip parenthetical suffixes" normalization must not turn 钙(Ca) into 钙 or Ca.
@@ -88,6 +118,35 @@ describe('Chinese aliases — trace-element and sensitive names must STAY unknow
   });
 });
 
+describe('Policy refusals — normalization and alias passes must not unlock them', () => {
+  it('a-淀粉酶 stays unknown — canonical urine-amylase name has no unit or panel context to disambiguate it', () => {
+    // Follow-up, deliberately not done here: scope the still-resolving bare
+    // 淀粉酶 alias to blood in its own before/after change.
+    expect(findEntry('淀粉酶')?.key).toBe('amylase');
+    expectUnknownForEverySpecimen('a-淀粉酶');
+  });
+
+  it('髓系原始细胞群 stays unknown — a blast-population position creates prognostic shock without a clinician', () => {
+    expectUnknownForEverySpecimen('髓系原始细胞群');
+  });
+
+  it.each([
+    'Cocaine, Urine',
+    'Methadone, Urine',
+    'Benzodiazepine Screen, Urine',
+    'Oxycodone',
+    'Opiate Screen, Urine',
+    'Amphetamine Screen, Urine',
+    'Barbiturate Screen, Urine',
+  ])('%s stays unknown — urine drug-screen privacy refusal has no grounded band', (name) => {
+    expectUnknownForEverySpecimen(name);
+  });
+
+  it('Estimated GFR (MDRD equation) stays unknown — it is a blank label row and the MDRD frame does not match our eGFR entry', () => {
+    expectUnknownForEverySpecimen('Estimated GFR (MDRD equation)');
+  });
+});
+
 describe('US English aliases — specimen-ambiguous names must STAY unknown', () => {
   it('Glucose is NOT aliased — MIMIC carries it in 9 fluids (Blood, Urine, CSF, Pleural, Ascites, Joint, Body Fluid, Stool)', () => {
     // A CSF or pleural glucose is a different test with a different frame. Unknown > wrong entry.
@@ -96,6 +155,7 @@ describe('US English aliases — specimen-ambiguous names must STAY unknown', ()
 
   it('Urea Nitrogen is NOT aliased — specimen-ambiguous AND the H1.5 urea-vs-BUN trap (x2.14)', () => {
     expect(findEntry('Urea Nitrogen')).toBeNull();
+    expect(findEntry('Urea Nitrogen', 'blood')?.key).toBe('bun');
   });
 
   it('bare "pH" must NOT resolve to the URINE entry — a blood-gas pH 7.1 is critical acidemia but sits inside urine 4-9', () => {
@@ -108,13 +168,41 @@ describe('US English aliases — specimen-ambiguous names must STAY unknown', ()
   });
 });
 
+describe('Chinese/GLU aliases — explicit specimen selects the correct glucose frame', () => {
+  it('GLU stays unknown when specimen is omitted or unknown', () => {
+    expect(findEntry('GLU')).toBeNull();
+    expect(findEntry('GLU', 'unknown')).toBeNull();
+    expect(findEntry('GLU', null)).toBeNull();
+  });
+
+  it('葡萄糖 stays unknown when specimen is omitted or unknown', () => {
+    expect(findEntry('葡萄糖')).toBeNull();
+    expect(findEntry('葡萄糖', 'unknown')).toBeNull();
+    expect(findEntry('葡萄糖', null)).toBeNull();
+  });
+
+  it('GLU and 葡萄糖 resolve to fasting glucose only with printed blood context', () => {
+    expect(findEntry('GLU', 'blood')?.key).toBe('fasting_glucose');
+    expect(findEntry('葡萄糖', 'blood')?.key).toBe('fasting_glucose');
+  });
+
+  it('GLU and 葡萄糖 resolve to urine glucose only with printed urine context', () => {
+    expect(findEntry('GLU', 'urine')?.key).toBe('urine_glucose');
+    expect(findEntry('葡萄糖', 'urine')?.key).toBe('urine_glucose');
+  });
+
+  it('unambiguous 血糖 keeps its legacy unscoped fasting-glucose identity', () => {
+    expect(findEntry('血糖')?.key).toBe('fasting_glucose');
+  });
+});
+
 describe('US English aliases — specimen-scoped urine names', () => {
-  it('bare pH resolves only with urine context', () => {
+  it('bare pH resolves only with explicit urine or blood context', () => {
     expect(findEntry('pH')).toBeNull();
     expect(findEntry('pH', 'unknown')).toBeNull();
     expect(findEntry('pH', null)).toBeNull();
     expect(findEntry('pH', 'urine')?.key).toBe('urine_ph');
-    expect(findEntry('pH', 'blood')).toBeNull();
+    expect(findEntry('pH', 'blood')?.key).toBe('blood_ph');
   });
 
   it('urinalysis names resolve with urine context', () => {
@@ -127,9 +215,8 @@ describe('US English aliases — specimen-scoped urine names', () => {
     expect(findEntry('GLU', 'urine')?.key).toBe('urine_glucose');
   });
 
-  it('bare Glucose remains unknown for blood', () => {
+  it('generic urine-only aliases remain unknown for blood', () => {
     expect(findEntry('Glucose', 'blood')).toBeNull();
-    expect(findEntry('GLU', 'blood')).toBeNull();
     expect(findEntry('PRO', 'blood')).toBeNull();
     expect(findEntry('Ketones', 'blood')).toBeNull();
     expect(findEntry('Specific Gravity', 'blood')).toBeNull();

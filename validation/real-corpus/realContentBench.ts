@@ -10,18 +10,20 @@
 // describe what the user actually risks:
 //   • chipCoverage — fraction of rows where the chip reproduces the report's own comparison
 //                    (the delivered value; ceiling = rows that print a range)
-//   • r6Coverage   — of rows we RECOGNISE as high-stakes, fraction reaching the confirm gate.
-//                    NOTE: an analyte we cannot NAME drops out of numerator AND denominator, so
-//                    this does NOT detect the recognition gap (an earlier comment here claimed
-//                    it did — it was wrong). KEPT ONLY as the self-graded contrast; read
-//                    r6CoverageGold instead.
+//   • analyteConfirmCoverage — of rows we RECOGNISE as high-stakes, the fraction reaching the
+//                    user-facing confirm gate. NOTE: an analyte we cannot NAME drops out of
+//                    numerator AND denominator, so this does NOT detect the recognition gap.
+//                    KEPT ONLY as the self-graded contrast; read analyteConfirmCoverageGold
+//                    instead.
 //   • defer rate   — chipDeferred: where we honestly assert nothing.
 //
 // CODEX #7 — THE SELF-GRADING IS NOW FIXED, and the fix changed the story. Metrics whose
-// denominator is chosen by the system under test cannot see that system's blind spots. Scored
-// against INDEPENDENT labels (./gold-labels.ts) instead of our own table:
-//     R6 coverage, self-graded : 80.0%  (56/70)    ← what we believed
-//     R6 coverage, gold labels : 27.4%  (58/212)   ← what is true on the beachhead corpus
+// denominator is chosen by the system under test cannot see that system's blind spots. Before
+// W5 separated confirmation from internal review, the now-retired needsConfirm metric reported:
+//     self-graded : 80.0%  (56/70)    ← what we believed
+//     gold labels : 27.4%  (58/212)   ← what was true on the beachhead corpus
+// Those historical values are deliberately not renamed: their semantics are not comparable with
+// analyteConfirmCoverage after W5.
 // The denominator tripled because 142 high-stakes rows were previously INVISIBLE: we cannot name
 // Lactate, Free (ionized) Calcium, the blood gases, INR(PT), Troponin T, Anion Gap, Urea Nitrogen,
 // or the whole-blood electrolyte variants, so no guard could fire and the metric simply dropped
@@ -46,6 +48,7 @@ export interface ClassifiedDetail {
   unit: string;
   ourClass: string;
   needsConfirm: boolean;
+  needsReview: boolean;
   datasetFlag: 'normal' | 'abnormal' | 'unscored';
   agree: boolean | null; // null = not scorable (dataset flag missing)
 }
@@ -83,8 +86,8 @@ export interface RealCorpusSummary {
   chipAbstained: number; // had everything needed, still deferred
   chipAccuracy: number; // chipCorrect / chipScorable  ← NOT / (scorable - abstained)
   chipWrongDetail: string[];
-  highStakesRows: number; // rows whose analyte we know to be high-stakes
-  highStakesConfirmed: number; // ...of those, routed to the confirm gate (R6)
+  recognizedHighStakesRows: number; // rows whose analyte we know to be high-stakes
+  recognizedHighStakesConfirmRows: number; // ...of those, routed to the user-facing confirm gate
   // confirmed / highStakes, over rows we RECOGNISE as high-stakes.
   // KNOWN LIMITATION (do not misread this number): an analyte we fail to NAME is excluded from
   // BOTH numerator and denominator — it does not score 0. So this measures "of the high-stakes
@@ -92,15 +95,15 @@ export interface RealCorpusSummary {
   // "Troponin I" we cannot resolve is invisible here. Closing that needs an INDEPENDENT gold
   // label for high-stakes status per row; until then this number cannot detect the recognition
   // gap it was introduced to expose.
-  r6Coverage: number;
-  // --- R6 COVERAGE vs INDEPENDENT GOLD LABELS (Codex #7) — the honest version ---
+  analyteConfirmCoverage: number;
+  // --- ANALYTE-CONFIRM COVERAGE vs INDEPENDENT GOLD LABELS (Codex #7) ---
   // Denominator = rows an INDEPENDENT label calls high-stakes (validation/real-corpus/gold-labels.ts,
   // exact-match on the printed name, never via our alias index). An analyte we cannot NAME now stays
   // in the denominator and scores as a MISS instead of vanishing — so this number can finally see
-  // the recognition gap that r6Coverage above is structurally blind to.
+  // the recognition gap that analyteConfirmCoverage above is structurally blind to.
   goldHighStakesRows: number;
-  goldHighStakesConfirmed: number;
-  r6CoverageGold: number;
+  goldHighStakesConfirmRows: number;
+  analyteConfirmCoverageGold: number;
   // The actionable residue: gold says high-stakes, we never recognised the analyte, so no guard
   // could fire on it. These are unprotected rows, listed by name so the gap is a work list.
   goldHighStakesUnrecognized: string[];
@@ -115,12 +118,12 @@ export interface RealCorpusSummary {
   abstainRate: number;
   abstainByReason: Record<string, number>;
   confirmRate: number; // among classified rows
-  confirmByRule: Record<string, number>;
+  confirmByRule: Record<string, number>; // co-occurring flags, not causal attribution
   agreementScored: number;
   agreement: number; // fraction matching the report's own flag
-  // The REAL safety gate: agreement among rows we present CONFIDENTLY (needsConfirm=false).
-  // A confirm-flagged disagreement (e.g. R11 band-vs-printed-range) is safe, not a wrong call,
-  // so it must not count against safety — only a confidently-wrong row does.
+  // Internal guard-health: agreement only among rows with neither a user-facing confirmation
+  // requirement nor an internal clinical-review signal. A disagreement protected by either
+  // channel must not count as confidently wrong.
   confidentScored: number;
   confidentAgreement: number;
   confidentlyWrong: ClassifiedDetail[]; // MUST stay empty — a confident wrong call is the failure
@@ -145,12 +148,12 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
   let chipAbstained = 0;
   const chipWrongDetail: string[] = [];
   let goldHighStakesRows = 0;
-  let goldHighStakesConfirmed = 0;
+  let goldHighStakesConfirmRows = 0;
   let goldNonAnalyteRows = 0;
   let goldAnalyteRows = 0;
   const goldHighStakesUnrecognized: string[] = [];
-  let highStakesRows = 0;
-  let highStakesConfirmed = 0;
+  let recognizedHighStakesRows = 0;
+  let recognizedHighStakesConfirmRows = 0;
   const abstainByReason: Record<string, number> = {};
   const classifiedDetail: ClassifiedDetail[] = [];
   let items = 0;
@@ -206,19 +209,19 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
         }
       }
       if (row.entry?.highStakes) {
-        highStakesRows += 1;
-        if (row.needsConfirm) highStakesConfirmed += 1;
+        recognizedHighStakesRows += 1;
+        if (row.needsConfirm) recognizedHighStakesConfirmRows += 1;
       }
 
-      // Independent-label R6 coverage. Unlike the block above, an analyte we failed to NAME still
-      // counts here — that is the whole point: it scores as a miss instead of disappearing.
+      // Independent-label analyte-confirm coverage. Unlike the block above, an analyte we failed
+      // to NAME still counts here — it scores as a miss instead of disappearing.
       const gold = goldFor(it.item_name);
       if (gold) {
         if (gold.kind === 'non-analyte') goldNonAnalyteRows += 1;
         else goldAnalyteRows += 1;
         if (gold.kind === 'analyte' && gold.highStakes) {
           goldHighStakesRows += 1;
-          if (row.needsConfirm) goldHighStakesConfirmed += 1;
+          if (row.needsConfirm) goldHighStakesConfirmRows += 1;
           if (row.entry === null) goldHighStakesUnrecognized.push(it.item_name.trim());
         }
       }
@@ -248,12 +251,23 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
         rowAgree = ours === (it.is_abnormal === '1');
         if (rowAgree) agree += 1;
       }
-      classifiedDetail.push({ name: it.item_name.trim(), value: it.item_value, unit: it.item_unit, ourClass: row.classification, needsConfirm: row.needsConfirm, datasetFlag, agree: rowAgree });
+      classifiedDetail.push({
+        name: it.item_name.trim(),
+        value: it.item_value,
+        unit: it.item_unit,
+        ourClass: row.classification,
+        needsConfirm: row.needsConfirm,
+        needsReview: row.needsReview,
+        datasetFlag,
+        agree: rowAgree,
+      });
     }
   }
 
   const cb = confirmBurden(confirmRows);
-  const confident = classifiedDetail.filter((d) => !d.needsConfirm && d.agree !== null);
+  const confident = classifiedDetail.filter(
+    (d) => !d.needsConfirm && !d.needsReview && d.agree !== null,
+  );
   const confidentAgree = confident.filter((d) => d.agree === true).length;
   return {
     reports: reports.length,
@@ -267,12 +281,16 @@ export function scoreRealCorpus(reports: RealReport[]): RealCorpusSummary {
     chipAbstained,
     chipAccuracy: chipScorable === 0 ? NaN : chipCorrect / chipScorable,
     chipWrongDetail,
-    highStakesRows,
-    highStakesConfirmed,
-    r6Coverage: highStakesRows === 0 ? NaN : highStakesConfirmed / highStakesRows,
+    recognizedHighStakesRows,
+    recognizedHighStakesConfirmRows,
+    analyteConfirmCoverage:
+      recognizedHighStakesRows === 0
+        ? NaN
+        : recognizedHighStakesConfirmRows / recognizedHighStakesRows,
     goldHighStakesRows,
-    goldHighStakesConfirmed,
-    r6CoverageGold: goldHighStakesRows === 0 ? NaN : goldHighStakesConfirmed / goldHighStakesRows,
+    goldHighStakesConfirmRows,
+    analyteConfirmCoverageGold:
+      goldHighStakesRows === 0 ? NaN : goldHighStakesConfirmRows / goldHighStakesRows,
     goldHighStakesUnrecognized: [...new Set(goldHighStakesUnrecognized)],
     goldNonAnalyteRows,
     goldAnalyteRows,

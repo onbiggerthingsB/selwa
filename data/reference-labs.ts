@@ -184,7 +184,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ['GLU', 'FPG', '血糖', '葡萄糖', '空腹血糖'],
+    aliases: ['FPG', '血糖', '空腹血糖'],
+    specimenAliases: { blood: ['GLU', '葡萄糖'] },
     unit: 'mmol/L', allowedUnits: ['mmol/L'],
     refLow: 3.9, refHigh: 6.1, criticalLow: 2.8, criticalHigh: 22.2, highStakes: true, populationSensitive: true,
     absoluteLow: 0.3, absoluteHigh: 160,
@@ -415,7 +416,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ['Na', 'Na+', '血钠', '钠'],
+    aliases: ['Na', 'Na+', 'Sodium, Whole Blood', '血钠', '钠'],
     unit: 'mmol/L', allowedUnits: ['mmol/L', 'mEq/L'],
     refLow: 137, refHigh: 145, criticalLow: 120, criticalHigh: 160, highStakes: true, populationSensitive: false,
     absoluteLow: 80, absoluteHigh: 230,
@@ -440,7 +441,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ['K', 'K+', '血钾', '钾'],
+    aliases: ['K', 'K+', 'Potassium, Whole Blood', '血钾', '钾'],
     unit: 'mmol/L', allowedUnits: ['mmol/L', 'mEq/L'],
     refLow: 3.5, refHigh: 5.3, criticalLow: 2.5, criticalHigh: 6.5, highStakes: true, populationSensitive: false,
     absoluteLow: 1, absoluteHigh: 15,
@@ -1116,7 +1117,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ["HCO3", "HCO3-", "CO2", "CO2-CP", "TCO2", "二氧化碳结合力", "碳酸氢根"],
+    aliases: ["HCO3", "HCO3-", "CO2", "CO2-CP", "二氧化碳结合力", "碳酸氢根"],
     unit: "mmol/L", allowedUnits: ["mmol/L", "mEq/L"],
     refLow: 22, refHigh: 29,
     criticalLow: 10, criticalHigh: 40, highStakes: true, populationSensitive: false,
@@ -1132,6 +1133,170 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
       bo: fallback('zh'),
     }),
     source: 'Medscape/Testing.com Bicarbonate (total CO2) reference range (22-29 mmol/L)',
+  },
+  {
+    key: 'base_excess',
+    name: defineText({
+      en: reviewed('Base excess'),
+      zh: reviewed('碱剩余'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: [
+      'Base Excess',
+      'BE',
+      'Actual Base Excess',
+      'ABE',
+      'Standard Base Excess',
+      'SBE',
+      '碱剩余',
+      '剩余碱',
+    ],
+    unit: 'mmol/L',
+    allowedUnits: ['mmol/L', 'mEq/L'],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed(
+        'A calculated estimate of the metabolic component of blood acid-base balance.',
+      ),
+      zh: reviewed('根据血气测量值计算的指标，用于描述血液酸碱平衡中的代谢成分。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'An estimate derived from blood-gas measurements. A negative value is called a base deficit and can accompany metabolic acidosis. Actual and standard base excess are calculated differently, so use the range printed on the report.',
+      ),
+      zh: reviewed(
+        '由血气测量值计算得出的指标。负值也称碱缺失，可见于代谢性酸中毒。实际碱剩余和标准碱剩余的算法不同，应以报告打印的范围为准。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'Sourcing failed: no harmonised reference or laboratory panic interval exists. Zander R. Base excess (BE): reloaded. Eur J Med Res. 2024; PMCID PMC11089692; doi:10.1186/s40001-024-01796-6. Actual base excess (ABE) and standard base excess (SBE) are different algorithm-dependent measurands; the classical formula can create an artefactual arterial-venous difference of 1.5-2 mmol/L, while manufacturers implement formulas inconsistently. Trauma base-deficit cutoffs such as -6 are severity-stratification criteria, not laboratory panic values. Use only the range printed on the patient\'s report.',
+  },
+  {
+    key: 'blood_ph',
+    name: defineText({
+      en: reviewed('Blood pH'),
+      zh: reviewed('血气pH'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: ['Blood pH', 'Arterial pH', 'Venous pH', '血气pH'],
+    specimenAliases: {
+      blood: ['pH'],
+    },
+    unit: 'units',
+    allowedUnits: ['units', 'pH', ''],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed('A measurement of how acidic or alkaline a blood sample is.'),
+      zh: reviewed('用于测量血液样本酸碱程度的项目。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'Blood pH measures how acidic or alkaline a blood sample is. Arterial and venous samples differ slightly, and this table cannot distinguish them, so use the range printed on the report.',
+      ),
+      zh: reviewed(
+        '血气pH用于测量血液样本的酸碱程度。动脉血和静脉血的结果略有差异，而本表无法区分两者，因此应以报告打印的范围为准。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'Sourcing failed: one owned interval cannot represent an unspecified blood sample. Although the arterial pH range is well established, venous pH runs approximately 0.03-0.04 lower and the current schema records only blood, with no arterial/venous axis; see docs/superpowers/specs/2026-07-20-w4-curation-cycle.md §6.3. Use only the range printed on the patient\'s report.',
+  },
+  {
+    key: 'total_co2_calculated',
+    name: defineText({
+      en: reviewed('Calculated total CO2'),
+      zh: reviewed('计算总二氧化碳'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: ['Calculated Total CO2', 'Total CO2', 'TCO2', '总二氧化碳'],
+    unit: 'mmol/L',
+    allowedUnits: ['mmol/L', 'mEq/L'],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed(
+        'A value calculated from blood-gas measurements that estimates bicarbonate plus dissolved carbon dioxide.',
+      ),
+      zh: reviewed('根据血气测量值计算的指标，用于估算碳酸氢盐与溶解二氧化碳的总量。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'Calculated total CO2 estimates bicarbonate plus dissolved carbon dioxide from blood-gas measurements. It is not identical to a bicarbonate measurement, and methods and report ranges differ, so use the range printed on the report.',
+      ),
+      zh: reviewed(
+        '计算总二氧化碳根据血气测量值估算碳酸氢盐与溶解二氧化碳的总量。它与碳酸氢盐测量不是同一项目，检测方法和报告范围也可能不同，因此应以报告打印的范围为准。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'Sourcing failed: no harmonised interval exists for this measurand. Calculated total CO2 differs from bicarbonate because it includes dissolved CO2 and is calculated from blood-gas pH and pCO2; methods and reported intervals differ. Reference: Parameters that reflect the carbon dioxide content of blood, acutecaretesting.org. Use only the range printed on the patient\'s report.',
+  },
+  {
+    key: 'anion_gap',
+    name: defineText({
+      en: reviewed('Anion gap'),
+      zh: reviewed('阴离子间隙'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: ['Anion Gap', 'AG', '阴离子间隙'],
+    unit: 'mmol/L',
+    allowedUnits: ['mmol/L', 'mEq/L'],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed('A value calculated from the electrolytes reported in a blood sample.'),
+      zh: reviewed('根据血液样本中所报告的电解质计算得出的指标。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'The anion gap is a calculated difference among electrolytes. Some laboratories include potassium in the formula and others do not, and analyser-specific intervals differ, so use the formula and range printed on the report.',
+      ),
+      zh: reviewed(
+        '阴离子间隙是根据多项电解质计算得出的差值。有些实验室的公式包含钾，有些则不包含，而且不同分析仪的范围也不同，因此应以报告使用的公式和打印范围为准。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'Sourcing failed: no harmonised reference or laboratory panic interval exists. Published intervals differ materially by analyser: Pratumvinit B et al., Clin Chim Acta. 2020;500:172-179, PMID 31669932; Ayala-Lopez N and Harb R, J Appl Lab Med. 2020;5(1):126-135, PMID 32445342. The Na-Cl-HCO3 and Na+K-Cl-HCO3 formulas differ by approximately the potassium concentration, while the row name does not identify the formula. Diagnostic thresholds are not laboratory panic values. Use only the range printed on the patient\'s report.',
   },
   {
     key: 'random_glucose',
@@ -1715,6 +1880,45 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     source: 'Cutoff varies widely by assay (Roche ~115 IU/mL; others ~40 or <4) — MUST defer to printed cutoff',
   },
   {
+    key: 'crp',
+    name: defineText({
+      en: reviewed('C-reactive protein'),
+      zh: reviewed('C反应蛋白'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: ['CRP', 'C反应蛋白', 'C-反应蛋白', '全量程C反应蛋白'],
+    unit: 'mg/L',
+    allowedUnits: ['mg/L'],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed(
+        'An acute-phase blood protein made by the liver; a general (non-specific) marker of inflammation.',
+      ),
+      zh: reviewed('一种由肝脏生成的急性期血浆蛋白，是反映炎症的非特异性指标。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'C-reactive protein is an acute-phase protein made by the liver that rises during infection or inflammation and settles as it resolves; it is non-specific, flagging that inflammation is present somewhere without naming the cause. Conventional CRP reference intervals differ between laboratories, so read your value against the range printed on your own report.',
+      ),
+      zh: reviewed(
+        'C反应蛋白是由肝脏生成的急性期蛋白，在感染或炎症期间会升高，并随着炎症缓解而回落；它缺乏特异性，只能反映身体某处存在炎症，不能说明具体原因。常规C反应蛋白的参考区间因实验室而异，因此应将结果与您自己的报告上打印的范围对照阅读。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'Report-only: conventional CRP has no portable universal reference interval. Current official laboratory catalogs disagree: Mayo Clinic Laboratories reports <5.0 mg/L (https://www.mayocliniclabs.com/test-catalog/Overview/9731), Cambridge University Hospitals reports 0-6 mg/L (https://www.cuh.nhs.uk/our-services/pathology/pathology-tests/pathology-tests-a-to-z/biochemistry-tests/biochemistry-tests-a-c/), and Labcorp test 006627 reports an adult interval of 0-10 mg/L (https://www.labcorp.com/tests/006627/c-reactive-protein-crp-quantitative). Siemens Dimension RCRP Instructions for Use PN 11645602 states that each laboratory should determine its own reference interval and that its <=5.0 mg/L interval is guidance only (https://doclib.siem-healthineers.com/rest/v1/view?document-id=1015311). This app therefore reproduces only the interval printed by the reporting laboratory. highStakes:true is a confirmation safeguard, not a panic cutoff: NICE NG253 recommendation 1.8.2 includes CRP among urgent venous tests for people already assessed as high risk of severe illness or death from sepsis (https://www.nice.org.uk/guidance/NG253/chapter/managing-suspected-sepsis), while Mayo notes that concentrations above 100 mg/L are associated with severe stimuli including severe infection (sepsis). No reference or critical threshold is encoded.',
+  },
+  {
     key: 'hs_crp',
     name: defineText({
       en: reviewed('High-sensitivity C-reactive protein'),
@@ -1959,6 +2163,45 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
       bo: fallback('zh'),
     }),
     source: 'Tietz/Medscape: PT ~11-14.5 s (reagent-dependent). Critical >30 s (lab-defined panic value)',
+  },
+  {
+    key: 'prothrombin_activity',
+    name: defineText({
+      en: reviewed('Prothrombin activity percentage'),
+      zh: reviewed('凝血酶原活动度'),
+      bo: fallback('zh'),
+    }),
+    specimen: 'blood',
+    interpretation: 'report-only',
+    aliases: ['PT%', 'PTA', '凝血酶原活动度', 'PT活动度', '凝血酶原活性'],
+    unit: '%',
+    allowedUnits: ['%'],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: true,
+    populationSensitive: false,
+    definition: defineText({
+      en: reviewed(
+        'A laboratory-derived percentage expressing prothrombin activity from the report’s own assay calibration.',
+      ),
+      zh: reviewed('由实验室依据本次检测方法的校准曲线得出的凝血酶原活动百分比。'),
+      bo: fallback('zh'),
+    }),
+    plain: defineText({
+      en: reviewed(
+        'A laboratory-derived percentage expressing prothrombin activity. Lower percentages mean blood clots more slowly, the opposite direction from prothrombin time measured in seconds. Methods differ, so use the range printed on the report.',
+      ),
+      zh: reviewed(
+        '由实验室检测方法得出的凝血酶原活动百分比。百分比越低表示凝血越慢，与以秒计量的凝血酶原时间方向相反。检测方法各不相同，应以报告上打印的范围为准。',
+      ),
+      bo: fallback('zh'),
+    }),
+    source:
+      'No harmonised reference interval exists for prothrombin activity %. The value is interpolated from each laboratory\'s own normal-pooled-plasma dilution curve, so it depends on reagent, instrument, diluent and population; WS/T 220—2021 declines to publish intervals for clotting-factor activity assays and directs each laboratory to establish its own. Published bands disagree widely (70–130, 80–120, 85–100, 70–140), and the name covers at least two different measurands (Quick-type, which includes fibrinogen and FV; Owren-type, which does not). This app therefore uses only the range printed on the patient\'s own report and abstains when none is present. Low percent indicates impaired clotting — the opposite direction from prothrombin time in seconds.',
   },
   {
     key: 'inr',
@@ -2290,7 +2533,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     specimen: 'urine',
     interpretation: 'ours',
     aliases: ["Urine GLU", "Urinary glucose", "Glycosuria", "尿糖"],
-    specimenAliases: { urine: ["Glucose", "GLU", "尿糖"] },
+    specimenAliases: { urine: ["Glucose", "GLU", "葡萄糖", "尿糖"] },
     unit: "qualitative", allowedUnits: ["qualitative", "negative/+/++/+++"],
     refLow: 0, refHigh: 0,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: true,
@@ -2647,8 +2890,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
   //   pO2  — a venous blood gas prints the identical row name "pO2"; specimen appears only in the
   //          report header, which row-level extraction never sees, so a NORMAL venous pO2 (~40)
   //          would trip an arterial critical-low alarm.
-  //   Base Excess — would be the first SIGNED analyte, and lib/classify.ts's NUMERIC regex rejects
-  //          a leading '-', so its entire negative half silently parses to null.
+  //   Base Excess — signed scalar parsing is now supported, but its sourced clinical curation
+  //          remains a separate high-stakes entry task.
   {
     key: 'calcium_ionized',
     name: defineText({
@@ -2676,12 +2919,13 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     source: 'Corpus-observed printed reference range, MIMIC-IV / US hospital blood-gas panel: 1.12-1.32 mmol/L (curate-evidence.json, row name "Free Calcium", n=4, gold canonical "Ionized calcium"). Mayo Clinic Laboratories test catalog, Calcium, Ionized, Serum: reference interval approximately 1.12-1.30 mmol/L. The shipped 1.10-1.35 mmol/L is a deliberate cross-analyzer envelope around those two, NOT any single lab\'s printed interval. criticalLow/criticalHigh 0.80/1.60 mmol/L follow common hospital blood-gas panic-value practice and are explicitly NOT traceable to a single authoritative standard — treat as a convention, not a citation.',
   },
   {
-    // 'Urea Nitrogen' and 'Urea N' are DELIBERATELY NOT aliased. The curation pass proposed them;
+    // Bare 'Urea Nitrogen' and 'Urea N' are DELIBERATELY NOT aliased. The curation pass proposed them;
     // the raw MIMIC catalog refutes it — 'Urea Nitrogen' is carried in EIGHT fluids there (Blood,
     // Stool, Urine, Ascites, Pleural, Joint Fluid, Body Fluid, CSF), so it is the Glucose trap
     // exactly: a 24h urine urea nitrogen has nothing to do with this serum band. Only
-    // specimen-unambiguous spellings are aliased here ('BUN' = Blood Urea Nitrogen by name).
-    // data/english-aliases.test.ts locks 'Urea Nitrogen' as unrecognised.
+    // specimen-unambiguous spellings are unscoped here ('BUN' = Blood Urea Nitrogen by name).
+    // 'Urea Nitrogen' is accepted only when a printed blood specimen selects this frame below.
+    // data/english-aliases.test.ts locks bare 'Urea Nitrogen' as unrecognised.
     key: 'bun',
     name: defineText({
       en: reviewed('Blood urea nitrogen (BUN)'),
@@ -2691,6 +2935,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     specimen: 'blood',
     interpretation: 'ours',
     aliases: ['BUN', 'Blood Urea Nitrogen', 'Serum Urea Nitrogen'],
+    specimenAliases: { blood: ['Urea Nitrogen'] },
     unit: 'mg/dL', allowedUnits: ['mg/dL'],
     refLow: 6, refHigh: 20,
     criticalLow: null, criticalHigh: null, highStakes: true, populationSensitive: false,

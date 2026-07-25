@@ -34,10 +34,11 @@ function sectionFor(name: string, value: string | null, unit: string | null, ran
   return { row: rep.rows[0], section: buildSummary(rep, 'en').sections[0] as SummarySection };
 }
 
-// This is a semantic signal, not an English-copy regex. summary.ts exposes the
-// report's printed range only when it actually rendered a report-position chip.
+// This is a semantic signal, not an English-copy regex. `reportRange` now
+// reproduces all printed text even when no position can be computed, while the
+// neutral `report` tone is reserved for a successfully reproduced position.
 // Detecting assertion from one English chip field let every non-English path evade this gate.
-const asserts = (s: SummarySection) => s.reportRange.trim().length > 0;
+const asserts = (s: SummarySection) => s.tone === 'report';
 
 interface LanguageAudit {
   checked: Record<Lang, number>;
@@ -166,13 +167,12 @@ describe('a row may never assert a position with no disclosure', () => {
 
   it('still-unrecognised high-stakes rows disclose that we cannot name them', () => {
     const audit = languageAudit();
-    // Lactate / Free Calcium / Troponin T were on this list until the tranche-1 curation gave them
+    // Lactate / Free Calcium / Troponin T / Anion Gap were on this list until curation gave them
     // entries. These remain unrecognised on purpose: pO2 because a venous gas prints the identical
     // row name, 'Urea Nitrogen' because MIMIC carries it in EIGHT fluids (the Glucose trap).
     for (const [n, v, u, r] of [
       ['pO2', '60', 'mm Hg', '80-100'],
       ['Urea Nitrogen', '47', 'mg/dL', '6-20'],
-      ['Anion Gap', '20', 'mEq/L', '8-16'],
     ] as const) {
       expect(goldFor(n)?.highStakes, `${n} should be gold-high-stakes`).toBe(true);
       const { row, section } = sectionFor(n, v, u, r);
@@ -249,6 +249,8 @@ describe('a row may never assert a position with no disclosure', () => {
     expect(row.action).toBe('abstain');
     expect(row.needsConfirm).toBe(false);
     expect(row.flags.map((f) => f.id)).toContain('R18-SPECIMEN-MATCH-UNCORROBORATED');
+    expect(resolveText(section.name, 'en').text).toBe('pH');
+    expect(resolveText(section.name, 'en').text).not.toBe('Urine pH');
     expect(resolveText(section.chip, 'en').text).toBe('Below your report’s range');
     expect(resolveText(section.chip, 'zh').text).toBe('低于报告所列范围');
     expect(resolveText(section.chip, 'bo').text).toBe('低于报告所列范围');
@@ -275,7 +277,8 @@ describe('R17 — we stop showing our band when it cannot be this row’s band',
     expect(row.flags.map((f) => f.id)).toContain('R17-BAND-NOT-COMPARABLE');
     expect(section.typicalRange, 'our serum band must not be presented for a urine row').toBe('');
     expect(section.source).toBe('');
-    expect(row.needsConfirm).toBe(true);
+    expect(row.needsConfirm).toBe(false);
+    expect(row.needsReview).toBe(true);
     // The chip is the REPORT's own arithmetic and stays correct whatever the specimen.
     expect(resolveText(section.chip, 'en').text).toBe('Above your report’s range');
     expect(resolveText(section.chip, 'zh').text).toBe('高于报告所列范围');

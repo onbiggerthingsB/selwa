@@ -38,8 +38,17 @@ describe('SummaryView', () => {
   });
 
   it('presents an unknown analyte without a normal/abnormal judgment', () => {
-    render(<SummaryView report={report} lang="en" />);
-    expect(screen.getByText('ceruloplasmin')).toBeInTheDocument();
+    const { container } = render(<SummaryView report={report} lang="en" />);
+    const rawName = screen.getByText('ceruloplasmin');
+    expect(rawName).toBeInTheDocument();
+    expect(
+      rawName.closest('.name-primary')?.querySelector(
+        '[data-translation-review="unverified"]',
+      ),
+    ).not.toBeNull();
+    expect(
+      container.querySelectorAll('[data-translation-review="unverified"]').length,
+    ).toBeGreaterThan(0);
     expect(screen.getAllByText(/not assessed/i).length).toBeGreaterThan(0);
   });
 
@@ -64,7 +73,7 @@ describe('SummaryView', () => {
 
     const primary = firstRow!.querySelector('.name-primary');
     const secondary = firstRow!.querySelector('.name-secondary');
-    expect(primary).toHaveTextContent('空腹血糖翻译未经审核');
+    expect(primary).toHaveTextContent(/^空腹血糖$/);
     expect(secondary).toHaveTextContent(/^Fasting plasma glucose$/);
     expect(
       primary!.querySelector('[data-requested-lang="bo"][data-resolved-lang="zh"]'),
@@ -73,9 +82,27 @@ describe('SummaryView', () => {
       secondary!.querySelector('[data-requested-lang="en"][data-resolved-lang="en"]'),
     ).not.toBeNull();
 
+    const fallbacks = container.querySelectorAll(
+      '[data-requested-lang="bo"][data-resolved-lang="zh"]',
+    );
+    expect(fallbacks.length).toBeGreaterThan(0);
+    expect(
+      [...fallbacks].every(
+        (fallback) =>
+          fallback.querySelector('[data-translation-review="unverified"]') === null,
+      ),
+    ).toBe(true);
+
+    const directUnverified = screen
+      .getByText('ceruloplasmin')
+      .closest('[data-requested-lang="bo"][data-resolved-lang="bo"]');
+    expect(directUnverified).not.toBeNull();
+    const directMarker = directUnverified!.querySelector(
+      '[data-translation-review="unverified"]',
+    );
+    expect(directMarker).toHaveAttribute('lang', 'zh');
     const markers = screen.getAllByText('翻译未经审核');
-    expect(markers.length).toBeGreaterThan(0);
-    expect(markers.every((marker) => marker.getAttribute('lang') === 'zh')).toBe(true);
+    expect(markers).toHaveLength(1);
     expect(
       screen.getAllByText(/高于报告所列范围/).some((node) =>
         node.closest('[data-requested-lang="bo"][data-resolved-lang="zh"]'),

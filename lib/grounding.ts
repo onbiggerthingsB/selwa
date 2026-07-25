@@ -95,6 +95,7 @@ export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: numb
       classification: outcome.action === 'abstain' ? 'unclassified' : classification,
       action: outcome.action,
       needsConfirm: outcome.needsConfirm,
+      needsReview: outcome.needsReview,
       flags: outcome.flags,
     };
   });

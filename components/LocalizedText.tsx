@@ -49,8 +49,9 @@ type LocalizedTextProps = Omit<ComponentPropsWithoutRef<'span'>, 'children' | 'l
 };
 
 /**
- * Renders one localized value and, by default, fails closed with a visible
- * marker whenever the requested language has not been explicitly reviewed.
+ * Renders one localized value and marks direct, unverified localized text.
+ * Screen owners disclose a language fallback once instead of repeating it on
+ * every fallback string.
  */
 export function LocalizedText({
   value,
@@ -69,9 +70,11 @@ export function LocalizedText({
       data-resolved-lang={resolved.resolvedLang}
     >
       <ResolvedContent value={resolved} />
-      {showVerification && resolved.review === 'unverified' && (
-        <TranslationVerificationMarker lang={lang} />
-      )}
+      {showVerification &&
+        !resolved.usedFallback &&
+        resolved.review === 'unverified' && (
+          <TranslationVerificationMarker lang={resolved.resolvedLang} />
+        )}
     </span>
   );
 }

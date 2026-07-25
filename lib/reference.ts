@@ -1,8 +1,8 @@
 import type { Bound, ReferenceEntry, Sex } from '@/lib/types';
 import { REFERENCE_LABS } from '@/data/reference-labs';
-import { LANGS, resolveText } from '@/lib/i18n';
+import { SOURCE_LANGS, resolveText } from '@/lib/i18n';
 
-function normName(s: string): string {
+export function normName(s: string): string {
   return s
     .trim()
     .toLowerCase()
@@ -13,7 +13,7 @@ function normName(s: string): string {
 const INDEX: Map<string, ReferenceEntry> = (() => {
   const m = new Map<string, ReferenceEntry>();
   for (const e of REFERENCE_LABS) {
-    const localizedNames = LANGS.map((lang) => resolveText(e.name, lang).text);
+    const localizedNames = SOURCE_LANGS.map((lang) => resolveText(e.name, lang).text);
     for (const token of [e.key, ...localizedNames, ...e.aliases]) {
       m.set(normName(token), e);
     }
@@ -79,8 +79,8 @@ export function findEntryMatch(
     // Some of the table's long-standing aliases predate specimen capture and
     // therefore also exist in INDEX. Preserve that exact legacy behavior when
     // specimen is omitted/unknown, but let an explicitly printed specimen
-    // refine a declared scoped alias. This prevents blood "GLU", "Ketones",
-    // "SG", etc. from silently inheriting a urine or fasting-blood frame.
+    // select only the frame declared for a scoped alias. Ambiguous names such
+    // as GLU can therefore route to blood or urine only when that context is printed.
     if (SCOPED_ALIAS_NAMES.has(normalized)) {
       return specimenSafeMatch(scoped, 'specimen-scoped', specimen);
     }
@@ -190,6 +190,60 @@ export function parseScalar(s: string | null | undefined): number | null {
 }
 
 export type QualitativeValue = 'negative' | 'positive' | 'trace';
+
+export type PrintedFlagDirection = 'high' | 'low' | 'abnormal';
+
+const HIGH_PRINTED_FLAG_TOKENS = ['↑', 'h', 'hi', 'high', '偏高', '增高', '升高', '高'] as const;
+const LOW_PRINTED_FLAG_TOKENS = ['↓', 'l', 'lo', 'low', '偏低', '降低', '减低', '低'] as const;
+const PRINTED_FLAG_TOKENS = new Map<string, PrintedFlagDirection>([
+  ...HIGH_PRINTED_FLAG_TOKENS.map((token) => [token, 'high'] as const),
+  ...LOW_PRINTED_FLAG_TOKENS.map((token) => [token, 'low'] as const),
+  ['*', 'abnormal'],
+  ['!', 'abnormal'],
+  ['a', 'abnormal'],
+  ['异常', 'abnormal'],
+]);
+
+function normalizePrintedFlag(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/[\s　]+/g, '')
+    // Strip neutral typography only when it wraps the whole token. Internal
+    // punctuation remains intact so H?, H:L, and H(L) cannot collapse into a
+    // known direct token or an allowed high/low composite.
+    .replace(/^[：:．.,()（）[\]【】]+/, '')
+    .replace(/[：:．.,()（）[\]【】]+$/, '');
+}
+
+/**
+ * Assigns deterministic meaning to a verbatim marker copied from the report.
+ * This deliberately accepts only a closed whole-token vocabulary and has no
+ * access to the result value or reference range.
+ */
+export function printedFlagDirection(raw: string | null): PrintedFlagDirection | null {
+  if (raw === null) return null;
+  const token = normalizePrintedFlag(raw);
+  const direct = PRINTED_FLAG_TOKENS.get(token);
+  if (direct !== undefined) return direct;
+
+  // A complete high+low composite is directionally ambiguous. Accept only the
+  // two known tokens in either order, with a documented separator or none.
+  for (const high of HIGH_PRINTED_FLAG_TOKENS) {
+    for (const low of LOW_PRINTED_FLAG_TOKENS) {
+      for (const separator of ['', '/', '|', '-']) {
+        if (
+          token === `${high}${separator}${low}`
+          || token === `${low}${separator}${high}`
+        ) {
+          return 'abnormal';
+        }
+      }
+    }
+  }
+
+  return null;
+}
 
 const QUALITATIVE_TOKENS = new Map<string, QualitativeValue>([
   ['absent', 'negative'],

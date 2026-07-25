@@ -33,6 +33,7 @@ function flag(
 export interface GuardOutcome {
   action: GuardAction;
   needsConfirm: boolean;
+  needsReview: boolean;
   flags: GuardFlag[];
 }
 
@@ -60,6 +61,15 @@ function structurallySuspicious(
   if (value === null) return true;
   if (entry.unit === 'qualitative' && parseQualitative(value) !== null) return false;
   if (valueNum === null) return true; // couldn't parse a clean number
+  // A leading minus is credible only for an entry whose curated absolute
+  // bounds explicitly admit signed values. Otherwise keep the OCR-confirmation
+  // gate even though parseValue now accepts signed scalars.
+  if (
+    valueNum < 0 &&
+    !(entry.absoluteLow !== null && entry.absoluteLow < 0)
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -158,7 +168,7 @@ export function evaluateRow(
         }),
       ),
     );
-    return { action: 'abstain', needsConfirm: false, flags };
+    return { action: 'abstain', needsConfirm: false, needsReview: false, flags };
   }
 
   const printed = normalizedPrintedRange ?? parsePrintedRange(extracted.printedRange);
@@ -211,14 +221,17 @@ export function evaluateRow(
     // The existing confirmation screen can edit only value and unit. Sending an
     // R18 row there cannot resolve a specimen/range mismatch, so disclose and
     // abstain without adding an irrelevant confirmation step.
-    return { action: 'abstain', needsConfirm: false, flags };
+    return { action: 'abstain', needsConfirm: false, needsReview: false, flags };
   }
 
   // Report-only entries are intentionally handled without an owned band. Their
   // name and definition may render, and the summary may reproduce the report's
   // own comparison, but no unit/value/clinical classification runs here. Low
   // OCR confidence still enters the confirmation flow; the result can be a word
-  // or a range, so do not mislabel it as a suspicious numeric shape.
+  // or a range, so do not mislabel it as a suspicious numeric shape. A high-stakes
+  // report-only entry must also carry confirmation here because this branch returns
+  // before R6. The 14 legacy urine report-only entries are highStakes:false; explicitly
+  // curated blood report-only entries may opt into confirmation without owning a band.
   if (entry.interpretation === 'report-only') {
     if (extracted.confidence === 'low') {
       flags.push(
@@ -232,9 +245,14 @@ export function evaluateRow(
           }),
         ),
       );
-      return { action: 'classify', needsConfirm: true, flags };
+      return { action: 'classify', needsConfirm: true, needsReview: false, flags };
     }
-    return { action: 'classify', needsConfirm: false, flags };
+    return {
+      action: 'classify',
+      needsConfirm: entry.highStakes,
+      needsReview: false,
+      flags,
+    };
   }
 
   // R2 — unit mismatch: abstain (no auto-conversion in v0).
@@ -260,7 +278,12 @@ export function evaluateRow(
     // recognised-but-unit-mismatched troponin abstained with needsConfirm=false AND (before R2 was
     // surfaced) no visible flag at all — strictly worse than not recognising it, because R1 at
     // least spoke. Recognising an analyte must never reduce what the user is told.
-    return { action: 'abstain', needsConfirm: entry.highStakes, flags };
+    return {
+      action: 'abstain',
+      needsConfirm: entry.highStakes,
+      needsReview: false,
+      flags,
+    };
   }
 
   // R13 — implausible magnitude → suppress interpretation (likely misread). Abstain
@@ -280,14 +303,17 @@ export function evaluateRow(
         }),
       ),
     );
-    return { action: 'abstain', needsConfirm: true, flags };
+    return { action: 'abstain', needsConfirm: true, needsReview: false, flags };
   }
 
   let needsConfirm = false;
+  let needsReview = false;
 
-  // R3 — critical/panic band.
+  // R3 — critical/panic band. This is an internal clinical conclusion, so it
+  // protects safety accounting without selecting the row for an OCR-framed
+  // user confirmation step.
   if (classification === 'critical') {
-    needsConfirm = true;
+    needsReview = true;
     flags.push(
       flag(
         'R3-CRITICAL-PANIC-RANGE',
@@ -341,8 +367,9 @@ export function evaluateRow(
     );
   }
 
-  // R6 — high-stakes OR critical: ALWAYS confirm, regardless of reported confidence.
-  if (entry.highStakes || classification === 'critical') {
+  // R6 — an analyte-level high-stakes designation always confirms, independent
+  // of the patient's value. Criticality is handled internally by R3 above.
+  if (entry.highStakes) {
     needsConfirm = true;
     flags.push(
       flag(
@@ -360,10 +387,10 @@ export function evaluateRow(
   // R11 — the report's own printed range vs ours (unit-normalized). Fire on a VALUE-LEVEL
   // FLIP (our band and the printed range give a different low/normal/high call for THIS
   // value) REGARDLESS of overall band closeness — a value sitting in the narrow gap between
-  // the two bands is a real disagreement that must confirm, even when the bands are within
-  // the materiality tolerance. Band differences that don't flip this value are informational
-  // only (assay/lab reference ranges legitimately vary). Surfaced by the real-content
-  // measurement: HCT 49.9% (our sex-unknown union band vs a narrower printed range).
+  // the two bands is a real disagreement that requires internal review, even when the bands
+  // are within the materiality tolerance. Band differences that don't flip this value are
+  // informational only (assay/lab reference ranges legitimately vary). Surfaced by the
+  // real-content measurement: HCT 49.9% (our sex-unknown union band vs a narrower printed range).
   // R16 — the printed range cannot be this analyte's range in the unit we assumed (grounding
   // assumes the range shares the VALUE's unit; real reports mix them). The assumption is
   // DISPROVED, so every downstream use of this range is void: R11 must not draw a conclusion
@@ -412,24 +439,24 @@ export function evaluateRow(
     //
     // Found by an adversarial review of the β2-microglobulin alias: a urine β2M of 1.03 mg/L
     // against a printed 0-0.3 rendered a correct chip ("Above your report's range") sitting beside
-    // "Typical range 0.8-2.4 mg/L" — our SERUM band — with nothing warning the user. R11 fires and
-    // confirms, but is not surfaced; R16 misses it (2.4 vs 0.3 is 8x, under SCALE_TOLERANCE 10);
+    // "Typical range 0.8-2.4 mg/L" — our SERUM band — with nothing warning the user. R11 fires but
+    // is not surfaced; R16 misses it (2.4 vs 0.3 is 8x, under SCALE_TOLERANCE 10);
     // R13 catches only the HEALTHY urine value (0.15 < absoluteLow) and misses the injured patient.
     //
     // We cannot tell which specimen the row is, so we do not guess: we stop presenting our band as
-    // "typical" for it (lib/summary.ts suppresses typicalRange + source) and confirm. The chip is
-    // untouched — it is the report's own arithmetic and stays correct regardless of specimen.
+    // "typical" for it (lib/summary.ts suppresses typicalRange + source) and mark it for internal
+    // review. The chip is untouched — it is the report's own arithmetic and stays correct.
     const ourLow = low ?? -Infinity;
     const ourHigh = high ?? Infinity;
     const theirLow = printed.low ?? -Infinity;
     const theirHigh = printed.high ?? Infinity;
     if (!(ourLow <= theirHigh && theirLow <= ourHigh)) {
-      needsConfirm = true;
+      needsReview = true;
       flags.push(
         flag(
           'R17-BAND-NOT-COMPARABLE',
           'caution',
-          // INTERNAL (not in SURFACING_FLAGS): it drives suppression + the confirm gate. Its
+          // INTERNAL (not in SURFACING_FLAGS): it drives suppression + safety accounting. Its
           // user-visible effect is the ABSENCE of a misleading "Typical range", which needs no
           // new sentence. Surfacing a message here is a deliberate follow-up, not an oversight.
           defineText({
@@ -445,7 +472,7 @@ export function evaluateRow(
       );
     }
     if (valueFlips || bandsDiffer) {
-      if (valueFlips) needsConfirm = true;
+      if (valueFlips) needsReview = true;
       flags.push(
         flag(
           'R11-RANGE-DISAGREEMENT',
@@ -491,7 +518,7 @@ export function evaluateRow(
     );
   }
 
-  return { action: 'classify', needsConfirm, flags };
+  return { action: 'classify', needsConfirm, needsReview, flags };
 }
 
 function printedRangeDisagrees(printed: PrintedRange, entry: ReferenceEntry, sex: Sex, age?: number): boolean {

@@ -27,6 +27,36 @@ export const UI_COPY = {
     bo: fallback('zh'),
   }),
 
+  // COMPLETENESS GATE copy (see components/RowManifest.tsx). Deliberately says "paper report",
+  // never "photo": we do not keep the photo, so the only thing the user can check against is the
+  // page in their hand. The wording must not imply we can tell whether something is missing —
+  // we cannot; that is exactly why we are asking.
+  manifestEyebrow: defineText({
+    en: reviewed('Check the list'),
+    zh: reviewed('核对清单'),
+    bo: fallback('zh'),
+  }),
+  manifestCountLabel: defineText({
+    en: reviewed('results read from your photo'),
+    zh: reviewed('项结果读自您的照片'),
+    bo: fallback('zh'),
+  }),
+  manifestHelp: defineText({
+    en: reviewed('Please compare this list with your paper report. We can only explain the results we read — if any are missing, take the photo again.'),
+    zh: reviewed('请将此清单与您的纸质报告核对。我们只能解读已读取到的结果——如有遗漏，请重新拍照。'),
+    bo: fallback('zh'),
+  }),
+  manifestConfirmCta: defineText({
+    en: reviewed('Yes, they are all here'),
+    zh: reviewed('是，全部都在'),
+    bo: fallback('zh'),
+  }),
+  manifestMissingCta: defineText({
+    en: reviewed('Something is missing — retake photo'),
+    zh: reviewed('有遗漏——重新拍照'),
+    bo: fallback('zh'),
+  }),
+
   confirmEyebrow: defineText({
     en: reviewed('One quick step'),
     zh: reviewed('快速一步'),

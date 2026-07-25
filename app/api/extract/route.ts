@@ -45,7 +45,13 @@ export async function POST(req: NextRequest) {
     });
 
     const parsed = message.parsed_output;
-    if (!parsed) return NextResponse.json({ error: 'Could not read the report' }, { status: 422 });
+    // Zero rows is the same event as an unreadable page, not a successful empty report: a report
+    // that OCRs to nothing must never present as one with nothing wrong. The schema deliberately
+    // still permits `rows: []` (adding .min(1) would push minItems into the model's constrained
+    // decoding and pressure it to invent a row on a blank image, attacking the OCR-only invariant).
+    if (!parsed || !Array.isArray(parsed.rows) || parsed.rows.length === 0) {
+      return NextResponse.json({ error: 'Could not read the report' }, { status: 422 });
+    }
     return NextResponse.json({ data: parsed });
   } catch {
     // Swallow the raw SDK error: it may carry request payloads or key material.

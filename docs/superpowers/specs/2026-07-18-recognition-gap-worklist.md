@@ -1,6 +1,7 @@
 # Recognition-gap work list (post Codex #7)
 
-Status: **alias pass shipped; curation cycle NOT started.**
+Status: **alias pass shipped; §2 curation cycle SUPERSEDED by
+`docs/superpowers/specs/2026-07-20-w4-curation-cycle.md`.**
 Source: adversarial triage of the 136 unrecognised analyte names in the two real corpora
 (`validation/real-corpus/`), classified by Sonnet 5 and then attacked by Opus 4.8, which
 **downgraded 14 proposed aliases** it could break.
@@ -15,14 +16,13 @@ The concrete harm, measured on the shipped pipeline — the chip is deliberately
 recognition, so an unrecognised analyte still gets a position chip with **no confirm gate and no
 surfaced flag**:
 
-| row | printed range | what the user sees |
-| --- | --- | --- |
-| Lactate 8.4 mmol/L (sepsis/shock) | 0.5-2.0 | "Above your report's range", `needsConfirm=false`, flags: none |
-| Troponin T 2.4 ng/mL (massive MI) | 0-0.01 | "Above your report's range", `needsConfirm=false`, flags: none |
-| Potassium, Whole Blood 7.2 mEq/L | 3.5-5.1 | "Above your report's range", `needsConfirm=false`, flags: none |
+| row | printed range | historical output | current status |
+| --- | --- | --- | --- |
+| Lactate 8.4 mmol/L (sepsis/shock) | 0.5-2.0 | ~~"Above your report's range", `needsConfirm=false`, flags: none~~ | **FIXED** — `lactate` is curated and reaches the confirm gate. |
+| Troponin T 2.4 ng/mL (massive MI) | 0-0.01 | ~~"Above your report's range", `needsConfirm=false`, flags: none~~ | **FIXED** — `troponin_t` is curated and reaches the confirm gate. |
+| Potassium, Whole Blood 7.2 mEq/L | 3.5-5.1 | ~~"Above your report's range", `needsConfirm=false`, flags: none~~ | **FIXED by W4-7** in the successor cycle — the matrix-qualified name resolves to `potassium`. |
 
-A life-threatening potassium is presented exactly as flatly as a mildly high cholesterol. R6 exists
-to prevent this and cannot fire, because recognition is its trigger.
+These rows document a real historical failure state; they are no longer an open work list.
 
 ## 1. DONE — alias pass (15 aliases, shipped)
 
@@ -44,20 +44,27 @@ hazard, and each was mechanically re-checked here for `normName()` index collisi
 high-stakes gap needs a *new curated entry*, not an alias — which is exactly what the adversary
 concluded when it downgraded them. Aliasing cannot close this.
 
-## 2. NEXT — curation cycle: 18 high-stakes entries (NOT started)
+## 2. SUPERSEDED — curation cycle: 18 high-stakes entries
+
+**SUPERSEDED by `docs/superpowers/specs/2026-07-20-w4-curation-cycle.md`. Do not execute
+this list.** The successor spec re-audits every item, records the later policy refusals, and
+pre-registers the safe work that remains.
 
 Each needs sourced reference bands + R13 absolute plausibility bounds + adversarial review, per the
 established pattern. **Do not rush these** — a wrong band is worse than no entry, because the entry
 turns "we don't know" into a confident comparison.
 
 Highest value for the US beachhead (drives the 27.4%):
-`Lactate` · `Free Calcium` (ionised — NOT total calcium, different band) · `pO2` · `pCO2` ·
+~~`Lactate`~~ · ~~`Free Calcium` (ionised — NOT total calcium, different band)~~ · `pO2` · ~~`pCO2`~~ ·
 `Base Excess` · `Anion Gap` · `Urea Nitrogen` (BUN — NOT urea; differs by ~2.8× conversion) ·
-`Troponin T` · `Bilirubin, Total` · `Hematocrit, Calculated` · `Calculated Total CO2`
+~~`Troponin T`~~ · `Bilirubin, Total` · `Hematocrit, Calculated` · `Calculated Total CO2`
 
-Chinese corpus: `凝血酶时间(TT)` / `TT` (thrombin time) · `PT%` (prothrombin activity) · `肌红蛋白`
-(myoglobin) · `肌酸激酶同工酶质量` (CK-MB mass) · `铅(Pb)` / `镉(Cd)` (blood heavy metals — whole-blood
+Chinese corpus: ~~`凝血酶时间(TT)`~~ / ~~`TT`~~ (thrombin time) · ~~`PT%`~~ (prothrombin activity) ·
+~~`肌红蛋白`~~ (myoglobin) · ~~`肌酸激酶同工酶质量`~~ (CK-MB mass) · `铅(Pb)` / `镉(Cd)` (blood heavy metals — whole-blood
 matrix, distinct from serum minerals)
+
+The nine struck printed names shipped before this successor cycle. They remain here only to
+preserve the historical decomposition, not as work candidates.
 
 Plus 20 non-high-stakes entries (coverage, not safety): RDW-SD, urobilinogen, tumour markers,
 `Asparate Aminotransferase (AST)` (the adversary showed our existing `ast` band does **not** match
@@ -80,11 +87,16 @@ These are **not** gaps to close. Recording them so a future pass doesn't "fix" t
 Closing these safely requires **panel/specimen context capture**, which is the already-deferred
 prerequisite — not an alias.
 
-## 4. SEPARATE BUG FOUND during triage (not yet fixed)
+## 4. RESOLVED — specimen-mismatched curated range
+
+Status: **FIXED** in commit `2d4982e`. `R17-BAND-NOT-COMPARABLE` now detects the
+non-overlapping printed and curated bands, and `lib/summary.ts` withholds the curated
+`typicalRange` and `source` on that row. This is retained below as historical failure
+evidence, not as an open work item.
 
 The Opus adversary, while clearing `β2微球蛋白`, demonstrated a **pre-existing** hazard that the alias
 did not create and does not worsen (the same state is already reachable via the entry's canonical
-`β2-微球蛋白`), but which is real and unmitigated:
+`β2-微球蛋白`), which was real before R17:
 
 > A specimen-unqualified **urine** β2-microglobulin of 1.03 mg/L against a printed range 0-0.3
 > renders a correct chip ("Above your report's range") next to **"Typical range 0.8-2.4 mg/L"** —
@@ -93,7 +105,6 @@ did not create and does not worsen (the same state is already reachable via the 
 > an 8× ratio, under `SCALE_TOLERANCE = 10`. R13 fires only for *normal* urine values — it catches
 > the healthy patient and misses the injured one.
 
-Generalised: whenever our curated band materially disagrees with the printed range, we still show
-"Typical range …" with no visible caveat. Options: surface an R11 variant (its message is about the
-report's own content, so it is speakable under B1), suppress `typicalRange` when R11 fires, or
-tighten `SCALE_TOLERANCE`. Needs its own decision — recorded here so it is not lost.
+Resolution: R17 treats fully non-overlapping bands as evidence that our curated frame is not
+comparable to the row, keeps the report-derived chip, and suppresses our curated range and
+provenance. The earlier alternatives were superseded by that implementation.

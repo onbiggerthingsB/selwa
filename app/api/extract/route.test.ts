@@ -71,6 +71,17 @@ describe('POST /api/extract', () => {
     expect(res.status).toBe(422);
   });
 
+  // A page that OCRs to nothing must not present as a report with nothing wrong: returning
+  // 200 {rows: []} was silent omission, indistinguishable from a blank image, and a dropped
+  // out-of-range row reads to the user as reassurance. Fails closed to the same unreadable
+  // response as a null parse, because it is the same event.
+  it('422s a zero-row extraction rather than returning an empty report', async () => {
+    parse.mockResolvedValue({ parsed_output: { rows: [] } });
+    const res = await POST(reqWith(new File(['img'], 'lab.jpg', { type: 'image/jpeg' })));
+    expect(res.status).toBe(422);
+    await expect(res.json()).resolves.toEqual({ error: 'Could not read the report' });
+  });
+
   it('502s without exposing or logging raw SDK errors', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     parse.mockRejectedValueOnce(new Error('upstream payload: secret-key-leak'));

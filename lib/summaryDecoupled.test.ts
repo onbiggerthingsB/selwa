@@ -18,26 +18,37 @@ const sec = (name: string, value: string, unit: string | null, range: string | n
   buildSummary(groundExtraction({ rows: [{ name, value, unit, printedRange: range, confidence: 'high' }] }, 'unknown'), 'en').sections[0];
 
 describe('decoupled chip — an UNKNOWN analyte still gets the report’s own comparison', () => {
-  it('Anion Gap (not in our table) with a printed range reproduces the position', () => {
-    const s = sec('Anion Gap', '14', 'mEq/L', '8-20');
+  it('an uncatalogued marker with a printed range reproduces the position', () => {
+    const s = sec('Uncatalogued Marker', '14', 'mEq/L', '8-20');
     expect(resolveText(s.chip, 'en').text).toBe('Within your report’s range');
     expect(s.reportRange).toBe('8-20'); // the report's own range surfaces too — it's their info
   });
 
   it('an unknown analyte OUT of its printed range reproduces that too', () => {
-    expect(resolveText(sec('Anion Gap', '25', 'mEq/L', '8-20').chip, 'en').text).toBe('Above your report’s range');
+    expect(resolveText(sec('Uncatalogued Marker', '25', 'mEq/L', '8-20').chip, 'en').text).toBe('Above your report’s range');
   });
 
   it('an unknown analyte with NO printed range still asserts nothing', () => {
-    const s = sec('Anion Gap', '14', 'mEq/L', null);
+    const s = sec('Uncatalogued Marker', '14', 'mEq/L', null);
     expect(resolveText(s.chip, 'en').text).toMatch(/clinician|not assessed/i);
     expect(s.reportRange).toBe('');
   });
 
   it('but we add NO education/typical-range for an analyte we do not know', () => {
-    const s = sec('Anion Gap', '14', 'mEq/L', '8-20');
+    const s = sec('Uncatalogued Marker', '14', 'mEq/L', '8-20');
     expect(resolveText(s.plain, 'en').text).toBe(''); // no invented meaning
     expect(s.typicalRange).toBe(''); // we have no curated range to offer as context
+  });
+});
+
+describe('decoupled chip — a report-only analyte uses only the report’s range', () => {
+  it('Anion Gap adds reviewed education without inventing a typical range', () => {
+    const s = sec('Anion Gap', '14', 'mEq/L', '8-20');
+    expect(resolveText(s.chip, 'en').text).toBe('Within your report’s range');
+    expect(s.reportRange).toBe('8-20');
+    expect(resolveText(s.plain, 'en').text).toMatch(/calculated.*electrolytes/i);
+    expect(s.typicalRange).toBe('');
+    expect(s.source).toBe('');
   });
 });
 
@@ -47,10 +58,13 @@ describe('decoupled chip — safety limits', () => {
     // believe we misread would assert a position from bad data.
     const s = sec('钾', '40', 'mmol/L', '3.5-5.1');
     expect(resolveText(s.chip, 'en').text).not.toMatch(/above|below|within/i);
+    expect(s.reportRange).toBe('3.5-5.1');
   });
 
   it('a non-numeric value asserts nothing (nothing to reproduce)', () => {
-    expect(resolveText(sec('滴虫', 'Negative(-)', null, 'Negative(-)').chip, 'en').text).toMatch(/clinician|not assessed/i);
+    const s = sec('滴虫', 'Negative(-)', null, 'Negative(-)');
+    expect(resolveText(s.chip, 'en').text).toMatch(/clinician|not assessed/i);
+    expect(s.reportRange).toBe('Negative(-)');
   });
 
   it('a KNOWN analyte is unaffected — still reproduces the report’s frame', () => {

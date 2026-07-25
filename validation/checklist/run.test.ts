@@ -28,7 +28,7 @@ describe('runBehavioralCase', () => {
       input: { row: { name: '空腹血糖', value: '5.5', unit: 'mmol/L', printedRange: null, confidence: 'high' } },
       perturbations: [
         { name: 'whitespace', patch: { name: ' 空腹血糖 ' } },
-        { name: 'alias', patch: { name: 'GLU' } },
+        { name: 'alias', patch: { name: 'FPG' } },
       ],
       expect: {},
     };

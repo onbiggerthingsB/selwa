@@ -31,6 +31,7 @@ import { describe, it, expect } from 'vitest';
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary, type SummarySection } from '@/lib/summary';
 import { REFERENCE_LABS } from '@/data/reference-labs';
+import { resolveBounds, findEntryMatch } from '@/lib/reference';
 import {
   LANGS,
   resolveText,
@@ -39,6 +40,10 @@ import {
 } from '@/lib/i18n';
 import { MIMIC_US_SAMPLE } from './real-corpus/us-sample';
 import { MEDREPBENCH_SAMPLE } from './real-corpus/sample';
+import {
+  SENSITIVE_ANALYTE_NAMES,
+  isSensitiveAnalyteName,
+} from '@/lib/sensitiveAnalytes';
 
 // Text that states a conclusion about the patient's value, or triages them.
 const BANNED: { re: RegExp; why: string }[] = [
@@ -186,6 +191,71 @@ function sectionsFor(name: string, value: string, unit: string | null, range: st
   return buildSummary(rep, 'en').sections;
 }
 
+function normalPoint(entry: (typeof REFERENCE_LABS)[number]): number {
+  const { low, high } = resolveBounds(entry, 'male', 40);
+  if (low !== null && high !== null) return (low + high) / 2;
+  if (low !== null) return low;
+  if (high !== null) return high;
+  throw new Error(`${entry.key}: critical entry has no normal reference point`);
+}
+
+function plausibleCriticalPoint(entry: (typeof REFERENCE_LABS)[number]): number {
+  if (
+    entry.criticalLow !== null &&
+    entry.absoluteLow !== null &&
+    entry.absoluteLow < entry.criticalLow
+  ) {
+    return (entry.absoluteLow + entry.criticalLow) / 2;
+  }
+  if (
+    entry.criticalHigh !== null &&
+    entry.absoluteHigh !== null &&
+    entry.criticalHigh < entry.absoluteHigh
+  ) {
+    return (entry.criticalHigh + entry.absoluteHigh) / 2;
+  }
+  throw new Error(`${entry.key}: critical band has no physiologically plausible test point`);
+}
+
+function visibleTriggerSurface(
+  entry: (typeof REFERENCE_LABS)[number],
+  value: number,
+) {
+  const report = groundExtraction(
+    {
+      rows: [
+        {
+          name: entry.key,
+          value: String(value),
+          unit: entry.unit,
+          printedRange: null,
+          confidence: 'high',
+          specimen: entry.specimen,
+        },
+      ],
+    },
+    'male',
+    40,
+  );
+  const row = report.rows[0];
+  if (row.entry?.key !== entry.key) {
+    throw new Error(`${entry.key}: conditionality fixture grounded to ${row.entry?.key ?? 'none'}`);
+  }
+  const section = buildSummary(report, 'en').sections[0];
+  const surfacedFlagIds = section.flags
+    .map((surfaced) => {
+      const sources = row.flags.filter((candidate) => candidate.message === surfaced.message);
+      if (sources.length !== 1) {
+        throw new Error(
+          `${entry.key}: surfaced flag did not map uniquely to a guard flag`,
+        );
+      }
+      return sources[0].id;
+    })
+    .sort();
+  return { row, surfacedFlagIds };
+}
+
 // Rows engineered to force each guard to fire, so the gate sees the worst case — not just
 // whatever the corpus happens to contain.
 const FORCING_ROWS: [string, string, string | null, string | null][] = [
@@ -201,7 +271,149 @@ const FORCING_ROWS: [string, string, string | null, string | null][] = [
   ['Creatinine', '1.0', 'mg/dL', '59-104'], // R16 on a high-stakes analyte
 ];
 
+const SENSITIVE_POSITION_FRAMES = [
+  { label: 'qualitative positive', value: 'POSITIVE', printedRange: 'NEGATIVE' },
+  { label: 'qualitative negative', value: 'NEGATIVE', printedRange: 'NEGATIVE' },
+  { label: 'numeric above', value: '3.4', printedRange: '0-1' },
+  { label: 'numeric below', value: '-1', printedRange: '0-1' },
+] as const;
+
+// Independent expected list: the test must not shrink if a production registry
+// member is accidentally deleted.
+const EXPECTED_SENSITIVE_ANALYTE_NAMES = [
+  'Cocaine, Urine',
+  'Methadone, Urine',
+  'Benzodiazepine Screen, Urine',
+  'Oxycodone',
+  'Opiate Screen, Urine',
+  'Amphetamine Screen, Urine',
+  'Barbiturate Screen, Urine',
+  '人类免疫缺陷 病毒抗体/抗原 (P24)',
+  '髓系原始细胞群',
+] as const;
+
 describe('B1 gate — no user-visible verdict about the patient’s own value', () => {
+  it('keeps every sensitive name/result visible while withholding position for every value direction', () => {
+    const leaks: string[] = [];
+
+    expect(SENSITIVE_ANALYTE_NAMES).toEqual(EXPECTED_SENSITIVE_ANALYTE_NAMES);
+    expect(isSensitiveAnalyteName('Cocaine Urine')).toBe(true);
+    expect(isSensitiveAnalyteName('人类免疫缺陷病毒抗体/抗原(P24)')).toBe(true);
+
+    for (const name of EXPECTED_SENSITIVE_ANALYTE_NAMES) {
+      expect(isSensitiveAnalyteName(name), `${name}: registry self-match`).toBe(true);
+      expect(
+        isSensitiveAnalyteName(`vendor ${name}`),
+        `${name}: substring matching must stay forbidden and fail open`,
+      ).toBe(false);
+
+      for (const frame of SENSITIVE_POSITION_FRAMES) {
+        const [section] = sectionsFor(
+          name,
+          frame.value,
+          null,
+          frame.printedRange,
+        );
+        const chip = {
+          en: resolveText(section.chip, 'en').text,
+          zh: resolveText(section.chip, 'zh').text,
+          bo: resolveText(section.chip, 'bo').text,
+        };
+
+        // The product decision withholds only the position, never the row itself.
+        expect(resolveText(section.name, 'en').text).toBe(name);
+        expect(section.valueText).toBe(frame.value);
+        expect(section.reportRange).toBe(frame.printedRange);
+
+        if (
+          section.tone !== 'unclassified' ||
+          chip.en !== 'Not assessed' ||
+          chip.zh !== '未评估' ||
+          chip.bo !== '未评估'
+        ) {
+          leaks.push(
+            `${name} / ${frame.label}: tone=${section.tone}, chips=${JSON.stringify(chip)}`,
+          );
+        }
+      }
+    }
+
+    expect(
+      leaks,
+      `sensitive patient-position leakage:\n${leaks.join('\n')}`,
+    ).toEqual([]);
+  });
+
+  it('never lets a sensitive name resolve to a curated entry (keeps the chip suppressor load-bearing)', () => {
+    // The suppressor withholds only the chip; typicalRange/source are gated on
+    // `curated && !bandNotComparable`, NOT on sensitivity. That is safe only while
+    // no sensitive name resolves to a curated 'ours' entry — otherwise a sensitive
+    // row would render our band + provenance beside a suppressed chip. Enforce the
+    // invariant mechanically so a future alias cannot silently open that path.
+    const resolved: string[] = [];
+    for (const name of EXPECTED_SENSITIVE_ANALYTE_NAMES) {
+      for (const specimen of ['unknown', 'blood', 'urine'] as const) {
+        const { entry } = findEntryMatch(name, specimen);
+        if (entry) resolved.push(`${name} [${specimen}] -> ${entry.key}`);
+      }
+    }
+    expect(
+      resolved,
+      `sensitive name resolved to a curated entry:\n${resolved.join('\n')}`,
+    ).toEqual([]);
+  });
+
+  it('keeps surfaced flags and confirm-list membership independent of critical-but-plausible values', () => {
+    // Option (b) permits value-dependent selection only when it truthfully signals
+    // reading confidence (R13/R16), never when it reveals a clinical conclusion.
+    // For every curated panic band, compare a normal value with a critical value
+    // that remains inside the entry's absolute physiological bounds. R13 therefore
+    // cannot confound this gate: any difference here is the forbidden R3/R6 leak.
+    const mismatches: Array<{
+      key: string;
+      normal: { surfacedFlagIds: string[]; needsConfirm: boolean };
+      critical: { surfacedFlagIds: string[]; needsConfirm: boolean };
+    }> = [];
+    let compared = 0;
+
+    for (const entry of REFERENCE_LABS) {
+      if (
+        entry.interpretation !== 'ours' ||
+        (entry.criticalLow === null && entry.criticalHigh === null)
+      ) {
+        continue;
+      }
+
+      compared += 1;
+      const normal = visibleTriggerSurface(entry, normalPoint(entry));
+      const critical = visibleTriggerSurface(entry, plausibleCriticalPoint(entry));
+      expect(normal.row.classification, `${entry.key}: normal fixture`).toBe('normal');
+      expect(critical.row.classification, `${entry.key}: critical fixture`).toBe('critical');
+
+      const normalSurface = {
+        surfacedFlagIds: normal.surfacedFlagIds,
+        needsConfirm: normal.row.needsConfirm,
+      };
+      const criticalSurface = {
+        surfacedFlagIds: critical.surfacedFlagIds,
+        needsConfirm: critical.row.needsConfirm,
+      };
+      if (JSON.stringify(normalSurface) !== JSON.stringify(criticalSurface)) {
+        mismatches.push({
+          key: entry.key,
+          normal: normalSurface,
+          critical: criticalSurface,
+        });
+      }
+    }
+
+    expect(compared, 'conditionality gate must exercise curated critical bands').toBeGreaterThan(0);
+    expect(
+      mismatches,
+      `patient-value-dependent screen elements:\n${JSON.stringify(mismatches, null, 2)}`,
+    ).toEqual([]);
+  });
+
   it('guard-forcing rows surface no banned verdict/triage text', () => {
     const copies: NamedCopy[] = [];
     for (const [n, v, u, r] of FORCING_ROWS) {

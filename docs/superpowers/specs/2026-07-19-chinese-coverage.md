@@ -1,6 +1,8 @@
 # Chinese coverage — plan
 
-Status: **NOT STARTED.** Written for implementation by Codex.
+Status: **SHIPPED** in commit `eef0235` (3 Chinese aliases + 5 reason-bearing locks).
+Measured outcome: MedRepBench R6-gold **54.1% (20/37) → 62.2% (23/37)**. The 54.1% baseline quoted
+below is HISTORICAL — do not baseline new work against it.
 
 The advisor confirmed the lab-report **source language is Chinese**. That inverts the coverage
 priority: recent curation was tuned for the US corpus — `validation/real-corpus/run.ts` still labels
@@ -80,7 +82,7 @@ of its own so a future bulk-alias pass cannot quietly pick it up.
 | --- | --- |
 | `PT%` | Prothrombin **activity percentage** — a third representation of prothrombin alongside the existing `prothrombin_time` (seconds) and `inr` (ratio). Different quantity, different units. It needs its own curated entry with a sourced band. Aliasing it onto either existing entry would compare a percentage against a seconds or ratio band. **Scope it; do not band it in this pass.** |
 | `a-淀粉酶` | No unit, single-item panel. An earlier adversarial review found this string is the canonical name of a **urine** amylase assay in Chinese lab catalogs. With no unit and no panel context there is nothing to disambiguate on. Stays unrecognised; revisit only if specimen context becomes available for this row. |
-| `髓系原始细胞群` | Myeloid blast population, %, research flow cytometry. Qualitative/research; out of scope for interpretation. Stays unrecognised. |
+| `髓系原始细胞群` | Myeloid blast population, %, research flow cytometry. A report-relative position can read as a leukaemia conclusion delivered by phone, in translation, without a clinician present. This is a prognostic-shock harm refusal, not a claim that the assay is low-stakes. Keep the name visible, withhold the position, and keep the analyte unrecognised. |
 
 ---
 

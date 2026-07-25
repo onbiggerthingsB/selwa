@@ -4,8 +4,8 @@ export const OCR_NOISE_INV: BehavioralCase[] = [
     input: { row: { name: '空腹血糖', value: '5.5', unit: 'mmol/L', printedRange: null, confidence: 'high' } },
     perturbations: [
       { name: 'leading/trailing whitespace', patch: { name: ' 空腹血糖 ' } },
-      { name: 'EN alias GLU', patch: { name: 'GLU' } },
-      { name: 'lowercase alias glu', patch: { name: 'glu' } },
+      { name: 'EN alias FPG', patch: { name: 'FPG' } },
+      { name: 'lowercase alias fpg', patch: { name: 'fpg' } },
       { name: 'unit trailing whitespace', patch: { unit: 'mmol/L ' } },
     ],
     expect: {} },

@@ -1,6 +1,6 @@
 # Urinalysis coverage — plan
 
-Status: **NOT STARTED.** Written for implementation by Codex.
+Status: **SHIPPED** in commit `7531700` (report-referenced urinalysis coverage).
 
 Motivating artefact: a real "Urine Complete Analysis" report (Aster Medical Centre, 19 rows) run
 through the shipped app. Most rows rendered *"This test is not in our reference set."* Feeding the

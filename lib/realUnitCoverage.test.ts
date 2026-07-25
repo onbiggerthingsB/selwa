@@ -37,10 +37,11 @@ describe('real-unit coverage — hematocrit %', () => {
     expect(r.classification).toBe('normal');
   });
 
-  it('红细胞压积 49.9% classifies but is CONFIRM-flagged vs the printed range (safe, not a silent wrong call)', () => {
+  it('红细胞压积 49.9% classifies but is internally reviewed vs the printed range', () => {
     const r = g('红细胞压积', '49.9', '%', '37-47');
     expect(r.action).toBe('classify');
-    expect(r.needsConfirm).toBe(true); // R11: our union band says normal, the report's range says high → confirm
+    expect(r.needsConfirm).toBe(false);
+    expect(r.needsReview).toBe(true); // R11: our union band says normal, the report's range says high
   });
 
   it('SAFETY: a mis-scaled hematocrit (0.39 labeled %) → 0.0039 L/L is caught by R13, not classified', () => {
