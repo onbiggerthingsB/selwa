@@ -18,14 +18,15 @@ describe('static localized-text corpus', () => {
     const corpus = extractLocalizedTextCorpus();
     const fallbackBo = corpus.calls.filter((entry) => entry.variants.bo.kind === 'fallback');
 
-    // Topology tripwire. Conventional CRP adds one reference name, definition, and plain
-    // string: 15 files, 491->494 calls, 490->493
-    // fallbacks. Rebaseline deliberately when a feature adds strings — and confirm, as the
-    // two assertions below do, that the growth is all fallback and none of it is direct
-    // (unreviewed) Tibetan.
+    // Topology tripwire. The completeness gate (components/RowManifest.tsx) adds five UI strings
+    // to lib/uiCopy.ts — manifestEyebrow, manifestCountLabel, manifestHelp, manifestConfirmCta,
+    // manifestMissingCta: 15 files (unchanged — RowManifest.tsx authors no defineText of its own),
+    // 494->499 calls, 493->498 fallbacks. Rebaseline deliberately when a feature adds strings — and
+    // confirm, as the two assertions below do, that the growth is all fallback and none of it is
+    // direct (unreviewed) Tibetan.
     expect(corpus.sourceFiles).toHaveLength(15);
-    expect(corpus.calls).toHaveLength(494);
-    expect(fallbackBo).toHaveLength(493);
+    expect(corpus.calls).toHaveLength(499);
+    expect(fallbackBo).toHaveLength(498);
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(corpus.excludedDirectBo[0].reason).toBe('verbatim-ocr-echo');

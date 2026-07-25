@@ -2,8 +2,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { GroundedReport, GroundedNotes } from '@/lib/types';
-import { getPendingReport } from '@/lib/session';
+import { clearPendingReport, getPendingReport } from '@/lib/session';
 import { ConfirmValues } from '@/components/ConfirmValues';
+import { RowManifest } from '@/components/RowManifest';
 import { SummaryView } from '@/components/SummaryView';
 import { NotesSection } from '@/components/NotesSection';
 import { SaveVisitButton } from '@/components/SaveVisitButton';
@@ -17,6 +18,7 @@ export default function ResultPage() {
   const router = useRouter();
   const [report, setReport] = useState<GroundedReport | null>(null);
   const [notes, setNotes] = useState<GroundedNotes | undefined>(undefined);
+  const [acknowledged, setAcknowledged] = useState(false);
   const [confirmed, setConfirmed] = useState<GroundedReport | null>(null);
   const [lang, setLang] = useLangPreference();
 
@@ -83,7 +85,21 @@ export default function ResultPage() {
         </aside>
       )}
 
-      {!confirmed ? (
+      {!acknowledged ? (
+        // COMPLETENESS GATE — must come FIRST, before ConfirmValues and before any interpretation.
+        // ConfirmValues cannot serve this purpose: it only lists rows the guard already flagged
+        // (and auto-skips entirely when none are flagged, which is ~64% of the Chinese corpus),
+        // and its row set is immutable, so it has no way to say "you missed one".
+        <RowManifest
+          report={report}
+          lang={lang}
+          onAcknowledged={() => setAcknowledged(true)}
+          onRetake={() => {
+            clearPendingReport();
+            router.replace('/');
+          }}
+        />
+      ) : !confirmed ? (
         <ConfirmValues report={report} lang={lang} onConfirmed={setConfirmed} />
       ) : (
         <>
