@@ -72,7 +72,64 @@ const SCOPED_ALIAS_NAMES: Set<string> = (() => {
   return names;
 })();
 
+// SPECIMEN-BEARING NAME PREFIXES.
+//
+// Chinese reports routinely qualify an analyte with the specimen it was measured in: the 32-page
+// health check measured on 2026-07-26 printed 血清总胆固醇, 血清甘油三酯, 血清尿酸, 血清总胆红素 and
+// nine more. The table curates bare analyte names, so every one of those rows went unrecognised —
+// twelve analytes, the entire lipid panel among them, silently unexplained
+// (validation/camera-path/full-report-2026-07-26.md).
+//
+// The prefix is NOT noise to delete: 血清 means serum, which is evidence the specimen is blood, and
+// the GLU/葡萄糖 disambiguation depends on exactly that signal. So it is consumed as specimen
+// EVIDENCE rather than stripped, which makes an ambiguous name MORE resolvable, not less.
+//
+// Deliberately blood-only. There is no 尿 prefix here and there must not be: 尿酸 (uric acid) and
+// 尿素 (urea) are BLOOD analytes whose names merely begin with the character for urine, so a urine
+// prefix rule would mis-specimen them. Blood prefixes carry no such trap.
+const SPECIMEN_NAME_PREFIXES: readonly { prefix: string; specimen: 'blood' }[] = [
+  { prefix: '血清', specimen: 'blood' }, // serum
+  { prefix: '血浆', specimen: 'blood' }, // plasma
+  { prefix: '全血', specimen: 'blood' }, // whole blood
+];
+
+/** The specimen a name declares about itself, plus the name with that declaration removed. */
+function splitSpecimenPrefix(
+  rawName: string,
+): { specimen: 'blood'; rest: string } | null {
+  const trimmed = rawName.trim();
+  for (const { prefix, specimen } of SPECIMEN_NAME_PREFIXES) {
+    if (!trimmed.startsWith(prefix)) continue;
+    const rest = trimmed.slice(prefix.length).trim();
+    if (rest.length === 0) return null; // the prefix was the whole name; nothing to match on
+    return { specimen, rest };
+  }
+  return null;
+}
+
 export function findEntryMatch(
+  rawName: string,
+  specimen: SpecimenContext | null = 'unknown',
+): ReferenceMatch {
+  const direct = findExactMatch(rawName, specimen);
+  if (direct.entry) return direct;
+
+  // Only once the printed name has failed on its own terms. Keeping this second is what makes the
+  // rule purely additive: every name that resolved before still resolves the same way.
+  const declared = splitSpecimenPrefix(rawName);
+  if (!declared) return direct;
+
+  // A printed panel heading that contradicts the name's own prefix is a conflict, not a hint.
+  // Refuse rather than pick a winner: specimen decides which reference band a number is read
+  // against, so guessing here would be guessing at meaning.
+  if ((specimen === 'urine' || specimen === 'blood') && specimen !== declared.specimen) {
+    return { entry: null, matchedVia: 'unmatched' };
+  }
+
+  return findExactMatch(declared.rest, declared.specimen);
+}
+
+function findExactMatch(
   rawName: string,
   specimen: SpecimenContext | null = 'unknown',
 ): ReferenceMatch {

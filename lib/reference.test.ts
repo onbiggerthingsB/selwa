@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   findEntry,
+  findEntryMatch,
   normName,
   normalizeUnit,
   unitComparisonKeyCollisions,
@@ -70,6 +71,64 @@ describe('findEntry', () => {
       .map(([token, keys]) => `${token} -> ${[...keys].sort().join(', ')}`);
     expect(collisions, collisions.join('\n')).toEqual([]);
   });
+  // Real reports qualify analytes with the specimen: the 32-page health check printed 血清总胆固醇,
+  // 血清甘油三酯, 血清尿酸 and nine more, none of which matched the table's bare names. Twelve
+  // analytes — the whole lipid panel among them — went silently unexplained.
+  describe('specimen-bearing name prefixes', () => {
+    it.each([
+      ['血清总胆固醇', 'total_cholesterol'],
+      ['血清甘油三酯', 'triglycerides'],
+      ['血清低密度脂蛋白胆固醇', 'ldl_cholesterol'],
+      ['血清高密度脂蛋白胆固醇', 'hdl_cholesterol'],
+      ['血清尿酸', 'uric_acid'],
+      ['血清总胆红素', 'total_bilirubin'],
+      ['血清直接胆红素', 'direct_bilirubin'],
+      ['血清间接胆红素', 'indirect_bilirubin'],
+      ['血清碱性磷酸酶', 'alkaline_phosphatase'],
+      ['血清总胆汁酸', 'total_bile_acids'],
+      ['血清游离三碘甲状腺原氨酸', 'free_t3'],
+      ['血清游离甲状腺素', 'free_t4'],
+    ])('resolves %s to %s', (printed, key) => {
+      expect(findEntry(printed)?.key).toBe(key);
+    });
+
+    it.each(['血浆葡萄糖', '全血葡萄糖'])('accepts the plasma/whole-blood prefix %s', (printed) => {
+      expect(findEntry(printed)?.key).toBe('fasting_glucose');
+    });
+
+    // The prefix is consumed as EVIDENCE, not deleted. 葡萄糖 alone is deliberately ambiguous
+    // between blood and urine; 血清葡萄糖 is not, so the prefix makes it MORE resolvable.
+    it('uses the prefix to disambiguate a name that is unresolvable without it', () => {
+      expect(findEntry('葡萄糖')).toBeNull();
+      const m = findEntryMatch('血清葡萄糖');
+      expect(m.entry?.key).toBe('fasting_glucose');
+      expect(m.matchedVia).toBe('specimen-scoped');
+    });
+
+    // THE TRAP THIS RULE MUST NOT FALL INTO. 尿酸 and 尿素 are BLOOD analytes whose names merely
+    // begin with the character for urine. A urine-prefix rule would mis-specimen them, which is why
+    // only blood prefixes exist. These must keep resolving exactly as before.
+    it.each([
+      ['尿酸', 'uric_acid'],
+      ['尿素', 'urea'],
+      ['尿素氮', 'urea'],
+    ])('leaves the blood analyte %s alone despite its 尿 initial', (printed, key) => {
+      expect(findEntry(printed)?.key).toBe(key);
+    });
+
+    // A printed panel heading contradicting the name's own prefix is a conflict, not a hint.
+    // Specimen decides which band a number is read against, so guessing would be guessing meaning.
+    it('refuses when a printed specimen contradicts the name prefix', () => {
+      expect(findEntry('血清总胆固醇', 'blood')?.key).toBe('total_cholesterol');
+      expect(findEntry('血清总胆固醇', 'urine')).toBeNull();
+    });
+
+    it('is purely additive — a bare name still resolves exactly as before', () => {
+      expect(findEntry('总胆固醇')?.key).toBe('total_cholesterol');
+      expect(findEntry('血清')).toBeNull(); // prefix alone is not an analyte
+    });
+  });
+
   it('treats omitted, unknown, and null specimen context identically', () => {
     for (const name of [
       'Potassium',
