@@ -92,9 +92,12 @@ describe('de-identified Lhasa CBC+CRP grounding regression', () => {
     // percentage family carried 百分比 on four of five siblings and not on basophils, so an
     // abnormal basophil result went unexplained. The safety metrics below are unchanged, which
     // is the point: recognition went up and nothing about the displayed comparison moved.
-    expect(s.recognized).toBe(18);
-    expect(s.classified).toBe(18);
-    expect(s.abstained).toBe(9);
+    // 18 -> 26 on 2026-07-26: the differential absolutes and platelet indices this report prints
+    // are now curated. Every safety figure below is unchanged, which is the point — recognition
+    // rose and nothing about the displayed comparison moved.
+    expect(s.recognized).toBe(26);
+    expect(s.classified).toBe(26);
+    expect(s.abstained).toBe(1);
     expect(s.chipScorable).toBe(27);
     expect(s.chipCorrect).toBe(27);
     expect(s.chipAbstained).toBe(0);

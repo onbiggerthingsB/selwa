@@ -11,6 +11,65 @@ interface UrineReportOnlyInput {
   allowedUnits?: string[];
 }
 
+interface BloodReportOnlyInput {
+  key: string;
+  name: LocalizedText;
+  aliases: string[];
+  definition: LocalizedText;
+  unit: string;
+  allowedUnits?: string[];
+  source?: string;
+  /**
+   * Report-only entries return before R6, so this is the ONLY thing that routes a high-confidence
+   * row to the confirmation screen. Left false it is silently never confirmed — which is wrong for
+   * exactly the rows whose misreading matters most.
+   */
+  highStakes?: boolean;
+}
+
+// BLOOD ANALYTES WE NAME BUT DO NOT CLASSIFY.
+//
+// Every entry here appeared on a real report and was previously unrecognised, so the user saw a raw
+// printed name and nothing else. Curating them as report-only buys the thing they actually need —
+// "what is this test?" — WITHOUT us asserting whether their number is reassuring. Position still
+// comes solely from the range printed on their own page, via the table-independent chip.
+//
+// They are report-only rather than banded because we have no population-appropriate source for a
+// band: assay-specific cutoffs (tumour markers, hepatitis serology, antibody titres), analyzer-
+// dependent indices, or quantities the printed range defines better than any textbook value. Adding
+// refLow/refHigh to any of these requires a real source, not a plausible number.
+//
+// Definitions are deliberately DIRECTION-NEUTRAL: they say what the test measures, never what a
+// high or low result would mean. That restraint matters most for the hepatitis and tumour-marker
+// rows, where an implied verdict delivered by phone without a clinician is the harm.
+function bloodReportOnly(input: BloodReportOnlyInput): ReferenceEntry {
+  return {
+    key: input.key,
+    name: input.name,
+    aliases: input.aliases,
+    specimen: 'blood',
+    interpretation: 'report-only',
+    unit: input.unit,
+    allowedUnits: input.allowedUnits ?? [input.unit],
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: input.highStakes ?? false,
+    populationSensitive: false,
+    definition: input.definition,
+    plain: input.definition,
+    // Deliberately empty, and the table's integrity test enforces it: `source` is a CITATION
+    // field, and an empty one is the structural marker that this entry asserts no reference
+    // interval. Report-only entries that genuinely have a citation are named in the test's
+    // SOURCED_REPORT_ONLY_KEYS allowlist; these are not among them, and filling the field with
+    // boilerplate would make them read as sourced when nothing backs them.
+    source: input.source ?? '',
+  };
+}
+
 interface MeasurementInput {
   key: string;
   name: LocalizedText;
@@ -782,7 +841,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     aliases: ['NEUT%', 'NE%', '中性粒细胞比率', '中性粒细胞百分比', '中性细胞比率', '中性粒细胞百分数'],
     unit: '%', allowedUnits: ['%'],
     refLow: 40, refHigh: 75, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 100,
+    absoluteLow: 0, absoluteHigh: 2500,
     plain: defineText({
       en: reviewed('The share of white cells that are neutrophils (main bacteria-fighting cells); high often suggests bacterial infection.'),
       zh: reviewed('中性粒细胞在白细胞中的比例，是抗细菌的主力，偏高常提示细菌感染。'),
@@ -807,7 +866,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     aliases: ['LYMPH%', 'LY%', '淋巴细胞比率', '淋巴细胞百分比', '淋巴细胞百分数'],
     unit: '%', allowedUnits: ['%'],
     refLow: 20, refHigh: 50, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 100,
+    absoluteLow: 0, absoluteHigh: 2500,
     plain: defineText({
       en: reviewed('The share of white cells that are lymphocytes (which fight viruses); changes can accompany viral infections.'),
       zh: reviewed('淋巴细胞在白细胞中的比例，主要对抗病毒，变化常见于病毒感染。'),
@@ -940,7 +999,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     unit: "%", allowedUnits: ["%"],
     refLow: 3, refHigh: 10,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 100,
+    absoluteLow: 0, absoluteHigh: 2500,
     plain: defineText({
       en: reviewed('This is the share of white blood cells that are monocytes, a cell type involved in fighting infection and clearing debris; it is interpreted alongside the rest of the white-cell count.'),
       zh: reviewed('这是白细胞中单核细胞所占的比例，单核细胞参与抗感染和清除体内废物，需结合整体白细胞情况一起判断。'),
@@ -966,7 +1025,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     unit: "%", allowedUnits: ["%"],
     refLow: 0.4, refHigh: 8,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 100,
+    absoluteLow: 0, absoluteHigh: 2500,
     plain: defineText({
       en: reviewed('This is the share of white blood cells that are eosinophils, which often rise with allergies or parasitic infections; it is read together with the absolute count.'),
       zh: reviewed('这是白细胞中嗜酸性粒细胞所占的比例，过敏或寄生虫感染时常升高，需结合绝对值一起判断。'),
@@ -992,7 +1051,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     unit: "%", allowedUnits: ["%"],
     refLow: 0, refHigh: 1,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 100,
+    absoluteLow: 0, absoluteHigh: 2500,
     plain: defineText({
       en: reviewed('This is the small share of white blood cells that are basophils, a cell type involved in allergic and inflammatory responses; normal values are very low.'),
       zh: reviewed('这是白细胞中嗜碱性粒细胞所占的很小比例，这类细胞参与过敏和炎症反应，正常值很低。'),
@@ -1815,7 +1874,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ["TT3", "Total T3", "T3", "总T3", "总三碘甲状腺原氨酸", "三碘甲腺原氨酸"],
+    aliases: ["TT3", "Total T3", "T3", "总T3", "总三碘甲状腺原氨酸", "三碘甲腺原氨酸", '三碘甲状腺原氨酸(T3)', '三碘甲状腺原氨酸（T3）'],
     unit: "nmol/L", allowedUnits: ["nmol/L"],
     refLow: 1.3, refHigh: 3.1,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: true,
@@ -1867,7 +1926,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ["TT4", "Total T4", "T4", "总T4", "总甲状腺素", "甲状腺素"],
+    aliases: ["TT4", "Total T4", "T4", "总T4", "总甲状腺素", "甲状腺素", '甲状腺素(T4)', '甲状腺素（T4）'],
     unit: "nmol/L", allowedUnits: ["nmol/L"],
     refLow: 66, refHigh: 181,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: true,
@@ -1919,7 +1978,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ["TgAb", "TG-Ab", "anti-Tg", "anti-thyroglobulin", "Thyroglobulin antibody", "抗甲状腺球蛋白抗体", "抗Tg抗体", "TG抗体"],
+    aliases: ["TgAb", "TG-Ab", "anti-Tg", "anti-thyroglobulin", "Thyroglobulin antibody", "抗甲状腺球蛋白抗体", "抗Tg抗体", "TG抗体", '抗甲状腺球蛋白抗体(TGAb)'],
     unit: "IU/mL", allowedUnits: ["IU/mL", "kIU/L", "U/mL"],
     refLow: null, refHigh: 115,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: true,
@@ -2644,7 +2703,9 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     specimen: 'urine',
     interpretation: 'ours',
     aliases: ["Urine pH", "尿酸碱度", "尿pH值", "酸碱度"],
-    specimenAliases: { urine: ["pH", "PH"] },
+    // Bare pH spellings are BLOOD-GAS names too. Unscoped, a pH 7.10 resolves here and
+    // classifies as normal urine pH with no flag — the exact failure R18 exists to stop.
+    specimenAliases: { urine: ["pH", "PH", "PH值", "PH 值", "pH值"] },
     unit: "pH", allowedUnits: ["pH"],
     unitOptional: true, // pH is dimensionless and urinalysis reports commonly leave the unit cell blank
     refLow: 5.0, refHigh: 8.0,
@@ -2698,7 +2759,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
       bo: fallback('zh'),
     }),
     aliases: ['Urine Colour', '尿色'],
-    specimenAliases: { urine: ['Color', 'Colour'] },
+    specimenAliases: { urine: ['Color', 'Colour', '颜色'] },
     definition: defineText({
       en: reviewed('Describes the color recorded for the urine sample.'),
       zh: reviewed('描述报告上记录的尿液颜色。'),
@@ -2713,8 +2774,8 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
       zh: reviewed('尿液外观'),
       bo: fallback('zh'),
     }),
-    aliases: ['Urine Clarity'],
-    specimenAliases: { urine: ['Appearance', 'Clarity', '透明度'] },
+    aliases: ['Urine Clarity', '尿透明度'],
+    specimenAliases: { urine: ['Appearance', 'Clarity', '透明度', '浑浊度'] },
     definition: defineText({
       en: reviewed('Describes the visible appearance or clarity recorded for the urine sample.'),
       zh: reviewed('描述报告上记录的尿液外观或清澈度。'),
@@ -3263,6 +3324,458 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     definition: defineText({
       en: reviewed('How much oxygen your red blood cells are carrying, measured through the skin.'),
       zh: reviewed('通过皮肤测得的红细胞携氧程度。'),
+      bo: fallback('zh'),
+    }),
+  }),
+
+  // ---- Differential absolutes (WS/T 405-2012, same source as the neutrophil/lymphocyte siblings)
+  {
+    key: 'monocyte_abs',
+    name: defineText({ en: reviewed('Monocyte count (absolute)'), zh: reviewed('单核细胞绝对值'), bo: fallback('zh') }),
+    specimen: 'blood',
+    interpretation: 'ours',
+    aliases: ['MONO#', '单核细胞绝对值', '单核细胞计数', '单核细胞数'],
+    unit: '10^9/L', allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L'],
+    refLow: 0.1, refHigh: 0.6,
+    criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
+    absoluteLow: 0, absoluteHigh: 2500,
+    plain: defineText({
+      en: reviewed('A white blood cell type involved in clearing debris and fighting infection.'),
+      zh: reviewed('一种参与清除异物和抵抗感染的白细胞。'),
+      bo: fallback('zh'),
+    }),
+    definition: defineText({
+      en: reviewed('One of the five white-blood-cell types, counted directly rather than as a percentage.'),
+      zh: reviewed('五类白细胞之一，以绝对数量计数，而非百分比。'),
+      bo: fallback('zh'),
+    }),
+    source: 'WS/T 405-2012 (血细胞分析参考区间) — adult intervals, same standard as the neutrophil/lymphocyte siblings. NOTE: WS/T 405-2012 is an ADULT standard and these entries carry no ageBands, matching the pre-existing siblings; paediatric intervals (WS/T 779-2021) are not curated.',
+  },
+  {
+    key: 'eosinophil_abs',
+    name: defineText({ en: reviewed('Eosinophil count (absolute)'), zh: reviewed('嗜酸性粒细胞绝对值'), bo: fallback('zh') }),
+    specimen: 'blood',
+    interpretation: 'ours',
+    aliases: ['EO#', 'EOS#', 'EO', '嗜酸性粒细胞绝对值', '嗜酸性粒细胞计数', '嗜酸性粒细胞数'],
+    unit: '10^9/L', allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L'],
+    refLow: 0.02, refHigh: 0.52,
+    criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
+    absoluteLow: 0, absoluteHigh: 2500,
+    plain: defineText({
+      en: reviewed('A white blood cell type that rises with some allergies and parasitic infections.'),
+      zh: reviewed('一种在某些过敏和寄生虫感染时升高的白细胞。'),
+      bo: fallback('zh'),
+    }),
+    definition: defineText({
+      en: reviewed('One of the five white-blood-cell types, counted directly rather than as a percentage.'),
+      zh: reviewed('五类白细胞之一，以绝对数量计数，而非百分比。'),
+      bo: fallback('zh'),
+    }),
+    source: 'WS/T 405-2012 (血细胞分析参考区间) — adult intervals, same standard as the neutrophil/lymphocyte siblings. NOTE: WS/T 405-2012 is an ADULT standard and these entries carry no ageBands, matching the pre-existing siblings; paediatric intervals (WS/T 779-2021) are not curated.',
+  },
+  {
+    key: 'basophil_abs',
+    name: defineText({ en: reviewed('Basophil count (absolute)'), zh: reviewed('嗜碱性粒细胞绝对值'), bo: fallback('zh') }),
+    specimen: 'blood',
+    interpretation: 'ours',
+    aliases: ['BASO#', 'BAS#', '嗜碱性粒细胞绝对值', '嗜碱性粒细胞计数', '嗜碱性粒细胞数'],
+    unit: '10^9/L', allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L'],
+    refLow: 0, refHigh: 0.06,
+    criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
+    absoluteLow: 0, absoluteHigh: 2500,
+    plain: defineText({
+      en: reviewed('The least common white blood cell type, involved in allergic responses.'),
+      zh: reviewed('数量最少的一类白细胞，参与过敏反应。'),
+      bo: fallback('zh'),
+    }),
+    definition: defineText({
+      en: reviewed('One of the five white-blood-cell types, counted directly rather than as a percentage.'),
+      zh: reviewed('五类白细胞之一，以绝对数量计数，而非百分比。'),
+      bo: fallback('zh'),
+    }),
+    source: 'WS/T 405-2012 (血细胞分析参考区间) — adult intervals, same standard as the neutrophil/lymphocyte siblings. NOTE: WS/T 405-2012 is an ADULT standard and these entries carry no ageBands, matching the pre-existing siblings; paediatric intervals (WS/T 779-2021) are not curated.',
+  },
+
+  // ---- Analyzer-dependent blood-count indices (report-only) ----
+  // Report-only because the printed interval tracks the analyser's own calibration. Note these are
+  // NOT following mpv/rdw_cv: those two carry curated bands (interpretation: 'ours').
+  bloodReportOnly({
+    key: 'plateletcrit',
+    name: defineText({ en: reviewed('Plateletcrit (PCT)'), zh: reviewed('血小板压积'), bo: fallback('zh') }),
+    // NOT bare 'PCT': it is procalcitonin on a chemistry panel and plateletcrit on a
+    // haematology analyser, and this entry would silently win for a procalcitonin row.
+    aliases: ['血小板压积', '血小板比容', '血小板压积PCT'],
+    unit: '%',
+    definition: defineText({
+      en: reviewed('The share of blood volume made up of platelets. Analyser-dependent, so the range printed on your report is the one that applies.'),
+      zh: reviewed('血小板在血液中所占的体积比例。该指标依赖检测仪器，因此以报告上打印的范围为准。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'pdw',
+    name: defineText({ en: reviewed('Platelet distribution width (PDW)'), zh: reviewed('血小板分布宽度'), bo: fallback('zh') }),
+    aliases: ['PDW', '血小板分布宽度'],
+    unit: 'fL',
+    allowedUnits: ['fL', 'fl'],
+    definition: defineText({
+      en: reviewed('How much platelet size varies. Analyser-dependent, so the range printed on your report is the one that applies.'),
+      zh: reviewed('血小板体积差异的大小。该指标依赖检测仪器，因此以报告上打印的范围为准。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'p_lcr',
+    name: defineText({ en: reviewed('Large platelet ratio (P-LCR)'), zh: reviewed('大血小板比率'), bo: fallback('zh') }),
+    aliases: ['P-LCR', 'PLCR', '大血小板比率'],
+    unit: '%',
+    definition: defineText({
+      en: reviewed('The share of platelets above the size threshold used by the analyser. That threshold is analyser-dependent, so the range printed on your report is the one that applies.'),
+      zh: reviewed('体积超过仪器设定阈值的血小板所占比例。该阈值依赖检测仪器，因此以报告上打印的范围为准。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'p_lcc',
+    name: defineText({ en: reviewed('Large platelet count (P-LCC)'), zh: reviewed('大血小板数目'), bo: fallback('zh') }),
+    aliases: ['P-LCC', 'PLCC', 'P_LCC', '大血小板数目', '大血小板计数'],
+    unit: '10^9/L',
+    allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L'],
+    definition: defineText({
+      en: reviewed('The number of larger-than-usual platelets. Analyser-dependent, so the range printed on your report is the one that applies.'),
+      zh: reviewed('体积偏大的血小板数量。该指标依赖检测仪器，因此以报告上打印的范围为准。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'rdw_sd',
+    name: defineText({ en: reviewed('Red cell distribution width, SD (RDW-SD)'), zh: reviewed('红细胞分布宽度标准差'), bo: fallback('zh') }),
+    aliases: ['RDW-SD', 'RDWSD', 'RDW_SD', '红细胞分布宽度标准差', '红细胞分布宽度SD'],
+    unit: 'fL',
+    allowedUnits: ['fL', 'fl'],
+    definition: defineText({
+      en: reviewed('How much red-blood-cell size varies, reported as a standard deviation. Analyser-dependent, so the range printed on your report is the one that applies.'),
+      zh: reviewed('红细胞体积差异的大小，以标准差表示。该指标依赖检测仪器，因此以报告上打印的范围为准。'),
+      bo: fallback('zh'),
+    }),
+  }),
+
+  // ---- Chemistry we name but do not classify ----
+  bloodReportOnly({
+    key: 'globulin',
+    name: defineText({ en: reviewed('Globulin'), zh: reviewed('球蛋白'), bo: fallback('zh') }),
+    aliases: ['GLB', 'GLOB', '球蛋白'],
+    unit: 'g/L',
+    definition: defineText({
+      en: reviewed('The serum proteins other than albumin, taken together. Usually calculated as total protein minus albumin.'),
+      zh: reviewed('除白蛋白以外的血清蛋白总和，通常由总蛋白减去白蛋白计算得出。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'albumin_globulin_ratio',
+    name: defineText({ en: reviewed('Albumin/globulin ratio (A/G)'), zh: reviewed('白球比'), bo: fallback('zh') }),
+    aliases: ['A/G', 'AGR', '白球比', '白蛋白球蛋白比值', '白/球'],
+    unit: 'ratio',
+    definition: defineText({
+      en: reviewed('Albumin divided by globulin. A calculated ratio, not a separately measured substance.'),
+      zh: reviewed('白蛋白与球蛋白的比值。这是计算得出的比例，并非单独测得的物质。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'vldl_cholesterol',
+    name: defineText({ en: reviewed('Very-low-density lipoprotein (VLDL)'), zh: reviewed('极低密度脂蛋白'), bo: fallback('zh') }),
+    aliases: ['VLDL', 'VLDL-C', '极低密度脂蛋白', '极低密度脂蛋白胆固醇'],
+    unit: 'mmol/L',
+    definition: defineText({
+      en: reviewed('One of the particles that carries fat in the blood. Usually estimated from the other lipid results rather than measured directly.'),
+      zh: reviewed('血液中运输脂肪的颗粒之一，通常由其他血脂结果推算，而非直接测得。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'fructosamine',
+    name: defineText({ en: reviewed('Fructosamine'), zh: reviewed('果糖胺'), bo: fallback('zh') }),
+    aliases: ['果糖胺', '糖化血清蛋白', 'GSP'],
+    unit: 'umol/L',
+    allowedUnits: ['umol/L', 'µmol/L', 'μmol/L'],
+    definition: defineText({
+      en: reviewed('Reflects average blood sugar over roughly the preceding two to three weeks, a shorter window than HbA1c.'),
+      zh: reviewed('反映近两至三周的平均血糖水平，观察窗口比糖化血红蛋白短。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'cholylglycine',
+    name: defineText({ en: reviewed('Cholylglycine (CG)'), zh: reviewed('甘胆酸'), bo: fallback('zh') }),
+    aliases: ['CG', '甘胆酸', '胆酸甘氨酸结合物', '甘胆酸（CG）', '甘胆酸(CG)'],
+    unit: 'as reported',
+    definition: defineText({
+      en: reviewed('A bile acid measured in blood, used in some panels to look at liver and bile function.'),
+      zh: reviewed('血中的一种胆汁酸，部分检查项目用它观察肝脏与胆汁功能。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'monoamine_oxidase',
+    name: defineText({ en: reviewed('Monoamine oxidase (MAO)'), zh: reviewed('单胺氧化酶'), bo: fallback('zh') }),
+    aliases: ['MAO', '单胺氧化酶'],
+    unit: 'U/L',
+    allowedUnits: ['U/L', 'IU/L'],
+    definition: defineText({
+      en: reviewed('An enzyme measured in some liver panels.'),
+      zh: reviewed('部分肝功能检查中测定的一种酶。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'afu',
+    name: defineText({ en: reviewed('Alpha-L-fucosidase (AFU)'), zh: reviewed('α-L-岩藻糖苷酶'), bo: fallback('zh') }),
+    aliases: ['AFU', 'a-L-岩藻糖苷酶', 'α-L-岩藻糖苷酶', '岩藻糖苷酶'],
+    unit: 'U/L',
+    allowedUnits: ['U/L', 'IU/L'],
+    definition: defineText({
+      en: reviewed('An enzyme measured in some liver panels.'),
+      zh: reviewed('部分肝功能检查中测定的一种酶。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'creatinine_clearance',
+    name: defineText({ en: reviewed('Endogenous creatinine clearance (Ccr)'), zh: reviewed('内生肌酐清除率'), bo: fallback('zh') }),
+    aliases: ['Ccr', 'CCR', '内生肌酐清除率', '肌酐清除率'],
+    unit: 'as reported',
+    definition: defineText({
+      en: reviewed('A measure of how well the kidneys filter. Depending on the method it is either collected over a set period or calculated from a formula; the report states which.'),
+      zh: reviewed('反映肾脏滤过能力的指标。根据方法不同，它或由定时留取的尿液测得，或由公式推算，报告上会注明。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'beta_hydroxybutyrate',
+    name: defineText({ en: reviewed('Beta-hydroxybutyrate'), zh: reviewed('β-羟基丁酸'), bo: fallback('zh') }),
+    aliases: ['β-羟基丁酸', 'b-羟基丁酸', 'BHB', '羟丁酸'],
+    unit: 'mmol/L',
+    definition: defineText({
+      en: reviewed('A ketone measured in blood. Ketones are made when the body burns fat for energy.'),
+      zh: reviewed('血中的一种酮体。人体以脂肪供能时会产生酮体。'),
+      bo: fallback('zh'),
+    }),
+  }),
+
+  // ---- Thyroid proteins and antibodies (assay-specific cutoffs; the printed range governs) ----
+  bloodReportOnly({
+    key: 'thyroglobulin',
+    name: defineText({ en: reviewed('Thyroglobulin (Tg)'), zh: reviewed('甲状腺球蛋白'), bo: fallback('zh') }),
+    aliases: ['TG蛋白', '甲状腺球蛋白'],
+    unit: 'as reported',
+    definition: defineText({
+      en: reviewed('A protein made by the thyroid gland. The result depends on both the assay used and on thyroglobulin antibodies, so the range printed on your report is the one that applies.'),
+      zh: reviewed('甲状腺产生的一种蛋白质。结果同时受所用试剂和甲状腺球蛋白抗体的影响，因此以报告上打印的范围为准。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'trab',
+    name: defineText({ en: reviewed('TSH receptor antibody (TRAb)'), zh: reviewed('促甲状腺激素受体抗体'), bo: fallback('zh') }),
+    aliases: ['TRAb', 'TRAB', '促甲状腺激素受体抗体', 'TSH受体抗体'],
+    unit: 'as reported',
+    definition: defineText({
+      en: reviewed('An antibody against the thyroid receptor for TSH. Cutoffs differ between assays, so the range printed on your report is the one that applies.'),
+      zh: reviewed('针对甲状腺促甲状腺激素受体的抗体。不同试剂的判断值不同，因此以报告上打印的范围为准。'),
+      bo: fallback('zh'),
+    }),
+  }),
+
+  // ---- Hepatitis B panel ----
+  //
+  // Five markers read TOGETHER by a clinician; no single one is a verdict, and the pattern across
+  // all five is what carries meaning. Each definition therefore says only what that marker IS, and
+  // every one of them points back to a clinician for the pattern. Cutoffs are assay-specific, so
+  // the printed range governs. Curating these buys the user "what is this row?" and nothing more.
+  bloodReportOnly({
+    key: 'hbsag',
+    name: defineText({ en: reviewed('Hepatitis B surface antigen (HBsAg)'), zh: reviewed('乙型肝炎表面抗原'), bo: fallback('zh') }),
+    aliases: ['HBsAg', 'HBSAG', '乙型肝炎表面抗原', '乙肝表面抗原', '乙型肝炎表面抗原(定量)', '乙型肝炎表面抗原（定量）'],
+    highStakes: true,
+    unit: 'as reported',
+    definition: defineText({
+      en: reviewed('One of five hepatitis B markers. The five are read together by a clinician; a single marker does not describe the overall picture.'),
+      zh: reviewed('乙肝五项指标之一。五项需由医生结合起来判读，单独一项不能说明整体情况。'),
+      bo: fallback('zh'),
+  }),
+  }),
+  bloodReportOnly({
+    key: 'hbsab',
+    name: defineText({ en: reviewed('Hepatitis B surface antibody (anti-HBs)'), zh: reviewed('乙型肝炎表面抗体'), bo: fallback('zh') }),
+    aliases: ['HBsAb', 'anti-HBs', 'HBsAB', '乙型肝炎表面抗体', '乙肝表面抗体', '乙型肝炎表面抗体(定量)', '乙型肝炎表面抗体（定量）'],
+    highStakes: true,
+    unit: 'as reported',
+    definition: defineText({
+      en: reviewed('One of five hepatitis B markers. The five are read together by a clinician; a single marker does not describe the overall picture.'),
+      zh: reviewed('乙肝五项指标之一。五项需由医生结合起来判读，单独一项不能说明整体情况。'),
+      bo: fallback('zh'),
+  }),
+  }),
+  bloodReportOnly({
+    key: 'hbeag',
+    name: defineText({ en: reviewed('Hepatitis B e antigen (HBeAg)'), zh: reviewed('乙型肝炎e抗原'), bo: fallback('zh') }),
+    aliases: ['HBeAg', 'HBEAG', '乙型肝炎e抗原', '乙肝e抗原', '乙型肝炎e抗原(定量)', '乙型肝炎e抗原（定量）'],
+    highStakes: true,
+    unit: 'as reported',
+    definition: defineText({
+      en: reviewed('One of five hepatitis B markers. The five are read together by a clinician; a single marker does not describe the overall picture.'),
+      zh: reviewed('乙肝五项指标之一。五项需由医生结合起来判读，单独一项不能说明整体情况。'),
+      bo: fallback('zh'),
+  }),
+  }),
+  bloodReportOnly({
+    key: 'hbeab',
+    name: defineText({ en: reviewed('Hepatitis B e antibody (anti-HBe)'), zh: reviewed('乙型肝炎e抗体'), bo: fallback('zh') }),
+    aliases: ['HBeAb', 'anti-HBe', 'HBEAB', '乙型肝炎e抗体', '乙肝e抗体', '乙型肝炎e抗体(定量)', '乙型肝炎e抗体（定量）'],
+    highStakes: true,
+    unit: 'as reported',
+    definition: defineText({
+      en: reviewed('One of five hepatitis B markers. The five are read together by a clinician; a single marker does not describe the overall picture.'),
+      zh: reviewed('乙肝五项指标之一。五项需由医生结合起来判读，单独一项不能说明整体情况。'),
+      bo: fallback('zh'),
+  }),
+  }),
+  bloodReportOnly({
+    key: 'hbcab',
+    name: defineText({ en: reviewed('Hepatitis B core antibody (anti-HBc)'), zh: reviewed('乙型肝炎核心抗体'), bo: fallback('zh') }),
+    aliases: ['HBcAb', 'anti-HBc', 'HBCAB', '乙型肝炎核心抗体', '乙肝核心抗体', '乙型肝炎核心抗体(定量)', '乙型肝炎核心抗体（定量）'],
+    highStakes: true,
+    unit: 'as reported',
+    definition: defineText({
+      en: reviewed('One of five hepatitis B markers. The five are read together by a clinician; a single marker does not describe the overall picture.'),
+      zh: reviewed('乙肝五项指标之一。五项需由医生结合起来判读，单独一项不能说明整体情况。'),
+      bo: fallback('zh'),
+  }),
+  }),
+
+  // ---- Tumour markers ----
+  //
+  // These are proteins that ordinary tissue also makes. They move with many benign conditions, they
+  // are used for screening and monitoring rather than diagnosis, and a single value never
+  // establishes or excludes anything. The definitions say that plainly and say nothing about what
+  // a higher or lower number would mean, because an implied verdict read off a phone without a
+  // clinician is the specific harm here. No curated band, deliberately: cutoffs are assay-specific
+  // and the printed range is the only one that applies to this patient's laboratory.
+  bloodReportOnly({
+    key: 'afp',
+    name: defineText({ en: reviewed('Alpha-fetoprotein (AFP)'), zh: reviewed('甲胎蛋白'), bo: fallback('zh') }),
+    aliases: ['AFP', '甲胎蛋白', '甲胎蛋白(AFP)', '甲胎蛋白（AFP）'],
+    highStakes: true,
+    unit: 'ng/ml',
+    allowedUnits: ['ng/ml', 'ng/mL', 'ug/L', 'µg/L'],
+    definition: defineText({
+      en: reviewed('A protein measured in blood. Doctors order it in specific situations, not as a general screening test. Many ordinary conditions affect it, and one result is never interpreted on its own.'),
+      zh: reviewed('血液中的一种蛋白质。医生会在特定情况下开具此项检查，它不是普通的筛查项目。许多常见情况都会影响它，单次结果不能单独判读。'),
+      bo: fallback('zh'),
+  }),
+  }),
+  bloodReportOnly({
+    key: 'cea',
+    name: defineText({ en: reviewed('Carcinoembryonic antigen (CEA)'), zh: reviewed('癌胚抗原'), bo: fallback('zh') }),
+    aliases: ['CEA', '癌胚抗原', '癌胚抗原(CEA)', '癌胚抗原（CEA）'],
+    highStakes: true,
+    unit: 'ng/mL',
+    allowedUnits: ['ng/mL', 'ng/ml', 'ug/L', 'µg/L'],
+    definition: defineText({
+      en: reviewed('A protein measured in blood. Doctors order it in specific situations, not as a general screening test. Smoking and a number of common conditions affect it, and one result is never interpreted on its own.'),
+      zh: reviewed('血液中的一种蛋白质。医生会在特定情况下开具此项检查，它不是普通的筛查项目。吸烟及多种常见情况都会影响它，单次结果不能单独判读。'),
+      bo: fallback('zh'),
+  }),
+  }),
+  bloodReportOnly({
+    key: 'ca199',
+    name: defineText({ en: reviewed('Carbohydrate antigen 19-9 (CA19-9)'), zh: reviewed('糖类抗原199'), bo: fallback('zh') }),
+    aliases: ['CA19-9', 'CA199', 'CA 19-9', '糖类抗原199', '糖类抗原19-9', '糖类抗原199(CA199)', 'CA-199'],
+    highStakes: true,
+    unit: 'as reported',
+    definition: defineText({
+      en: reviewed('A substance measured in blood. Doctors order it in specific situations, not as a general screening test. Benign digestive and bile-duct conditions affect it, and one result is never interpreted on its own.'),
+      zh: reviewed('血液中的一种物质。医生会在特定情况下开具此项检查，它不是普通的筛查项目。良性的消化道和胆道情况都会影响它，单次结果不能单独判读。'),
+      bo: fallback('zh'),
+  }),
+  }),
+  bloodReportOnly({
+    key: 'psa_total',
+    name: defineText({ en: reviewed('Total prostate-specific antigen (tPSA)'), zh: reviewed('总前列腺特异性抗原'), bo: fallback('zh') }),
+    aliases: ['tPSA', 'TPSA', 'PSA', '总前列腺特异性抗原', '总PSA', '总前列腺特异性抗原(TPSA)'],
+    highStakes: true,
+    unit: 'ng/ml',
+    allowedUnits: ['ng/ml', 'ng/mL', 'ug/L', 'µg/L'],
+    definition: defineText({
+      en: reviewed('A protein made by the prostate. Age and several non-cancerous prostate conditions affect it, and one result is never interpreted on its own.'),
+      zh: reviewed('前列腺产生的一种蛋白质。年龄以及多种非癌性的前列腺情况都会影响它，单次结果不能单独判读。'),
+      bo: fallback('zh'),
+  }),
+  }),
+  bloodReportOnly({
+    key: 'psa_free',
+    name: defineText({ en: reviewed('Free prostate-specific antigen (fPSA)'), zh: reviewed('游离前列腺特异抗原'), bo: fallback('zh') }),
+    aliases: ['fPSA', 'FPSA', '游离前列腺特异抗原', '游离PSA', '游离前列腺特异抗原(FPSA)'],
+    highStakes: true,
+    unit: 'ng/mL',
+    allowedUnits: ['ng/mL', 'ng/ml', 'ug/L', 'µg/L'],
+    definition: defineText({
+      en: reviewed('The portion of prostate-specific antigen circulating unbound. It is read together with total PSA, not on its own.'),
+      zh: reviewed('前列腺特异性抗原中未与蛋白结合的部分。需与总PSA结合判读，不能单独使用。'),
+      bo: fallback('zh'),
+  }),
+  }),
+  bloodReportOnly({
+    key: 'psa_ratio',
+    name: defineText({ en: reviewed('Free/total PSA ratio'), zh: reviewed('游离PSA与总PSA比值'), bo: fallback('zh') }),
+    aliases: ['FPSA/PSA', 'fPSA/tPSA', 'F/T PSA', '游离PSA与总PSA比值', '游离/总PSA'],
+    unit: 'ratio',
+    definition: defineText({
+      en: reviewed('Free PSA divided by total PSA. A calculated ratio, read together with the two values it comes from.'),
+      zh: reviewed('游离PSA除以总PSA所得的比值。这是计算值，需与其来源的两项结果一起判读。'),
+      bo: fallback('zh'),
+    }),
+  }),
+
+  // ---- Other ----
+
+  // ---- Urinalysis rows a real report printed that the table did not cover ----
+  urineReportOnly({
+    key: 'urine_occult_blood',
+    name: defineText({ en: reviewed('Urine occult blood'), zh: reviewed('尿隐血'), bo: fallback('zh') }),
+    aliases: ['Urine Occult Blood', '尿隐血', '尿潜血'],
+    specimenAliases: { urine: ['BLD', 'OB', '隐血'] },
+    unit: 'qualitative',
+    allowedUnits: ['qualitative', 'negative/positive', 'negative/+/++/+++'],
+    definition: defineText({
+      en: reviewed('A dipstick test that reacts to haem, the pigment in blood. It can react whether or not whole blood cells are present.'),
+      zh: reviewed('试纸检测的是血红素（血液中的色素）反应。无论是否存在完整的血细胞，试纸都可能出现反应。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  urineReportOnly({
+    key: 'urine_ascorbic_acid',
+    name: defineText({ en: reviewed('Urine ascorbic acid (vitamin C)'), zh: reviewed('尿维生素C'), bo: fallback('zh') }),
+    aliases: ['Urine Vitamin C', '尿维生素C', '尿抗坏血酸'],
+    specimenAliases: { urine: ['Ascorbic acid', 'VC', '维生素C', '抗坏血酸'] },
+    unit: 'qualitative',
+    allowedUnits: ['qualitative', 'negative/positive', 'negative/+/++/+++'],
+    definition: defineText({
+      en: reviewed('Vitamin C in the urine. It is measured because high levels can interfere with other dipstick results on the same strip.'),
+      zh: reviewed('尿中的维生素C。检测它是因为含量过高会干扰同一试纸上其他项目的结果。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bloodReportOnly({
+    key: 'ast_alt_ratio',
+    name: defineText({ en: reviewed('AST/ALT ratio'), zh: reviewed('天冬氨酸/丙氨酸氨基转移酶比值'), bo: fallback('zh') }),
+    aliases: ['AST/ALT', 'AST/ALT比值', 'DeRitis', '谷草/谷丙', '天冬氨酸/丙氨酸氨基转移酶比值'],
+    unit: 'ratio',
+    definition: defineText({
+      en: reviewed('One liver enzyme divided by another. A calculated ratio, read together with the two enzyme values it comes from.'),
+      zh: reviewed('两种肝酶的比值。这是计算值，需与其来源的两项酶结果一起判读。'),
       bo: fallback('zh'),
     }),
   }),

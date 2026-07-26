@@ -289,6 +289,10 @@ export function normalizeUnit(u: string): string {
     .trim()
     .replace(/µ|μ/g, 'u') // micro sign variants → u
     .replace(/×/g, 'x')
+    // A leading '*' before a power-of-ten is the multiplication sign, not a footnote marker: the
+    // 2026-07-26 report printed the differential absolutes as '*10^9/L'. Anchored to the start and
+    // required to be followed by a digit, so it cannot swallow a real annotation elsewhere.
+    .replace(/^\*(?=\d)/, 'x')
     .replace(/[()（）]/g, '') // strip parens but KEEP content: 'mg/L(FEU)' ≡ 'mg/L FEU' (basis preserved)
     .replace(/\s+/g, '')
     .toLowerCase();

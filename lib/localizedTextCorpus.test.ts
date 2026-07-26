@@ -18,15 +18,17 @@ describe('static localized-text corpus', () => {
     const corpus = extractLocalizedTextCorpus();
     const fallbackBo = corpus.calls.filter((entry) => entry.variants.bo.kind === 'fallback');
 
-    // Topology tripwire. Latest move 2026-07-26: eight body-measurement entries (report-only,
-    // no curated bands) add a name + definition each, and the measurement unit-contradiction guard
-    // adds one flag message: 499->516 calls, 498->515 fallbacks, 15 files unchanged.
+    // Topology tripwire. Latest move 2026-07-26: curating the remaining uncurated analytes from the
+    // real report adds 33 report-only entries (a name + definition each) and the measurement
+    // unit-contradiction guard adds one flag message: 516->585 calls, 515->584 fallbacks, 15 files
+    // unchanged. The 13C urea-breath entry was NOT curated: it is a breath assay with no applicable
+    // specimen frame, and its printed abbreviation DOB collides with date of birth.
     // Rebaseline deliberately when a feature adds strings — and
     // confirm, as the two assertions below do, that the growth is all fallback and none of it is
     // direct (unreviewed) Tibetan.
     expect(corpus.sourceFiles).toHaveLength(15);
-    expect(corpus.calls).toHaveLength(516);
-    expect(fallbackBo).toHaveLength(515);
+    expect(corpus.calls).toHaveLength(585);
+    expect(fallbackBo).toHaveLength(584);
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(corpus.excludedDirectBo[0].reason).toBe('verbatim-ocr-echo');
@@ -64,10 +66,10 @@ describe('static localized-text corpus', () => {
       .filter((entry) => entry.reference?.field === 'name')
       .map((entry) => entry.reference!.key);
 
-    expect(reference).toHaveLength(353);
-    expect(fields).toEqual({ name: 125, plain: 103, definition: 125 });
-    expect(nameKeys).toHaveLength(125);
-    expect(new Set(nameKeys)).toHaveLength(125);
+    expect(reference).toHaveLength(422);
+    expect(fields).toEqual({ name: 158, plain: 106, definition: 158 });
+    expect(nameKeys).toHaveLength(158);
+    expect(new Set(nameKeys)).toHaveLength(158);
   });
 
   it('preserves every production placeholder expression and its order', () => {

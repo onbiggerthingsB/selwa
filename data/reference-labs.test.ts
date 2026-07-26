@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { REFERENCE_LABS } from './reference-labs';
 import { findEntry } from '@/lib/reference';
@@ -29,20 +31,48 @@ describe('reference table integrity', () => {
     // The eight body measurements added 2026-07-26 are report-only BY DESIGN: no curated band,
     // because a sea-level SpO2/pulse/BP band would misrepresent this Lhasa (3,650 m) population.
     expect(reportOnly.map((entry) => entry.key).sort()).toEqual([
+      'afp',
+      'afu',
+      'albumin_globulin_ratio',
       'anion_gap',
+      'ast_alt_ratio',
       'base_excess',
+      'beta_hydroxybutyrate',
       'blood_ph',
       'bmi',
+      'ca199',
+      'cea',
+      'cholylglycine',
+      'creatinine_clearance',
       'crp',
       'diastolic_bp',
+      'fructosamine',
+      'globulin',
+      'hbcab',
+      'hbeab',
+      'hbeag',
+      'hbsab',
+      'hbsag',
       'height',
+      'monoamine_oxidase',
       'oxygen_saturation',
+      'p_lcc',
+      'p_lcr',
+      'pdw',
+      'plateletcrit',
       'prothrombin_activity',
+      'psa_free',
+      'psa_ratio',
+      'psa_total',
       'pulse_rate',
+      'rdw_sd',
       'systolic_bp',
+      'thyroglobulin',
       'total_co2_calculated',
+      'trab',
       'urine_amorphous_deposits',
       'urine_appearance',
+      'urine_ascorbic_acid',
       'urine_bacteria',
       'urine_bilirubin',
       'urine_casts',
@@ -51,12 +81,16 @@ describe('reference table integrity', () => {
       'urine_epithelial_cells',
       'urine_mucus',
       'urine_nitrite',
+      'urine_occult_blood',
       'urine_rbc_microscopy',
       'urine_urobilinogen',
       'urine_wbc_microscopy',
       'urine_yeast_cells',
+      'vldl_cholesterol',
       'waist_circumference',
       'weight',
+
+
 
     ]);
 
@@ -287,7 +321,9 @@ describe('reference table integrity', () => {
     const preExisting = REFERENCE_LABS.filter(
       (entry) => entry.interpretation === 'report-only' && entry.specimen === 'urine',
     );
-    expect(preExisting).toHaveLength(14);
+    // 14 -> 16 on 2026-07-26: 尿隐血 and 尿维生素C, both printed on a real urinalysis page and
+    // neither previously in the table. Both report-only and non-high-stakes like their siblings.
+    expect(preExisting).toHaveLength(16);
     expect(preExisting.every((entry) => entry.highStakes === false)).toBe(true);
   });
 
@@ -370,5 +406,35 @@ describe('reference table integrity', () => {
       if (e.absoluteLow !== null && e.criticalLow !== null) expect(e.absoluteLow).toBeLessThanOrEqual(e.criticalLow);
       if (e.absoluteHigh !== null && e.criticalHigh !== null) expect(e.absoluteHigh).toBeGreaterThanOrEqual(e.criticalHigh);
     }
+  });
+});
+
+describe('reference table source hygiene', () => {
+  // A duplicate property in an object literal is legal JavaScript: the later one silently wins and
+  // the earlier one vanishes. This actually happened on 2026-07-26 — a second `specimenAliases` was
+  // added to urine_appearance and the whole first list disappeared, taking '浑浊度' with it. Nothing
+  // caught it: tsc accepted the file, every runtime assertion passed (the collapse happens before
+  // any test can observe it), and the only symptom was one printed spelling quietly not resolving.
+  // Aliases are a safety surface, so losing one without a failure is exactly the wrong direction.
+  // This scan reads the SOURCE TEXT, because that is the only place the duplicate still exists.
+  it('never declares the same property twice inside one entry', () => {
+    const source = readFileSync(join(process.cwd(), 'data/reference-labs.ts'), 'utf8');
+    const starts = [...source.matchAll(/^    key: '([a-z0-9_]+)',$/gm)];
+    expect(starts.length).toBeGreaterThan(0);
+
+    const duplicates: { key: string; property: string; times: number }[] = [];
+    starts.forEach((start, index) => {
+      const from = start.index!;
+      const to = index + 1 < starts.length ? starts[index + 1].index! : source.length;
+      const counts = new Map<string, number>();
+      for (const [, property] of source.slice(from, to).matchAll(/^    ([A-Za-z]\w*):/gm)) {
+        counts.set(property, (counts.get(property) ?? 0) + 1);
+      }
+      for (const [property, times] of counts) {
+        if (times > 1) duplicates.push({ key: start[1], property, times });
+      }
+    });
+
+    expect(duplicates).toEqual([]);
   });
 });

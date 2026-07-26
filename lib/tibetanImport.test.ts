@@ -292,7 +292,7 @@ describe('Tibetan reviewer packet export', () => {
   });
 
   it('locks the three measured inventories and authored component tally', () => {
-    expect(packet.names).toHaveLength(125);
+    expect(packet.names).toHaveLength(158);
     expect(GLOSSARY_TERM_COMPONENT_COUNTS).toEqual({
       comparators: 6,
       coreNegators: 15,
@@ -319,10 +319,15 @@ describe('Tibetan reviewer packet export', () => {
       .toEqual(['core-negator', 'polarity']);
   });
 
-  it('exports all 125 distinct names with definition context, specimen, aliases, and units', () => {
-    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(125);
-    expect(new Set(packet.names.map(({ en }) => en))).toHaveLength(125);
-    expect(packet.names.filter(({ unit }) => unit === 'as reported')).toHaveLength(6);
+  it('exports all 158 distinct names with definition context, specimen, aliases, and units', () => {
+    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(158);
+    expect(new Set(packet.names.map(({ en }) => en))).toHaveLength(158);
+    // 6 -> 16 on 2026-07-26. The 6 pre-existing urine wildcards, plus 10 report-only entries whose
+    // printed unit genuinely varies by assay or vendor (hepatitis serology in COI/S-CO/IU-mL,
+    // thyroid antibodies, CA19-9, creatinine clearance, cholylglycine). For those there is no
+    // curated unit family to contradict, and 'as reported' says so explicitly rather than
+    // pretending incompatible units are equivalent.
+    expect(packet.names.filter(({ unit }) => unit === 'as reported')).toHaveLength(16);
     for (const row of packet.names) {
       const entry = REFERENCE_LABS.find(({ key }) => key === row.key)!;
       expect(row.context).toBe(
@@ -410,7 +415,7 @@ describe('Tibetan reviewer packet export', () => {
         parseCsv(readFileSync(path.join(output, fileName), 'utf8')),
       ]),
     );
-    expect(parsed.names.rows).toHaveLength(125);
+    expect(parsed.names.rows).toHaveLength(158);
     expect(parsed.terms.rows).toHaveLength(34);
     expect(parsed.floor.rows).toHaveLength(162);
     expect(parsed.decisions.rows).toHaveLength(1);
@@ -418,7 +423,7 @@ describe('Tibetan reviewer packet export', () => {
       expect(sheet.rows.every((row) => row.bo === '')).toBe(true);
     }
     const rows = readReviewedPacket(output);
-    expect(rows).toHaveLength(125 + 162);
+    expect(rows).toHaveLength(158 + 162);
     expect(rows.every(({ bo }) => bo === '')).toBe(true);
   });
 
@@ -450,7 +455,7 @@ describe('Tibetan reviewer packet export', () => {
   it('recomputes the exact current bo baseline hashes without editing their lock files', () => {
     const checklist = buildRebaselineChecklist(extractLocalizedTextCorpus({ repoRoot: process.cwd() }));
     expect(checklist).toEqual({
-      referenceBaselineBo: 'd36429a82da7e3b367afa70a9011fad1d92a05cb0c8c951a17c9636354c54685',
+      referenceBaselineBo: 'df60a2b8c16e383f043cb88a204c58cef96aa524c2b7c5cedbf4aca6d4715a32',
       disclaimerBaselineBo: '26b37ac41f7ab7ca787474a8f0bd549f24937226f475fa873e7dffb3f0ccde4b',
       directContexts: [],
       expectedHashes: {},
