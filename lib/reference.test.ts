@@ -71,6 +71,49 @@ describe('findEntry', () => {
       .map(([token, keys]) => `${token} -> ${[...keys].sort().join(', ')}`);
     expect(collisions, collisions.join('\n')).toEqual([]);
   });
+  // Names a real 32-page report printed that the table already covered under a different spelling.
+  // Reviewed by an independent model before adding: each is the SAME measurand, not a near neighbour.
+  it.each([
+    ['嗜碱性粒细胞百分比', 'basophil_pct'],
+    ['平均血红蛋白含量', 'mch'], // MCH, not MCHC — the printed pg unit corroborates it
+    ['丙氨酸氨基转氨酶', 'alt'], // 转氨酶 / 转移酶 both standard for transaminase
+    ['天门冬氨酸氨基转移酶', 'ast'], // 天门冬 / 天冬 both standard for aspartate
+    ['非高密度脂蛋白', 'non_hdl_cholesterol'],
+    ['甲状腺过氧化物酶抗体', 'tpo_antibody'],
+    ['碳酸氢盐', 'bicarbonate'],
+    ['Vita25-羟基维生素D', 'vitamin_d_25oh'], // 'Vita' is vendor formatting; the analyte is explicit
+  ])('resolves the printed spelling %s to %s', (printed, key) => {
+    expect(findEntry(printed, 'blood')?.key).toBe(key);
+  });
+
+  // DELIBERATELY NOT AN ALIAS. Cystatins A, B and C are distinct proteins; only cystatin C is the
+  // kidney assay this entry curates, so a bare 胱抑素 that dropped the subtype must keep abstaining
+  // rather than silently resolve to cystatin C.
+  it('refuses a cystatin name that has lost its subtype', () => {
+    expect(findEntry('胱抑素', 'blood')).toBeNull();
+    expect(findEntry('胱抑素C', 'blood')?.key).toBe('cystatin_c');
+  });
+
+  // The differential-percentage family drifted: four of five siblings carried 百分比 and one did
+  // not, which is how an abnormal basophil result went unexplained. Pin the whole matrix so the
+  // class cannot recur one missing string at a time.
+  it('covers every differential percentage in every printed spelling', () => {
+    const family = [
+      ['中性粒细胞', 'neutrophil_pct'],
+      ['淋巴细胞', 'lymphocyte_pct'],
+      ['单核细胞', 'monocyte_pct'],
+      ['嗜酸性粒细胞', 'eosinophil_pct'],
+      ['嗜碱性粒细胞', 'basophil_pct'],
+    ] as const;
+    const missing: string[] = [];
+    for (const [stem, key] of family) {
+      for (const suffix of ['百分比', '百分数']) {
+        if (findEntry(`${stem}${suffix}`, 'blood')?.key !== key) missing.push(`${stem}${suffix}`);
+      }
+    }
+    expect(missing, `unmatched differential spellings:\n${missing.join('\n')}`).toEqual([]);
+  });
+
   // Real reports qualify analytes with the specimen: the 32-page health check printed 血清总胆固醇,
   // 血清甘油三酯, 血清尿酸 and nine more, none of which matched the table's bare names. Twelve
   // analytes — the whole lipid panel among them — went silently unexplained.

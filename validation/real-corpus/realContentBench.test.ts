@@ -88,9 +88,13 @@ describe('de-identified Lhasa CBC+CRP grounding regression', () => {
     const s = scoreRealCorpus(LHASA_FIELD_SAMPLE);
     expect(s.reports).toBe(1);
     expect(s.items).toBe(27);
-    expect(s.recognized).toBe(17);
-    expect(s.classified).toBe(17);
-    expect(s.abstained).toBe(10);
+    // 17 -> 18 on 2026-07-26: 嗜碱性粒细胞百分比 gained a curated alias. The differential
+    // percentage family carried 百分比 on four of five siblings and not on basophils, so an
+    // abnormal basophil result went unexplained. The safety metrics below are unchanged, which
+    // is the point: recognition went up and nothing about the displayed comparison moved.
+    expect(s.recognized).toBe(18);
+    expect(s.classified).toBe(18);
+    expect(s.abstained).toBe(9);
     expect(s.chipScorable).toBe(27);
     expect(s.chipCorrect).toBe(27);
     expect(s.chipAbstained).toBe(0);
