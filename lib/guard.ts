@@ -197,6 +197,38 @@ export function evaluateRow(
   //
   // Cost of failing closed here is small and bounded: with no printed range there is no chip
   // either, so the row loses only typicalRange and the definition, and it still discloses.
+  // Body measurements match by EXACT name, never by scoped alias, so the scoped branch below would
+  // never run for them and they would reach the report-only return with no unit check at all. A
+  // printed unit that contradicts the curated family is evidence the name match itself is wrong
+  // (a '%' row is not a pulse), so refuse it. Missing units stay acceptable — reports routinely
+  // omit them on these rows, which is why several carry unitOptional.
+  //
+  // Scoped to measurements deliberately. The same gap exists in principle for the 20 pre-existing
+  // report-only entries matched exactly, but widening it there requires auditing every curated unit
+  // family first: `crp` currently allows only mg/L while mg/dL is the US convention, so hoisting
+  // this check unaudited would start refusing valid CRP rows. Tracked separately; not fixed here.
+  if (
+    entry.specimen === 'measurement' &&
+    reportOnlySpecimenContradicted(extracted, entry)
+  ) {
+    flags.push(
+      flag(
+        'R2-UNIT-MISMATCH',
+        'caution',
+        defineText({
+          en: reviewed(
+            'The unit printed next to this measurement does not match the unit we expect for it, so we are not naming it. Please check the measurement and its unit on your report.',
+          ),
+          zh: reviewed(
+            '此项测量旁打印的单位与我们预期的单位不符，因此我们不予命名。请核对报告上的测量项目和单位。',
+          ),
+          bo: fallback('zh'),
+        }),
+      ),
+    );
+    return { action: 'abstain', needsConfirm: false, needsReview: false, flags };
+  }
+
   if (
     matchedVia === 'specimen-scoped' &&
     (entry.interpretation === 'report-only'

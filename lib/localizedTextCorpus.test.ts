@@ -18,15 +18,15 @@ describe('static localized-text corpus', () => {
     const corpus = extractLocalizedTextCorpus();
     const fallbackBo = corpus.calls.filter((entry) => entry.variants.bo.kind === 'fallback');
 
-    // Topology tripwire. The completeness gate (components/RowManifest.tsx) adds five UI strings
-    // to lib/uiCopy.ts — manifestEyebrow, manifestCountLabel, manifestHelp, manifestConfirmCta,
-    // manifestMissingCta: 15 files (unchanged — RowManifest.tsx authors no defineText of its own),
-    // 494->499 calls, 493->498 fallbacks. Rebaseline deliberately when a feature adds strings — and
+    // Topology tripwire. Latest move 2026-07-26: eight body-measurement entries (report-only,
+    // no curated bands) add a name + definition each, and the measurement unit-contradiction guard
+    // adds one flag message: 499->516 calls, 498->515 fallbacks, 15 files unchanged.
+    // Rebaseline deliberately when a feature adds strings — and
     // confirm, as the two assertions below do, that the growth is all fallback and none of it is
     // direct (unreviewed) Tibetan.
     expect(corpus.sourceFiles).toHaveLength(15);
-    expect(corpus.calls).toHaveLength(499);
-    expect(fallbackBo).toHaveLength(498);
+    expect(corpus.calls).toHaveLength(516);
+    expect(fallbackBo).toHaveLength(515);
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(corpus.excludedDirectBo[0].reason).toBe('verbatim-ocr-echo');
@@ -64,10 +64,10 @@ describe('static localized-text corpus', () => {
       .filter((entry) => entry.reference?.field === 'name')
       .map((entry) => entry.reference!.key);
 
-    expect(reference).toHaveLength(337);
-    expect(fields).toEqual({ name: 117, plain: 103, definition: 117 });
-    expect(nameKeys).toHaveLength(117);
-    expect(new Set(nameKeys)).toHaveLength(117);
+    expect(reference).toHaveLength(353);
+    expect(fields).toEqual({ name: 125, plain: 103, definition: 125 });
+    expect(nameKeys).toHaveLength(125);
+    expect(new Set(nameKeys)).toHaveLength(125);
   });
 
   it('preserves every production placeholder expression and its order', () => {
@@ -82,7 +82,7 @@ describe('static localized-text corpus', () => {
 
     expect(actual).toEqual({
       'lib/grounding.ts:80': [['converted.from', 'converted.to']],
-      'lib/guard.ts:264': [['entry.unit']],
+      'lib/guard.ts:296': [['entry.unit']],
       'lib/notesGuard.ts:740': [['sd.raw']],
       'lib/notesGuard.ts:784': [['ratio.toFixed(1)', 'sd.raw']],
       'lib/notesGuard.ts:815': [['sd.raw', 'srcFreq.toUpperCase()']],

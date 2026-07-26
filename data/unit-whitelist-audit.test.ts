@@ -33,6 +33,12 @@ const EQUIVALENCE_GROUPS: Record<string, string[]> = {
   // NEVER whitelist mEq/L (2 mEq/L = 1 mmol/L) — enforced separately below.
   monovalent_ion: ['mmol/l', 'meq/l'],
   seconds: ['s', 'sec', '秒'],
+  // BMI notation: the same quantity written three ways, no magnitude difference.
+  bmi_notation: ['kg/m2', 'kg/m²', 'kg/m^2'],
+  // Per-minute rate (pulse): every form denotes beats per one minute.
+  per_minute: ['次/分', 'bpm', '/min', '次/分钟', 'beats/min'],
+  // Percent: halfwidth % and fullwidth ％ are the same unit; Chinese reports print both.
+  percent: ['%', '％'],
   esr_rate: ['mm/h', 'mm/hr', 'mm/1h'],
   egfr: ['ml/min/1.73m2', 'ml/min/1.73m²'],
   // D-dimer FEU basis: µg/mL FEU = mg/L FEU exactly (both FEU-qualified).

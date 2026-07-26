@@ -26,12 +26,20 @@ describe('reference table integrity', () => {
       (entry) => entry.interpretation === 'report-only',
     );
 
+    // The eight body measurements added 2026-07-26 are report-only BY DESIGN: no curated band,
+    // because a sea-level SpO2/pulse/BP band would misrepresent this Lhasa (3,650 m) population.
     expect(reportOnly.map((entry) => entry.key).sort()).toEqual([
       'anion_gap',
       'base_excess',
       'blood_ph',
+      'bmi',
       'crp',
+      'diastolic_bp',
+      'height',
+      'oxygen_saturation',
       'prothrombin_activity',
+      'pulse_rate',
+      'systolic_bp',
       'total_co2_calculated',
       'urine_amorphous_deposits',
       'urine_appearance',
@@ -47,6 +55,9 @@ describe('reference table integrity', () => {
       'urine_urobilinogen',
       'urine_wbc_microscopy',
       'urine_yeast_cells',
+      'waist_circumference',
+      'weight',
+
     ]);
 
     for (const entry of reportOnly) {
@@ -286,7 +297,15 @@ describe('reference table integrity', () => {
       expect(e.key).toMatch(/^[a-z0-9_]+$/);
       expect(keys.has(e.key)).toBe(false);
       keys.add(e.key);
-      expect(e.specimen).toBe(e.key.startsWith('urine_') ? 'urine' : 'blood');
+      // A body measurement is neither a urine nor a blood assay; every other entry still must
+      // declare the frame its key implies.
+      expect(e.specimen).toBe(
+        e.specimen === 'measurement'
+          ? 'measurement'
+          : e.key.startsWith('urine_')
+            ? 'urine'
+            : 'blood',
+      );
       expect(['ours', 'report-only']).toContain(e.interpretation);
       expect(e.unit.length).toBeGreaterThan(0);
       expect(e.allowedUnits).toContain(e.unit);

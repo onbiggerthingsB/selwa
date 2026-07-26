@@ -36,6 +36,17 @@ export interface ReferenceMatch {
   matchedVia: ReferenceMatchVia;
 }
 
+/**
+ * The printed specimen a report row would carry for this entry. A body measurement is never a
+ * printed specimen — real reports leave those rows' specimen absent — so it maps to 'unknown',
+ * which is also the only context from which a measurement entry is reachable.
+ */
+export function printedSpecimenFor(
+  entry: ReferenceEntry,
+): 'blood' | 'urine' | 'unknown' {
+  return entry.specimen === 'measurement' ? 'unknown' : entry.specimen;
+}
+
 function specimenSafeMatch(
   entry: ReferenceEntry | null,
   matchedVia: Exclude<ReferenceMatchVia, 'unmatched'>,

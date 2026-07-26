@@ -11,6 +11,50 @@ interface UrineReportOnlyInput {
   allowedUnits?: string[];
 }
 
+interface MeasurementInput {
+  key: string;
+  name: LocalizedText;
+  aliases: string[];
+  definition: LocalizedText;
+  unit: string;
+  allowedUnits: string[];
+  unitOptional?: boolean;
+}
+
+// BODY MEASUREMENTS. Height, blood pressure, pulse, SpO2 and the like appear on real 体检 reports
+// but are not assays of any specimen, so they could not be represented until `specimen` gained a
+// 'measurement' frame. See lib/types.ts for why ScopedSpecimen is deliberately NOT widened.
+//
+// All are `report-only` and NONE carries a curated band, on purpose. The report that motivated this
+// is from Lhasa at 3,650 m: a sea-level SpO2 band would misrepresent an altitude-acclimatised value
+// in either direction, and pulse and blood-pressure bands are age-dependent. What the user gets is
+// the curated NAME and DEFINITION plus the hospital's own printed range and the existing
+// table-independent arithmetic chip — the whole benefit of recognition with none of the
+// interpretive risk. Do not add refLow/refHigh here without a population-specific source.
+function bodyMeasurement(input: MeasurementInput): ReferenceEntry {
+  return {
+    key: input.key,
+    name: input.name,
+    aliases: input.aliases,
+    specimen: 'measurement',
+    interpretation: 'report-only',
+    unit: input.unit,
+    allowedUnits: input.allowedUnits,
+    unitOptional: input.unitOptional,
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    highStakes: false,
+    populationSensitive: false,
+    definition: input.definition,
+    plain: input.definition,
+    source: '',
+  };
+}
+
 function urineReportOnly(input: UrineReportOnlyInput): ReferenceEntry {
   const unit = input.unit ?? 'as reported';
   return {
@@ -3121,4 +3165,105 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     source: 'Univ. of Michigan MLabs test catalog, "Creatine Kinase, Total and MB Isoenzyme": CK-MB mass 0-4.9 ng/mL when total CK <500 IU/L; not sex-specific (mlabs.umich.edu/tests/creatine-kinase-total-and-mb-isoenzyme, independently fetched and verified 2026-07-19). Cross-method spread: Al-Hadi HA & Fox KA, "Cardiac Markers in the Early Diagnosis and Management of Patients with Acute Coronary Syndrome" (PMC3074795), verbatim: reference ranges "8-16 IU/L for CK-MB activity, and 5-10 ng/ml (ug/l) for CK-MB mass" (fetched and verified 2026-07-19). MedRepBench ZH hospital corpus prints 0-4.0 ng/ml for 肌酸激酶同工酶质量. ng/mL = ug/L exactly, no conversion factor. Reagent/platform-dependent: prefer the range printed on the report.',
   },
+
+  // ---- Body measurements (see bodyMeasurement above: report-only, no curated bands) ----
+  bodyMeasurement({
+    key: 'height',
+    name: defineText({ en: reviewed('Height'), zh: reviewed('身高'), bo: fallback('zh') }),
+    aliases: ['Height', '身高'],
+    unit: 'cm',
+    allowedUnits: ['cm', 'CM'],
+    definition: defineText({
+      en: reviewed('How tall you are, measured standing.'),
+      zh: reviewed('站立时测量的身体高度。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bodyMeasurement({
+    key: 'weight',
+    name: defineText({ en: reviewed('Weight'), zh: reviewed('体重'), bo: fallback('zh') }),
+    aliases: ['Weight', '体重'],
+    unit: 'kg',
+    allowedUnits: ['kg', 'Kg', 'KG', 'kG'],
+    definition: defineText({
+      en: reviewed('Your body weight.'),
+      zh: reviewed('您的体重。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bodyMeasurement({
+    key: 'bmi',
+    name: defineText({ en: reviewed('Body mass index (BMI)'), zh: reviewed('体重指数'), bo: fallback('zh') }),
+    aliases: ['BMI', '体重指数', '身体质量指数'],
+    // Printed with no unit on most reports; kg/m2 when printed at all.
+    unit: 'kg/m2',
+    allowedUnits: ['kg/m2', 'kg/m²', 'kg/m^2'],
+    definition: defineText({
+      en: reviewed('A number calculated from your height and weight.'),
+      zh: reviewed('根据身高和体重计算出的数值。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bodyMeasurement({
+    key: 'waist_circumference',
+    name: defineText({ en: reviewed('Waist circumference'), zh: reviewed('腰围'), bo: fallback('zh') }),
+    aliases: ['Waist', '腰围'],
+    unit: 'cm',
+    allowedUnits: ['cm', 'CM'],
+    definition: defineText({
+      en: reviewed('The distance around your waist.'),
+      zh: reviewed('腰部一周的长度。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bodyMeasurement({
+    key: 'systolic_bp',
+    name: defineText({ en: reviewed('Systolic blood pressure'), zh: reviewed('收缩压'), bo: fallback('zh') }),
+    aliases: ['SBP', '收缩压', '高压'],
+    unit: 'mmHg',
+    allowedUnits: ['mmHg', 'mm Hg'],
+    definition: defineText({
+      en: reviewed('The upper number in a blood-pressure reading, measured as the heart beats.'),
+      zh: reviewed('血压读数中较高的那个数字，是心脏跳动时测得的。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bodyMeasurement({
+    key: 'diastolic_bp',
+    name: defineText({ en: reviewed('Diastolic blood pressure'), zh: reviewed('舒张压'), bo: fallback('zh') }),
+    aliases: ['DBP', '舒张压', '低压'],
+    unit: 'mmHg',
+    allowedUnits: ['mmHg', 'mm Hg'],
+    definition: defineText({
+      en: reviewed('The lower number in a blood-pressure reading, measured between heartbeats.'),
+      zh: reviewed('血压读数中较低的那个数字，是心跳间隙测得的。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bodyMeasurement({
+    key: 'pulse_rate',
+    name: defineText({ en: reviewed('Pulse'), zh: reviewed('脉搏'), bo: fallback('zh') }),
+    aliases: ['Pulse', 'PR', '脉搏', '心率', 'Heart rate'],
+    unit: '次/分',
+    allowedUnits: ['次/分', 'bpm', '/min', '次/分钟', 'beats/min'],
+    definition: defineText({
+      en: reviewed('How many times your heart beats in one minute.'),
+      zh: reviewed('心脏一分钟跳动的次数。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bodyMeasurement({
+    key: 'oxygen_saturation',
+    name: defineText({ en: reviewed('Blood oxygen saturation'), zh: reviewed('血氧饱和度'), bo: fallback('zh') }),
+    aliases: ['SpO2', 'SpO₂', 'SaO2', '血氧饱和度', '血氧'],
+    unit: '%',
+    allowedUnits: ['%', '％'],
+    // Direction-neutral on purpose. Healthy values shift substantially with altitude and this
+    // report is from 3,650 m, so the app must not imply what is normal for this person.
+    definition: defineText({
+      en: reviewed('How much oxygen your red blood cells are carrying, measured through the skin.'),
+      zh: reviewed('通过皮肤测得的红细胞携氧程度。'),
+      bo: fallback('zh'),
+    }),
+  }),
 ];

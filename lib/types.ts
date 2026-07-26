@@ -8,7 +8,22 @@ export interface ReferenceEntry {
   key: string; // stable id, e.g. 'fasting_glucose'
   name: LocalizedText;
   aliases: string[]; // EN abbreviations + ZH names/synonyms, matched case-insensitively
-  specimen: 'blood' | 'urine'; // required: known context must never cross specimen frames
+  /**
+   * The frame this entry belongs to. 'blood'/'urine' are assay specimens; known context must never
+   * cross them. 'measurement' is a BODY MEASUREMENT, not an assay of any specimen — height, blood
+   * pressure, pulse, SpO2. Those rows exist on real 体检 reports and were previously impossible to
+   * represent at all (validation/camera-path/full-report-2026-07-26.md).
+   *
+   * A 'measurement' entry is reachable ONLY from a row whose printed specimen is unknown/absent:
+   * specimenSafeMatch refuses it whenever the report explicitly printed blood or urine, because
+   * 'measurement' !== 'blood' | 'urine'. ScopedSpecimen and ExtractedRow.specimen are deliberately
+   * NOT widened — the OCR contract is unchanged and the model is never asked to classify a row as
+   * a measurement.
+   *
+   * (An independent review preferred renaming this field to `applicability`, which reads better for
+   * the non-specimen case. Deferred: it would rewrite all 117 entries for no safety gain.)
+   */
+  specimen: 'blood' | 'urine' | 'measurement';
   /**
    * 'ours' uses a curated band. 'report-only' names/translates the test but
    * never classifies it; any position comes solely from the printed report.

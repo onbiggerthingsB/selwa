@@ -292,7 +292,7 @@ describe('Tibetan reviewer packet export', () => {
   });
 
   it('locks the three measured inventories and authored component tally', () => {
-    expect(packet.names).toHaveLength(117);
+    expect(packet.names).toHaveLength(125);
     expect(GLOSSARY_TERM_COMPONENT_COUNTS).toEqual({
       comparators: 6,
       coreNegators: 15,
@@ -314,14 +314,14 @@ describe('Tibetan reviewer packet export', () => {
       comparator: 6,
       polarity: 12,
     });
-    expect(packet.floor).toHaveLength(161); // 139 + 5 T2/T3 + 12 T4 safety strings + 5 completeness-gate strings; grows with every UI feature
+    expect(packet.floor).toHaveLength(162); // 139 + 5 T2/T3 + 12 T4 + 5 completeness-gate + 1 measurement unit-contradiction flag
     expect(packet.terms.find(({ term }) => term === '阴性')?.categories.split(' | ').sort())
       .toEqual(['core-negator', 'polarity']);
   });
 
-  it('exports all 117 distinct names with definition context, specimen, aliases, and units', () => {
-    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(117);
-    expect(new Set(packet.names.map(({ en }) => en))).toHaveLength(117);
+  it('exports all 125 distinct names with definition context, specimen, aliases, and units', () => {
+    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(125);
+    expect(new Set(packet.names.map(({ en }) => en))).toHaveLength(125);
     expect(packet.names.filter(({ unit }) => unit === 'as reported')).toHaveLength(6);
     for (const row of packet.names) {
       const entry = REFERENCE_LABS.find(({ key }) => key === row.key)!;
@@ -354,7 +354,7 @@ describe('Tibetan reviewer packet export', () => {
     expect(interpolated).toHaveLength(8);
     expect(interpolated.find(({ id }) => id === 'lib/grounding.ts:message:0')?.zh)
       .toContain('{fromUnit}');
-    expect(interpolated.find(({ id }) => id === 'lib/guard.ts:function:evaluateRow:3')?.zh)
+    expect(interpolated.find(({ id }) => id === 'lib/guard.ts:function:evaluateRow:4')?.zh)
       .toContain('{unit}');
 
     const unknownAnalyte = packet.floor.find(
@@ -372,7 +372,7 @@ describe('Tibetan reviewer packet export', () => {
   it('keeps conditional calls one row each with two review alternatives', () => {
     const conditionals = packet.floor.filter(({ alternatives }) => alternatives === '2');
     expect(conditionals.map(({ id }) => id).sort()).toEqual([
-      'lib/guard.ts:function:evaluateRow:11',
+      'lib/guard.ts:function:evaluateRow:12',
       'lib/notesGuard.ts:function:evaluateNegations:2',
       'lib/notesGuard.ts:function:evaluateNegations:8',
     ]);
@@ -410,15 +410,15 @@ describe('Tibetan reviewer packet export', () => {
         parseCsv(readFileSync(path.join(output, fileName), 'utf8')),
       ]),
     );
-    expect(parsed.names.rows).toHaveLength(117);
+    expect(parsed.names.rows).toHaveLength(125);
     expect(parsed.terms.rows).toHaveLength(34);
-    expect(parsed.floor.rows).toHaveLength(161);
+    expect(parsed.floor.rows).toHaveLength(162);
     expect(parsed.decisions.rows).toHaveLength(1);
     for (const sheet of [parsed.names, parsed.terms, parsed.floor]) {
       expect(sheet.rows.every((row) => row.bo === '')).toBe(true);
     }
     const rows = readReviewedPacket(output);
-    expect(rows).toHaveLength(117 + 161);
+    expect(rows).toHaveLength(125 + 162);
     expect(rows.every(({ bo }) => bo === '')).toBe(true);
   });
 
@@ -450,7 +450,7 @@ describe('Tibetan reviewer packet export', () => {
   it('recomputes the exact current bo baseline hashes without editing their lock files', () => {
     const checklist = buildRebaselineChecklist(extractLocalizedTextCorpus({ repoRoot: process.cwd() }));
     expect(checklist).toEqual({
-      referenceBaselineBo: '62915e7cefee1e523aa46a41712eb475d253575ec86e33787e401ec43894488f',
+      referenceBaselineBo: 'd36429a82da7e3b367afa70a9011fad1d92a05cb0c8c951a17c9636354c54685',
       disclaimerBaselineBo: '26b37ac41f7ab7ca787474a8f0bd549f24937226f475fa873e7dffb3f0ccde4b',
       directContexts: [],
       expectedHashes: {},

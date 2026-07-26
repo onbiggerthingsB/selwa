@@ -31,7 +31,7 @@ import { describe, it, expect } from 'vitest';
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary, type SummarySection } from '@/lib/summary';
 import { REFERENCE_LABS } from '@/data/reference-labs';
-import { resolveBounds, findEntryMatch } from '@/lib/reference';
+import { resolveBounds, findEntryMatch, printedSpecimenFor } from '@/lib/reference';
 import {
   LANGS,
   resolveText,
@@ -230,7 +230,7 @@ function visibleTriggerSurface(
           unit: entry.unit,
           printedRange: null,
           confidence: 'high',
-          specimen: entry.specimen,
+          specimen: printedSpecimenFor(entry),
         },
       ],
     },

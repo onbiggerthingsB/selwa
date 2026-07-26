@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { REFERENCE_LABS } from '@/data/reference-labs';
 import { UNIT_CONVERSIONS } from '@/data/unit-conversions';
 import { groundExtraction } from '@/lib/grounding';
-import { resolveBounds } from '@/lib/reference';
+import { resolveBounds, printedSpecimenFor } from '@/lib/reference';
 import { buildSummary } from '@/lib/summary';
 import type { GroundedReport, ReferenceEntry } from '@/lib/types';
 
@@ -60,7 +60,7 @@ describe('summary value/reference-band unit frame', () => {
                 unit: allowedUnit || null,
                 printedRange: null,
                 confidence: 'high',
-                specimen: entry.specimen,
+                specimen: printedSpecimenFor(entry),
               },
             ],
           },
@@ -145,7 +145,7 @@ describe('summary value/reference-band unit frame', () => {
               unit: conversion.conventionalUnit,
               printedRange: null,
               confidence: 'high',
-              specimen: entry.specimen,
+              specimen: printedSpecimenFor(entry),
             },
           ],
         },

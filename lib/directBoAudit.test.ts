@@ -119,10 +119,10 @@ describe('direct Tibetan localization audit', () => {
     expect(DISCLAIMER_TEXTS).toHaveLength(5);
     expect(Object.keys(UI_COPY)).toHaveLength(30);
     expect(Object.keys(CONSENT_COPY)).toHaveLength(6);
-    expect(REFERENCE_LABS).toHaveLength(117);
+    expect(REFERENCE_LABS).toHaveLength(125);
 
     const copies = auditedCopies();
-    expect(copies).toHaveLength(5 + 30 + 6 + (117 * 3) + 1);
+    expect(copies).toHaveLength(5 + 30 + 6 + (125 * 3) + 1);
     expect(
       copies.find(({ context }) => context === SUMMARY_DIRECT_BO_CONTEXT)?.copy,
       'the sole direct-bo exception must stay a verbatim unverified OCR token',

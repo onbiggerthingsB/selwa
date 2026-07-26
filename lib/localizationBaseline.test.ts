@@ -7,11 +7,14 @@ import { UI_COPY } from '@/lib/uiCopy';
 
 // Captured from clean pre-refactor HEAD 9c5100a85565bba784bac2ff488bd28a6e2720bb.
 // Hash input is JSON.stringify's UTF-8 bytes with the property order below and no trailing LF.
+// Rebaselined 2026-07-26 for the eight body-measurement entries. zh and bo remain BYTE-IDENTICAL,
+// which is the invariant this lock exists for: bo still falls back to zh for every reference string,
+// i.e. no unreviewed Tibetan entered the table.
 const REFERENCE_BASELINE = {
-  count: 117,
-  en: 'f007b58112659ee291f9d75b8e92443590465e080fcb1f66ee868e0811dd443f',
-  zh: '62915e7cefee1e523aa46a41712eb475d253575ec86e33787e401ec43894488f',
-  bo: '62915e7cefee1e523aa46a41712eb475d253575ec86e33787e401ec43894488f',
+  count: 125,
+  en: '227120d7a4e4a596d22a8a12fdd9084ab7fda15490f76d79e4acd0175f116ee7',
+  zh: 'd36429a82da7e3b367afa70a9011fad1d92a05cb0c8c951a17c9636354c54685',
+  bo: 'd36429a82da7e3b367afa70a9011fad1d92a05cb0c8c951a17c9636354c54685',
 } as const;
 
 const DISCLAIMER_KEYS = [
