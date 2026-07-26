@@ -1,4 +1,20 @@
-# Camera path — first real OCR measurement (2026-07-25)
+# Camera path — real OCR measurements
+
+Two records live here:
+
+- **This file** — the first measurement (2026-07-25): one CBC page, three runs, graded against a
+  hand transcription. Found two reproducible value errors that `chipWrong` cannot see.
+- **`full-report-2026-07-26.md`** — a whole 32-page health check, 31 pages, self-consistency across
+  three runs. Found values perfectly stable on lab tables, but unit and name reading unstable enough
+  to flip a row between explained and withheld.
+
+They are complementary: the first has ground truth and can measure accuracy on one page; the second
+has no ground truth but covers a whole real document and many page types. The second method would
+have MISSED the first's finding, because that error reproduced identically in all three runs.
+
+---
+
+## First measurement (2026-07-25)
 
 Everything else in this repo validates the **deterministic middle** against hand-transcribed rows.
 This directory is the only place that records what the vision model actually read off a

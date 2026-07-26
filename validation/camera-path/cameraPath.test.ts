@@ -73,6 +73,43 @@ describe('camera path — what the model actually read off the page', () => {
   // chipWrong === 0 is therefore necessary but NOT sufficient. If this test ever starts failing
   // because the chip diverges, that is good news — it would mean the display finally reacts to a
   // misread value. Until then, do not treat a green gold-set run as evidence the numbers are right.
+  // SECOND MEASUREMENT, 2026-07-26 (see full-report-2026-07-26.md). Across a whole 32-page health
+  // check, values on real lab tables were perfectly stable (113 rows x 3 runs, zero value
+  // disagreements) — but UNITS wobbled, and that decides whether a row is explained or withheld.
+  //
+  // 促甲状腺激素's unit was read as 'uIU/mL' once and 'ulU/mL' twice across three runs of the same
+  // image. Capital I and lowercase l are near-identical in most fonts. The app's behaviour diverges
+  // on them, so the same photograph re-taken can silently withhold the row.
+  //
+  // This test documents a DEFECT, not desired behaviour. Normalising the I/l confusion pair before
+  // the unit check would make both spellings classify — and would fail this test, which is the
+  // correct signal that it has been fixed.
+  it('lets an I/l unit misread flip TSH between explained and withheld', () => {
+    const tsh = (unit: string) =>
+      groundExtraction(
+        {
+          rows: [{
+            name: '促甲状腺激素',
+            value: '2.5',
+            unit,
+            printedRange: '0.35-4.94',
+            confidence: 'high' as const,
+          }],
+        },
+        'unknown',
+      ).rows[0];
+
+    const capitalI = tsh('uIU/mL');
+    const lowercaseL = tsh('ulU/mL');
+
+    // Both are recognised as the same analyte: the divergence is purely in the unit check.
+    expect(capitalI.entry?.key).toBe('tsh');
+    expect(lowercaseL.entry?.key).toBe('tsh');
+
+    expect(capitalI.action).toBe('classify');
+    expect(lowercaseL.action).toBe('abstain');
+  });
+
   it('renders an identical chip for the misread values as for the true ones', () => {
     const chipsFor = (values: readonly (readonly [string, string, string])[]) =>
       buildSummary(
