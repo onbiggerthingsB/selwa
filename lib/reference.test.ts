@@ -3,6 +3,7 @@ import {
   findEntry,
   findEntryMatch,
   normName,
+  printedSpecimenFor,
   normalizeUnit,
   unitComparisonKeyCollisions,
   unitMatches,
@@ -164,6 +165,83 @@ describe('findEntry', () => {
     it('refuses when a printed specimen contradicts the name prefix', () => {
       expect(findEntry('血清总胆固醇', 'blood')?.key).toBe('total_cholesterol');
       expect(findEntry('血清总胆固醇', 'urine')).toBeNull();
+    });
+
+    // A trailing 测定/检测 is procedural: 钾测定 IS potassium. Real reports print it on roughly half
+    // their chemistry rows, and every one of these went unrecognised before.
+    it.each([
+      ['钾测定', 'potassium'],
+      ['钠测定', 'sodium'],
+      ['氯测定', 'chloride'],
+      ['钙测定', 'calcium_total'],
+      ['无机磷测定', 'phosphate'],
+      ['镁测定', 'magnesium'],
+      ['同型半胱氨酸测定', 'homocysteine'],
+      ['血浆乳酸测定', 'lactate'], // chains: suffix, then the 血浆 specimen prefix
+      ['血清碳酸氢盐（HCO3）测定', 'bicarbonate'],
+    ])('strips the measurement suffix from %s', (printed, key) => {
+      expect(findEntry(printed, 'blood')?.key).toBe(key);
+    });
+
+    // A bracket naming a specimen is EVIDENCE and is consumed; it is the only thing separating
+    // urine glucose from blood glucose.
+    it('reads a parenthesised specimen as evidence', () => {
+      expect(findEntry('葡萄糖(尿)')?.key).toBe('urine_glucose');
+      expect(findEntry('葡萄糖')).toBeNull(); // bare name stays ambiguous
+      expect(findEntry('葡萄糖(尿)', 'blood')).toBeNull(); // contradiction still refused
+    });
+
+    // THE TEMPTATION THAT MUST STAY REFUSED. Dropping an ABBREVIATION bracket looks like the same
+    // idea and is not: 钙(Ca) and 镁(Mg) are trace-element panel rows in µg/ml, so reducing them to
+    // 钙/镁 would read a µg/ml number against a serum mmol/L band. data/english-aliases.test.ts owns
+    // this boundary; duplicated here so the candidate ladder carries its own guard.
+    it.each(['钙(Ca)', '镁(Mg)'])('leaves the abbreviation bracket on %s intact', (printed) => {
+      for (const specimen of ['unknown', 'blood', 'urine'] as const) {
+        expect(findEntry(printed, specimen)).toBeNull();
+      }
+    });
+
+    // FOUND BY REVIEW, not by me. The first version decided specimen per-candidate, so ORDERING
+    // rather than semantics kept it safe: a weakened reading carrying no specimen evidence could
+    // resolve and return before a later, evidence-bearing reading forced a refusal. Specimen is now
+    // resolved once from the whole printed name.
+    it.each(['血清葡萄糖(尿)', '血清葡萄糖(尿)测定'])(
+      'refuses %s — the name declares two different specimens about itself',
+      (printed) => {
+        for (const specimen of ['unknown', 'blood', 'urine'] as const) {
+          expect(findEntry(printed, specimen)).toBeNull();
+        }
+      },
+    );
+
+    it('refuses a name whose bracketed specimen contradicts the printed panel', () => {
+      // （尿）素 normalises to 尿素 (urea, a BLOOD analyte). Before the fix the suffix-stripped
+      // candidate resolved to blood urea before the bracketed 尿 was ever considered.
+      expect(findEntry('（尿）素测定', 'blood')).toBeNull();
+      expect(findEntry('（尿）素测定', 'urine')).toBeNull();
+    });
+
+    it('accepts a 检测 suffix as well as 测定', () => {
+      expect(findEntry('钾检测', 'blood')?.key).toBe('potassium');
+    });
+
+    // Table-wide invariant requested at review: adding either suffix to any curated token must
+    // never repoint it at a DIFFERENT entry. If this goes red, the suffix rule must shrink.
+    it('never lets a measurement suffix repoint a curated name to another analyte', () => {
+      const repointed: string[] = [];
+      for (const entry of REFERENCE_LABS) {
+        const names = SOURCE_LANGS.map((lang) => resolveText(entry.name, lang).text);
+        for (const token of [entry.key, ...names, ...entry.aliases]) {
+          if (!token) continue;
+          for (const suffix of ['测定', '检测']) {
+            const resolved = findEntry(`${token}${suffix}`, printedSpecimenFor(entry));
+            if (resolved && resolved.key !== entry.key) {
+              repointed.push(`${token}${suffix}: ${entry.key} -> ${resolved.key}`);
+            }
+          }
+        }
+      }
+      expect(repointed, repointed.join('\n')).toEqual([]);
     });
 
     it('is purely additive — a bare name still resolves exactly as before', () => {

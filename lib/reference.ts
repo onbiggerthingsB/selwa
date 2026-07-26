@@ -118,6 +118,91 @@ function splitSpecimenPrefix(
   return null;
 }
 
+/** A trailing 测定 / 检测 ("determination", "test") is procedural boilerplate: 钾测定 IS potassium. */
+const MEASUREMENT_SUFFIX = /(测定|检测)$/u;
+
+/**
+ * A parenthesised span naming a SPECIMEN is evidence — 葡萄糖(尿) is urine glucose, and deleting the
+ * bracket would throw away the only thing separating it from blood glucose. It is consumed, never
+ * dropped.
+ *
+ * Every OTHER parenthesised span is left INTACT, deliberately. Dropping abbreviation brackets looks
+ * harmless and is not: 钙(Ca) and 镁(Mg) are trace-element panel rows printed in µg/ml, and reducing
+ * them to 钙 / 镁 would match serum calcium and magnesium and read a µg/ml number against a mmol/L
+ * band. data/english-aliases.test.ts locks that boundary and names this exact temptation. Where a
+ * bracketed name genuinely needs to resolve, give it an explicit curated alias instead.
+ */
+const SPECIMEN_IN_PARENS: readonly { pattern: RegExp; specimen: 'blood' | 'urine' }[] = [
+  { pattern: /^(尿|尿液)$/u, specimen: 'urine' },
+  { pattern: /^(血|血清|血浆|全血)$/u, specimen: 'blood' },
+];
+
+const PARENTHESISED = /[(（]([^)）]*)[)）]/u;
+
+/**
+ * Every piece of specimen evidence a printed name carries ABOUT ITSELF — from a 血清/血浆/全血 prefix
+ * and from a parenthesised specimen. Collected up front, before any candidate is tried, so that the
+ * specimen decision is made once from the whole name rather than by whichever weakened reading
+ * happens to resolve first. Ordering must not be what keeps this safe.
+ */
+function selfDeclaredSpecimens(rawName: string): Set<'blood' | 'urine'> {
+  const found = new Set<'blood' | 'urine'>();
+  const base = rawName.trim();
+  for (const form of [base, base.replace(MEASUREMENT_SUFFIX, '').trim()]) {
+    const prefix = splitSpecimenPrefix(form);
+    if (prefix) found.add(prefix.specimen);
+    const parens = PARENTHESISED.exec(form);
+    if (parens) {
+      const inner = parens[1].trim();
+      const match = SPECIMEN_IN_PARENS.find(({ pattern }) => pattern.test(inner));
+      if (match) found.add(match.specimen);
+    }
+  }
+  return found;
+}
+
+/**
+ * Progressively less literal readings of a printed name, each still containing the whole analyte
+ * identity. Names only — the specimen is resolved separately and applied uniformly, so no candidate
+ * can smuggle in a different frame than the full name declared.
+ */
+function nameCandidates(rawName: string): string[] {
+  const base = rawName.trim();
+  const seen = new Set<string>([base]);
+  const out: string[] = [];
+  const push = (name: string) => {
+    const trimmed = name.trim();
+    if (trimmed.length === 0 || seen.has(trimmed)) return;
+    seen.add(trimmed);
+    out.push(trimmed);
+  };
+
+  // Only a bracket naming a specimen is removed; an abbreviation bracket stays put, because
+  // reducing 钙(Ca) to 钙 would match serum calcium against a trace-element µg/ml row.
+  const dropSpecimenParens = (form: string): string | null => {
+    const parens = PARENTHESISED.exec(form);
+    if (!parens) return null;
+    const inner = parens[1].trim();
+    if (!SPECIMEN_IN_PARENS.some(({ pattern }) => pattern.test(inner))) return null;
+    return form.replace(PARENTHESISED, '').trim();
+  };
+
+  for (const form of [base, base.replace(MEASUREMENT_SUFFIX, '').trim()]) {
+    push(form);
+    const withoutParens = dropSpecimenParens(form);
+    if (withoutParens) push(withoutParens);
+    for (const variant of [form, withoutParens ?? '']) {
+      if (!variant) continue;
+      const prefix = splitSpecimenPrefix(variant);
+      if (!prefix) continue;
+      push(prefix.rest);
+      const nested = dropSpecimenParens(prefix.rest);
+      if (nested) push(nested);
+    }
+  }
+  return out;
+}
+
 export function findEntryMatch(
   rawName: string,
   specimen: SpecimenContext | null = 'unknown',
@@ -125,19 +210,42 @@ export function findEntryMatch(
   const direct = findExactMatch(rawName, specimen);
   if (direct.entry) return direct;
 
-  // Only once the printed name has failed on its own terms. Keeping this second is what makes the
-  // rule purely additive: every name that resolved before still resolves the same way.
-  const declared = splitSpecimenPrefix(rawName);
-  if (!declared) return direct;
+  // Everything below runs ONLY after the printed name has failed on its own terms, which is what
+  // keeps these rules purely additive: any name that resolved before resolves identically.
+  //
+  // Each step removes PROCEDURAL text while leaving the analyte's identity fully present. None of
+  // them resolves an analyte from an abbreviation alone — that would be unsafe, because bare
+  // tokens collide (findEntry('TG') is triglycerides, while labs also print thyroglobulin as
+  // 甲状腺球蛋白(TG)).
+  // ONE specimen decision, taken from the whole printed name before any candidate is tried.
+  // Doing this per-candidate let ordering decide safety: a weakened reading with no specimen
+  // evidence could resolve and return before a later, evidence-bearing reading forced a refusal.
+  const declared = selfDeclaredSpecimens(rawName);
 
-  // A printed panel heading that contradicts the name's own prefix is a conflict, not a hint.
-  // Refuse rather than pick a winner: specimen decides which reference band a number is read
-  // against, so guessing here would be guessing at meaning.
-  if ((specimen === 'urine' || specimen === 'blood') && specimen !== declared.specimen) {
+  // A name that declares two different specimens about itself contradicts itself — 血清葡萄糖(尿)
+  // says serum in its prefix and urine in its bracket. Refuse; do not let either half win.
+  if (declared.size > 1) return { entry: null, matchedVia: 'unmatched' };
+
+  const [selfSpecimen] = declared;
+
+  // A printed panel heading that contradicts the name's own specimen is a conflict, not a hint.
+  // Specimen decides which reference band a number is read against, so guessing here would be
+  // guessing at meaning.
+  if (
+    selfSpecimen &&
+    (specimen === 'urine' || specimen === 'blood') &&
+    specimen !== selfSpecimen
+  ) {
     return { entry: null, matchedVia: 'unmatched' };
   }
 
-  return findExactMatch(declared.rest, declared.specimen);
+  const effectiveSpecimen = selfSpecimen ?? specimen;
+  for (const candidate of nameCandidates(rawName)) {
+    const match = findExactMatch(candidate, effectiveSpecimen);
+    if (match.entry) return match;
+  }
+
+  return direct;
 }
 
 function findExactMatch(

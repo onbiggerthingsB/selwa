@@ -1174,7 +1174,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ["HCO3", "HCO3-", "CO2", "CO2-CP", "二氧化碳结合力", "碳酸氢根", '碳酸氢盐'],
+    aliases: ["HCO3", "HCO3-", "CO2", "CO2-CP", "二氧化碳结合力", "碳酸氢根", '碳酸氢盐', '碳酸氢盐（HCO3）'],
     unit: "mmol/L", allowedUnits: ["mmol/L", "mEq/L"],
     refLow: 22, refHigh: 29,
     criticalLow: 10, criticalHigh: 40, highStakes: true, populationSensitive: false,

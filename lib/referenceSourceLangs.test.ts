@@ -91,7 +91,7 @@ describe('reference names index only source languages', () => {
   // and both traced to validation/camera-path/. Rebaseline
   // deliberately when aliases are curated; the invariant being protected is that bo contributes
   // NOTHING to the index, which the before/after equality below is what actually checks.
-  it('keeps the source-language map bit-exact with the current 787-key index', () => {
+  it('keeps the source-language map bit-exact with the current 788-key index', () => {
     expect(SOURCE_LANGS).toEqual(['en', 'zh']);
     expect(LANGS).toEqual(['en', 'zh', 'bo']);
 
@@ -105,8 +105,8 @@ describe('reference names index only source languages', () => {
       afterKeys: after.size,
       ...indexDiff(before, after),
     }).toEqual({
-      beforeKeys: 787,
-      afterKeys: 787,
+      beforeKeys: 788,
+      afterKeys: 788,
       added: [],
       removed: [],
       repointed: [],
@@ -129,8 +129,8 @@ describe('reference names index only source languages', () => {
       actualKeys: actual.size,
       ...indexDiff(expected, actual),
     }).toEqual({
-      expectedKeys: 787,
-      actualKeys: 787,
+      expectedKeys: 788,
+      actualKeys: 788,
       added: [],
       removed: [],
       repointed: [],
