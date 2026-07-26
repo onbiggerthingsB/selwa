@@ -81,10 +81,14 @@ describe('camera path — what the model actually read off the page', () => {
   // image. Capital I and lowercase l are near-identical in most fonts. The app's behaviour diverges
   // on them, so the same photograph re-taken can silently withhold the row.
   //
-  // This test documents a DEFECT, not desired behaviour. Normalising the I/l confusion pair before
-  // the unit check would make both spellings classify — and would fail this test, which is the
-  // correct signal that it has been fixed.
-  it('lets an I/l unit misread flip TSH between explained and withheld', () => {
+  // FIXED 2026-07-26. lib/reference.ts now folds the I/l and O/0 OCR confusion pairs into a
+  // comparison key used by unitMatches and the conversion lookup, so both spellings resolve to the
+  // same unit and the row is explained either way. The fold is proven collision-free over the whole
+  // shipped unit inventory by a tripwire in lib/reference.test.ts.
+  //
+  // This test now pins the FIX. It was originally written to assert the defect; it flipped when the
+  // defect was closed, which was the intended signal.
+  it('reads TSH the same whether OCR gave a capital I or a lowercase l', () => {
     const tsh = (unit: string) =>
       groundExtraction(
         {
@@ -102,12 +106,14 @@ describe('camera path — what the model actually read off the page', () => {
     const capitalI = tsh('uIU/mL');
     const lowercaseL = tsh('ulU/mL');
 
-    // Both are recognised as the same analyte: the divergence is purely in the unit check.
     expect(capitalI.entry?.key).toBe('tsh');
     expect(lowercaseL.entry?.key).toBe('tsh');
 
+    // The whole point: the glyph the OCR happened to pick no longer decides whether the user is
+    // told anything about their thyroid.
     expect(capitalI.action).toBe('classify');
-    expect(lowercaseL.action).toBe('abstain');
+    expect(lowercaseL.action).toBe('classify');
+    expect(lowercaseL.action).toBe(capitalI.action);
   });
 
   it('renders an identical chip for the misread values as for the true ones', () => {

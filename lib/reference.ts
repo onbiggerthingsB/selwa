@@ -112,10 +112,56 @@ export function normalizeUnit(u: string): string {
     .toLowerCase();
 }
 
+// OCR CONFUSION FOLDING — comparison only, never for display.
+//
+// Measured 2026-07-26 on a real 32-page health check (validation/camera-path/): across three runs
+// of the same photograph the model read 促甲状腺激素's unit as 'uIU/mL' once and 'ulU/mL' twice.
+// Capital I and lowercase l are near-identical in most fonts. Because the unit check is exact, the
+// same row was explained on one attempt and silently withheld on the other two — the direction is
+// safe (we abstain rather than assert), but the product's value evaporates for no real reason.
+//
+// WHY THIS IS SAFE, AND WHY IT MUST STAY NARROW. The unit check is a safety control: it is what
+// stops a mg/dL number being read against a mmol/L band. Folding characters weakens it in
+// principle, so only pairs that CANNOT distinguish two real units may be folded, and the choice is
+// verified rather than assumed — unitComparisonKeyCollisions() below is asserted empty over the
+// whole shipped unit inventory, so adding a unit that would collide fails the test suite.
+//
+// Folded: i<->l and o<->0, the two classic OCR letter/digit confusions. Deliberately NOT folded:
+// the digit 1. It is a real confusion pair with l, but it appears inside numeric content
+// ('mL/min/1.73m2', '10^9/L') where fuzzing digits buys nothing we have observed and risks more.
+function foldOcrConfusables(normalized: string): string {
+  return normalized.replace(/i/gu, 'l').replace(/o/gu, '0');
+}
+
+/** Comparison key for unit equality. NEVER render this: it is deliberately mangled. */
+export function unitComparisonKey(u: string): string {
+  return foldOcrConfusables(normalizeUnit(u));
+}
+
+/**
+ * Units that were distinct before folding but collapse together after it. Pure so the test can
+ * feed it the entire shipped inventory without an import cycle; a non-empty result means the
+ * folding has started merging units that carry different meaning, and the fold must shrink.
+ */
+export function unitComparisonKeyCollisions(
+  units: readonly string[],
+): { key: string; units: string[] }[] {
+  const buckets = new Map<string, Set<string>>();
+  for (const unit of units) {
+    if (!unit) continue;
+    const key = unitComparisonKey(unit);
+    if (!buckets.has(key)) buckets.set(key, new Set());
+    buckets.get(key)!.add(normalizeUnit(unit));
+  }
+  return [...buckets.entries()]
+    .filter(([, distinct]) => distinct.size > 1)
+    .map(([key, distinct]) => ({ key, units: [...distinct].sort() }));
+}
+
 export function unitMatches(extractedUnit: string | null, entry: ReferenceEntry): boolean {
   if (!extractedUnit) return entry.unitOptional === true;
-  const u = normalizeUnit(extractedUnit);
-  return entry.allowedUnits.some((a) => normalizeUnit(a) === u);
+  const u = unitComparisonKey(extractedUnit);
+  return entry.allowedUnits.some((a) => unitComparisonKey(a) === u);
 }
 
 export interface ResolvedBounds {

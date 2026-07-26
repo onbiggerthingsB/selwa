@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { findEntry, normalizeUnit, unitMatches, resolveBounds, parsePrintedRange } from './reference';
+import {
+  findEntry,
+  normalizeUnit,
+  unitComparisonKeyCollisions,
+  unitMatches,
+  resolveBounds,
+  parsePrintedRange,
+} from './reference';
+import { REFERENCE_LABS } from '@/data/reference-labs';
+import { UNIT_CONVERSIONS } from '@/data/unit-conversions';
 
 describe('findEntry', () => {
   it('matches Chinese name', () => {
@@ -61,6 +70,59 @@ describe('unit matching', () => {
     expect(unitMatches(null, glu)).toBe(false);
     const urinePh = findEntry('pH', 'urine')!;
     expect(unitMatches(null, urinePh)).toBe(true);
+  });
+
+  // Measured on a real photograph (validation/camera-path/full-report-2026-07-26.md): across three
+  // runs of the same page the model read TSH's unit as 'uIU/mL' once and 'ulU/mL' twice. Capital I
+  // and lowercase l are near-identical in most fonts, so an exact check silently withheld the row
+  // on two attempts out of three.
+  it('accepts a unit whose I/l was confused by OCR', () => {
+    const tsh = findEntry('促甲状腺激素')!;
+    expect(unitMatches('uIU/mL', tsh)).toBe(true);
+    expect(unitMatches('ulU/mL', tsh)).toBe(true); // the misread the camera path actually produced
+    expect(unitMatches('μIU/mL', tsh)).toBe(true);
+  });
+
+  it('accepts a unit whose O/0 was confused by OCR', () => {
+    const wbc = findEntry('白细胞')!;
+    expect(unitMatches('10^9/L', wbc)).toBe(true);
+    expect(unitMatches('1O^9/L', wbc)).toBe(true); // letter O misread for the digit
+  });
+
+  // THE SAFETY BOUNDARY. Folding characters weakens a control whose job is to stop a mg/dL number
+  // being read against a mmol/L band. These must still be refused.
+  it('still refuses units that differ in meaning, not just in glyph', () => {
+    const glu = findEntry('fasting_glucose')!;
+    expect(unitMatches('mg/dL', glu)).toBe(false);
+    const wbc = findEntry('白细胞')!;
+    expect(unitMatches('10^12/L', wbc)).toBe(false); // RBC's scale, a thousandfold out
+    expect(unitMatches('mmol/L', wbc)).toBe(false); // wrong dimension entirely
+    // NB 'G/L' (giga per litre) IS allowed for WBC — it equals 10^9/L. Not a counter-example.
+  });
+
+  // TRIPWIRE. The fold is only safe while no two units that mean different things collapse onto the
+  // same key. Asserted over the ENTIRE shipped inventory, so adding a colliding unit fails here
+  // rather than silently letting one unit be accepted for another. If this goes red, shrink the
+  // fold — do not add an exception for the new unit.
+  it('never collapses two distinct shipped units onto one key', () => {
+    const units = new Set<string>();
+    for (const entry of REFERENCE_LABS) {
+      if (entry.unit) units.add(entry.unit);
+      for (const allowed of entry.allowedUnits ?? []) units.add(allowed);
+    }
+    for (const conversion of UNIT_CONVERSIONS) {
+      units.add(conversion.siUnit);
+      units.add(conversion.conventionalUnit);
+    }
+    expect(units.size).toBeGreaterThan(50); // the scan must actually be covering the inventory
+
+    const collisions = unitComparisonKeyCollisions([...units]);
+    expect(
+      collisions,
+      `unit comparison key collisions:\n${collisions
+        .map((c) => `${c.key} <- ${c.units.join(' , ')}`)
+        .join('\n')}`,
+    ).toEqual([]);
   });
 });
 

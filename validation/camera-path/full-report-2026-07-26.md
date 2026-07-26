@@ -68,11 +68,27 @@ Same analyte, same value, same printed range. **In 2 of 3 runs the user's TSH ro
 withheld** because of a font ambiguity in the unit string.
 
 The direction is safe: the app abstains rather than asserting something wrong. But it degrades the
-product's core value invisibly, it is not detectable from a single run, and it is fixable by
-normalising the well-known I/l confusion pair before the unit check.
+product's core value invisibly, and it is not detectable from a single run.
 
-`cameraPath.test.ts` pins this as a deterministic test. If someone adds unit normalisation, that
-test fails, which is the correct signal.
+### Fixed, same day
+
+`lib/reference.ts` now folds the two classic OCR confusion pairs (I/l and O/0) into a
+`unitComparisonKey` used by `unitMatches` and the conversion lookup. `normalizeUnit` itself is
+unchanged, because it also feeds the Tibetan reviewer packet.
+
+The fold weakens a safety control in principle — the unit check is what stops a mg/dL number being
+read against a mmol/L band — so it is bounded by evidence rather than taste:
+
+- only pairs that cannot distinguish two real units are folded; the digit `1` is deliberately NOT
+  folded, despite being a genuine confusion partner for `l`, because it appears inside numeric
+  content (`mL/min/1.73m2`) where fuzzing buys nothing observed;
+- `unitComparisonKeyCollisions()` is asserted empty over the entire shipped unit inventory
+  (73 units incl. the conversion table), so adding a unit that would collide fails the suite;
+- `mg/dL` vs `mmol/L`, and `10^9/L` vs `10^12/L`, are still refused.
+
+Verified end to end by replaying all three runs of every page in this report through
+`groundExtraction`: **291 distinct rows, zero behaviour differences between runs.** Before the fix
+the TSH row flipped between explained and withheld; after it, nothing flips.
 
 ## Result 4: the page the patient most needs is the one the app cannot read
 
