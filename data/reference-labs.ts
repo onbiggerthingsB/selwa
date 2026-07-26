@@ -543,7 +543,20 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ['GGT', '谷氨酰转肽酶', '谷氨酰转移酶'],
+    // The γ- prefixed and 基-infixed forms are what real Chinese reports print; normName folds
+    // γ→y, so each γ alias here also covers the Latin-y spelling OCR produces for the same row.
+    aliases: [
+      'GGT',
+      'γ-GT',
+      '谷氨酰转肽酶',
+      '谷氨酰转移酶',
+      '谷氨酰基转移酶',
+      'γ-谷氨酰转肽酶',
+      'γ-谷氨酰转移酶',
+      'γ-谷氨酰基转移酶',
+      '血清γ-谷氨酰基转移酶',
+      '血清γ-谷氨酰转移酶',
+    ],
     unit: 'U/L', allowedUnits: ['U/L', 'IU/L'],
     refLow: { male: 10, female: 7 }, refHigh: { male: 58, female: 43 },
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: true,

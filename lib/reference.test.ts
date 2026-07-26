@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   findEntry,
+  normName,
   normalizeUnit,
   unitComparisonKeyCollisions,
   unitMatches,
@@ -9,6 +10,7 @@ import {
 } from './reference';
 import { REFERENCE_LABS } from '@/data/reference-labs';
 import { UNIT_CONVERSIONS } from '@/data/unit-conversions';
+import { SOURCE_LANGS, resolveText } from '@/lib/i18n';
 
 describe('findEntry', () => {
   it('matches Chinese name', () => {
@@ -33,6 +35,40 @@ describe('findEntry', () => {
   });
   it('returns null for an unknown analyte', () => {
     expect(findEntry('ceruloplasmin')).toBeNull();
+  });
+
+  // Measured on a real report (validation/camera-path/full-report-2026-07-26.md): the page prints
+  // 血清γ-谷氨酰基转移酶 and the OCR rendered the Greek gamma as a Latin y on some runs. Neither
+  // spelling matched, so a routine liver enzyme was silently unrecognised.
+  it.each([
+    '血清γ-谷氨酰基转移酶', // exactly as the report prints it
+    '血清y-谷氨酰基转移酶', // exactly as the OCR read it
+    'γ-谷氨酰基转移酶',
+    'y-谷氨酰基转移酶',
+    '谷氨酰基转移酶', // the 基-infixed variant
+    'γ-GT',
+    'GGT',
+  ])('resolves GGT written as %s', (spelling) => {
+    expect(findEntry(spelling, 'blood')?.key).toBe('ggt');
+  });
+
+  // TRIPWIRE for the γ→y fold in normName. Safe only while it merges no two analytes onto one
+  // index token. If this goes red, shrink the fold rather than renaming an analyte around it.
+  it('never collapses two different analytes onto one index token', () => {
+    const byToken = new Map<string, Set<string>>();
+    for (const entry of REFERENCE_LABS) {
+      const names = SOURCE_LANGS.map((lang) => resolveText(entry.name, lang).text);
+      for (const token of [entry.key, ...names, ...entry.aliases]) {
+        if (!token) continue;
+        const key = normName(token);
+        if (!byToken.has(key)) byToken.set(key, new Set());
+        byToken.get(key)!.add(entry.key);
+      }
+    }
+    const collisions = [...byToken.entries()]
+      .filter(([, keys]) => keys.size > 1)
+      .map(([token, keys]) => `${token} -> ${[...keys].sort().join(', ')}`);
+    expect(collisions, collisions.join('\n')).toEqual([]);
   });
   it('treats omitted, unknown, and null specimen context identically', () => {
     for (const name of [

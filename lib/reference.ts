@@ -7,6 +7,12 @@ export function normName(s: string): string {
     .trim()
     .toLowerCase()
     .replace(/[\s　]+/g, '') // collapse ASCII + ideographic spaces
+    // Greek gamma is routinely OCR'd as a Latin y: the same 32-page report yielded both
+    // 血清γ-谷氨酰基转移酶 and 血清y-谷氨酰基转移酶 for the same printed row
+    // (validation/camera-path/full-report-2026-07-26.md). Fold them so one curated alias covers
+    // both spellings. Verified collision-free: no other index token contains γ, and folding
+    // introduces no new collisions across all 787 tokens (asserted in reference.test.ts).
+    .replace(/γ/gu, 'y')
     .replace(/[：:．.,()（）[\]【】]/g, '');
 }
 

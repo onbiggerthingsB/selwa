@@ -86,7 +86,11 @@ function observableIndex(): Map<string, string> {
 }
 
 describe('reference names index only source languages', () => {
-  it('keeps the source-language map bit-exact with the current 735-key index', () => {
+  // Index-size tripwire. 735 -> 742: seven GGT aliases added 2026-07-26 after a real report
+  // printed 血清γ-谷氨酰基转移酶 and went unrecognised (validation/camera-path/). Rebaseline
+  // deliberately when aliases are curated; the invariant being protected is that bo contributes
+  // NOTHING to the index, which the before/after equality below is what actually checks.
+  it('keeps the source-language map bit-exact with the current 742-key index', () => {
     expect(SOURCE_LANGS).toEqual(['en', 'zh']);
     expect(LANGS).toEqual(['en', 'zh', 'bo']);
 
@@ -100,8 +104,8 @@ describe('reference names index only source languages', () => {
       afterKeys: after.size,
       ...indexDiff(before, after),
     }).toEqual({
-      beforeKeys: 735,
-      afterKeys: 735,
+      beforeKeys: 742,
+      afterKeys: 742,
       added: [],
       removed: [],
       repointed: [],
@@ -124,8 +128,8 @@ describe('reference names index only source languages', () => {
       actualKeys: actual.size,
       ...indexDiff(expected, actual),
     }).toEqual({
-      expectedKeys: 735,
-      actualKeys: 735,
+      expectedKeys: 742,
+      actualKeys: 742,
       added: [],
       removed: [],
       repointed: [],
