@@ -363,6 +363,53 @@ function scalarFromBound(b: Bound, which: 'low' | 'high', sex: Sex): number {
   return which === 'low' ? Math.min(b.male, b.female) : Math.max(b.male, b.female);
 }
 
+// ADULT-ONLY BANDS AND THE UNDER-18 FALLBACK.
+//
+// The five white-cell differential absolutes take their bands from WS/T 405-2012, which is an
+// ADULT standard, and none of them carries ageBands. The capture form offers "Under 18 · 18 岁以下"
+// (components/CaptureCard.tsx), so before this fallback a child's report was classified against
+// adult intervals. That is not a theoretical gap: young children are normally lymphocyte-
+// predominant, so an ordinary paediatric lymphocyte count sits well above the adult 1.1–3.2 band
+// and would have been called abnormal.
+//
+// Under 18 these entries stop asserting our band and behave as report-only. The user does NOT lose
+// the status chip: the chip is pure arithmetic on the printed value against the printed range and
+// never consults this table, so a child's row still shows where it falls — we simply stop layering
+// our own adult classification on top of it. This is the table's standing rule applied honestly:
+// never assert what we cannot verify.
+//
+// The bands are nulled rather than merely relabelled so that no downstream reader can reach an
+// adult interval through a derived entry.
+//
+// NOT a general age model. Most bands in this table are adult-derived; this names only the five
+// whose paediatric intervals are known to differ sharply and which a real report printed. Curating
+// WS/T 779-2021 paediatric intervals is the complete answer and is not done here.
+export const ADULT_ONLY_BAND_KEYS: ReadonlySet<string> = new Set([
+  'neutrophil_abs',
+  'lymphocyte_abs',
+  'monocyte_abs',
+  'eosinophil_abs',
+  'basophil_abs',
+]);
+
+export const ADULT_BAND_MIN_AGE = 18;
+
+export function applyAgeApplicability(
+  entry: ReferenceEntry | null,
+  age?: number,
+): ReferenceEntry | null {
+  if (!entry || age === undefined || age >= ADULT_BAND_MIN_AGE) return entry;
+  if (entry.interpretation !== 'ours' || !ADULT_ONLY_BAND_KEYS.has(entry.key)) return entry;
+  return {
+    ...entry,
+    interpretation: 'report-only',
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+  };
+}
+
 export function resolveBounds(entry: ReferenceEntry, sex: Sex, age?: number): ResolvedBounds {
   const bands = entry.ageBands;
   if (bands && bands.length > 0) {

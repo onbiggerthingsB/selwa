@@ -1,6 +1,6 @@
 import type { GroundedReport, GroundedRow, Sex } from '@/lib/types';
 import type { LabExtraction } from '@/lib/extractionSchema';
-import { findEntryMatch, unitMatches, parsePrintedRange } from '@/lib/reference';
+import { findEntryMatch, unitMatches, parsePrintedRange, applyAgeApplicability } from '@/lib/reference';
 import { parseValue, classify } from '@/lib/classify';
 import { evaluateRow } from '@/lib/guard';
 import { convertValue } from '@/lib/convert';
@@ -11,10 +11,13 @@ export function groundExtraction(extraction: LabExtraction, sex: Sex, age?: numb
   const rows: GroundedRow[] = extraction.rows.map((extracted) => {
     // Only explicitly printed urine/blood context may unlock (or refine) a
     // scoped alias. Missing/null context retains the legacy exact lookup.
-    const { entry, matchedVia } = findEntryMatch(
+    const { entry: matchedEntry, matchedVia } = findEntryMatch(
       extracted.name,
       extracted.specimen ?? 'unknown',
     );
+    // Applied at the single resolution point so every downstream reader — classify, the guard,
+    // the summary — sees one consistent entry, rather than each having to remember the rule.
+    const entry = applyAgeApplicability(matchedEntry, age);
     let valueNum = parseValue(extracted.value);
 
     // R2b — safe unit auto-conversion. When the reported unit doesn't match our

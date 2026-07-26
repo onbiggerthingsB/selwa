@@ -83,7 +83,7 @@ describe('static localized-text corpus', () => {
     );
 
     expect(actual).toEqual({
-      'lib/grounding.ts:80': [['converted.from', 'converted.to']],
+      'lib/grounding.ts:83': [['converted.from', 'converted.to']],
       'lib/guard.ts:296': [['entry.unit']],
       'lib/notesGuard.ts:740': [['sd.raw']],
       'lib/notesGuard.ts:784': [['ratio.toFixed(1)', 'sd.raw']],

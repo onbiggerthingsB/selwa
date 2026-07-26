@@ -674,3 +674,45 @@ describe('report-only high-stakes grounding', () => {
     );
   });
 });
+
+describe('adult-only bands under 18', () => {
+  // WS/T 405-2012 is an adult standard and the five differential absolutes carry no ageBands,
+  // but the capture form offers "Under 18". Young children are normally lymphocyte-predominant,
+  // so 6.5 is an ordinary count for a 10-year-old and the report prints 4.0-10.0 to say so --
+  // yet the adult band is 1.1-3.2, which would have called it high.
+  const paediatric: LabExtraction = {
+    rows: [
+      {
+        name: '淋巴细胞绝对值',
+        value: '6.5',
+        unit: '10^9/L',
+        printedRange: '4.0-10.0',
+        confidence: 'high',
+      },
+    ],
+  };
+
+  it('stops asserting the adult band for a child', () => {
+    const row = groundExtraction(paediatric, 'unknown', 10).rows[0];
+
+    expect(row.entry?.key).toBe('lymphocyte_abs');
+    expect(row.entry?.interpretation).toBe('report-only');
+    expect(row.classification).toBe('unclassified');
+    // Nulled, not merely relabelled: no derived entry may still expose an adult interval.
+    expect([row.entry?.refLow, row.entry?.refHigh]).toEqual([null, null]);
+    expect([row.entry?.criticalLow, row.entry?.criticalHigh]).toEqual([null, null]);
+  });
+
+  it('still classifies the same row for an adult', () => {
+    const row = groundExtraction(paediatric, 'unknown', 40).rows[0];
+
+    expect(row.entry?.interpretation).toBe('ours');
+    expect(row.classification).toBe('high');
+  });
+
+  it('leaves an entry alone when age is not given', () => {
+    const row = groundExtraction(paediatric, 'unknown').rows[0];
+
+    expect(row.entry?.interpretation).toBe('ours');
+  });
+});
