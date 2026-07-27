@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { findEntry } from '@/lib/reference';
 import { groundExtraction } from '@/lib/grounding';
 import { buildSummary } from '@/lib/summary';
 import { resolveText } from '@/lib/i18n';
@@ -145,5 +146,41 @@ describe('camera path — what the model actually read off the page', () => {
 
     expect(ocrChips).toEqual(truthChips);
     expect(truthChips.every((chip) => /Within your report/u.test(chip))).toBe(true);
+  });
+});
+
+describe('recognition against what the camera actually produced', () => {
+  // WHY THIS GATE EXISTS. Every recognition number this project quoted was measured against
+  // LHASA_FIELD_SAMPLE, whose names are hand-transcribed and already cleaned: '白细胞'. The camera
+  // emits '白细胞 WBC' — the Chinese name and its Latin abbreviation in one cell. On 2026-07-27,
+  // measured against these frozen runs, the table resolved ONE of 26 distinct names. The quoted
+  // figure at the time was 96.3%.
+  //
+  // The gap was invisible because nothing scored the matcher against real OCR output. This does,
+  // so a fixture that has already done the hard part by hand can never again stand in for the
+  // camera. If this number falls, recognition genuinely regressed on the path a user travels.
+  const cameraNames = [
+    ...new Set(CAMERA_PATH_RUNS_2026_07_25.flat().map((row) => row.name.trim())),
+  ].filter((name) => name.length > 0);
+
+  it('resolves every distinct name the camera produced', () => {
+    const unresolved = cameraNames.filter(
+      (name) => !findEntry(name, 'blood') && !findEntry(name, 'unknown'),
+    );
+
+    expect(cameraNames.length).toBeGreaterThanOrEqual(26);
+    expect(unresolved).toEqual([]);
+  });
+
+  it('never resolves a bare differential abbreviation, which cannot say count from percentage', () => {
+    // '嗜碱性粒细胞绝对值 BASO' and '嗜碱性粒细胞百分比 BASO%' are different rows of the same cell
+    // line. A bare BASO cannot tell them apart, and reading one as the other swaps a count for a
+    // percentage. NEUT and LYMPH already declined; EO/EOS/MONO/BASO were arbitrary leftovers.
+    for (const bare of ['NEUT', 'LYMPH', 'MONO', 'EO', 'EOS', 'BASO']) {
+      expect(findEntry(bare, 'blood')).toBeNull();
+    }
+    // The suffixed forms carry the distinction and must keep resolving.
+    expect(findEntry('BASO#', 'blood')?.key).toBe('basophil_abs');
+    expect(findEntry('BASO%', 'blood')?.key).toBe('basophil_pct');
   });
 });

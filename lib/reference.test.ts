@@ -423,3 +423,45 @@ describe('parsePrintedRange', () => {
     expect(parsePrintedRange('')).toBeNull();
   });
 });
+
+describe('bilingual pair names', () => {
+  // Real reports print the Chinese name and its Latin abbreviation in one cell: '白细胞 WBC'.
+  // Measured 2026-07-27 against frozen camera output, this shape accounted for 25 of 26
+  // unresolved names. See validation/camera-path/cameraPath.test.ts for the gate.
+  it.each([
+    ['白细胞 WBC', 'wbc_count'],
+    ['WBC 白细胞', 'wbc_count'],
+    ['白细胞  WBC', 'wbc_count'],
+    ['中性粒细胞绝对值 NEUT#', 'neutrophil_abs'],
+    ['嗜碱性粒细胞绝对值 BASO', 'basophil_abs'],
+    ['大血小板数目 P_LCC', 'p_lcc'],
+  ])('resolves %s', (printed, key) => {
+    expect(findEntry(printed, 'blood')?.key).toBe(key);
+  });
+
+  it.each([
+    // The Chinese half must resolve. A bare abbreviation is never enough on its own: PCT is both
+    // procalcitonin and plateletcrit, so recognising it says nothing about a Chinese name we
+    // cannot read. Procalcitonin is uncurated, and this must NOT rescue it.
+    ['降钙素原 PCT', 'an unreadable Chinese half is not rescued by its abbreviation'],
+    // Two labels on one row naming different analytes means we do not know the analyte. This is
+    // not hypothetical: it is how the bare-BASO defect was found. Tg is triglycerides in this
+    // table while 甲状腺球蛋白 is thyroglobulin, so the row contradicts itself.
+    ['白细胞 RBC', 'halves naming different analytes'],
+    ['甲状腺球蛋白 Tg', 'Tg is triglycerides here, so the two halves disagree'],
+    // 钙(Ca)/镁(Mg) are trace-element rows in µg/ml; bare 钙/镁 are the serum analytes in mmol/L.
+    // The parenthesised spelling was already locked; the space-separated one carries the identical
+    // ambiguity and must decline identically.
+    ['钙 Ca', 'trace-element ambiguity, space-separated'],
+    ['镁 Mg', 'trace-element ambiguity, space-separated'],
+    // Three tokens are not a bilingual pair. Guessing which two to join would be invention.
+    ['白细胞 WBC 计数', 'not a two-token pair'],
+  ])('refuses %s (%s)', (printed) => {
+    expect(findEntry(printed, 'blood')).toBeNull();
+  });
+
+  it('leaves the un-paired Chinese name resolving on its own', () => {
+    // Refusing the contradictory pair must not cost us the plain name.
+    expect(findEntry('甲状腺球蛋白', 'blood')?.key).toBe('thyroglobulin');
+  });
+});

@@ -245,7 +245,57 @@ export function findEntryMatch(
     if (match.entry) return match;
   }
 
+  const pair = splitBilingualPair(rawName);
+  if (pair && !BILINGUAL_SPLIT_DECLINED.has(pair.cjk)) {
+    const viaCjk = findExactMatch(pair.cjk, effectiveSpecimen);
+    if (viaCjk.entry) {
+      const viaLatin = findExactMatch(pair.latin, effectiveSpecimen);
+      // Two labels on one row disagreeing about the analyte means we do not know the analyte.
+      if (viaLatin.entry && viaLatin.entry.key !== viaCjk.entry.key) {
+        return { entry: null, matchedVia: 'unmatched' };
+      }
+      return viaCjk;
+    }
+  }
+
   return direct;
+}
+
+// BILINGUAL PAIR NAMES — "白细胞 WBC".
+//
+// Measured 2026-07-26 (validation/camera-path/runs-2026-07-25.ts): of the 26 distinct names the
+// camera actually produced from a real CBC photo, ONE resolved. Not because the analytes were
+// uncurated — they all were — but because the report prints the Chinese name and its Latin
+// abbreviation side by side in one cell, and the table curates each half separately. The Lhasa
+// regression fixture hid this for months by feeding hand-cleaned names the camera never emits.
+//
+// RESOLUTION RULE, and why it is this shape rather than "try both halves":
+//   1. The CHINESE half must resolve. The Latin half alone is never enough — bare abbreviations are
+//      the known hazard class in this table (PCT is procalcitonin AND plateletcrit; Tg is
+//      thyroglobulin AND triglycerides). If we cannot name the Chinese half, an abbreviation we
+//      recognise is not evidence about a name we do not.
+//   2. If BOTH halves resolve to DIFFERENT entries, refuse. Two labels disagreeing about what a row
+//      is means we do not know what it is.
+//
+// Applied only AFTER every ordinary candidate has failed, so no existing match changes.
+const BILINGUAL_SPLIT_DECLINED: ReadonlySet<string> = new Set([
+  // 钙(Ca) and 镁(Mg) are trace-element panel rows in µg/ml, while bare 钙/镁 are the serum
+  // analytes in mmol/L. lib/reference.test.ts locks the parenthesised spelling as unknown; the
+  // space-separated spelling carries the identical ambiguity and must decline identically.
+  '钙',
+  '镁',
+]);
+
+const CJK_ONLY = /^[\u3400-\u4dbf\u4e00-\u9fff]+$/u;
+const LATIN_TOKEN = /^[A-Za-z][A-Za-z0-9#%._\-]*$/u;
+
+function splitBilingualPair(rawName: string): { cjk: string; latin: string } | null {
+  const parts = rawName.trim().split(/\s+/);
+  if (parts.length !== 2) return null;
+  const [first, second] = parts;
+  if (CJK_ONLY.test(first) && LATIN_TOKEN.test(second)) return { cjk: first, latin: second };
+  if (LATIN_TOKEN.test(first) && CJK_ONLY.test(second)) return { cjk: second, latin: first };
+  return null;
 }
 
 function findExactMatch(
