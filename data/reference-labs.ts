@@ -841,7 +841,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     aliases: ['NEUT%', 'NE%', '中性粒细胞比率', '中性粒细胞百分比', '中性细胞比率', '中性粒细胞百分数'],
     unit: '%', allowedUnits: ['%'],
     refLow: 40, refHigh: 75, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 2500,
+    absoluteLow: 0, absoluteHigh: 100,
     plain: defineText({
       en: reviewed('The share of white cells that are neutrophils (main bacteria-fighting cells); high often suggests bacterial infection.'),
       zh: reviewed('中性粒细胞在白细胞中的比例，是抗细菌的主力，偏高常提示细菌感染。'),
@@ -866,7 +866,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     aliases: ['LYMPH%', 'LY%', '淋巴细胞比率', '淋巴细胞百分比', '淋巴细胞百分数'],
     unit: '%', allowedUnits: ['%'],
     refLow: 20, refHigh: 50, criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 2500,
+    absoluteLow: 0, absoluteHigh: 100,
     plain: defineText({
       en: reviewed('The share of white cells that are lymphocytes (which fight viruses); changes can accompany viral infections.'),
       zh: reviewed('淋巴细胞在白细胞中的比例，主要对抗病毒，变化常见于病毒感染。'),
@@ -999,7 +999,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     unit: "%", allowedUnits: ["%"],
     refLow: 3, refHigh: 10,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 2500,
+    absoluteLow: 0, absoluteHigh: 100,
     plain: defineText({
       en: reviewed('This is the share of white blood cells that are monocytes, a cell type involved in fighting infection and clearing debris; it is interpreted alongside the rest of the white-cell count.'),
       zh: reviewed('这是白细胞中单核细胞所占的比例，单核细胞参与抗感染和清除体内废物，需结合整体白细胞情况一起判断。'),
@@ -1025,7 +1025,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     unit: "%", allowedUnits: ["%"],
     refLow: 0.4, refHigh: 8,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 2500,
+    absoluteLow: 0, absoluteHigh: 100,
     plain: defineText({
       en: reviewed('This is the share of white blood cells that are eosinophils, which often rise with allergies or parasitic infections; it is read together with the absolute count.'),
       zh: reviewed('这是白细胞中嗜酸性粒细胞所占的比例，过敏或寄生虫感染时常升高，需结合绝对值一起判断。'),
@@ -1051,7 +1051,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     unit: "%", allowedUnits: ["%"],
     refLow: 0, refHigh: 1,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 2500,
+    absoluteLow: 0, absoluteHigh: 100,
     plain: defineText({
       en: reviewed('This is the small share of white blood cells that are basophils, a cell type involved in allergic and inflammatory responses; normal values are very low.'),
       zh: reviewed('这是白细胞中嗜碱性粒细胞所占的很小比例，这类细胞参与过敏和炎症反应，正常值很低。'),
@@ -1074,7 +1074,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     specimen: 'blood',
     interpretation: 'ours',
     aliases: ["NEUT#", "ANC", "中性粒细胞绝对值", "中性粒细胞计数", "中性粒细胞绝对数", "中性粒细胞数", "中性细胞值"],
-    unit: "10^9/L", allowedUnits: ["10^9/L", "10*9/L", "/nL", "K/uL", "10^3/uL"],
+    unit: "10^9/L", allowedUnits: ["10^9/L", "10*9/L", "x10^9/L", "×10^9/L", "/nL", "K/uL", "10^3/uL"],
     refLow: 1.8, refHigh: 6.3,
     criticalLow: 0.5, criticalHigh: null, highStakes: true, populationSensitive: false,
     absoluteLow: 0, absoluteHigh: 2000,
@@ -1100,7 +1100,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     specimen: 'blood',
     interpretation: 'ours',
     aliases: ["LYMPH#", "ALC", "淋巴细胞绝对值", "淋巴细胞计数", "淋巴细胞绝对数", "淋巴细胞数"],
-    unit: "10^9/L", allowedUnits: ["10^9/L", "10*9/L", "/nL", "K/uL", "10^3/uL"],
+    unit: "10^9/L", allowedUnits: ["10^9/L", "10*9/L", "x10^9/L", "×10^9/L", "/nL", "K/uL", "10^3/uL"],
     refLow: 1.1, refHigh: 3.2,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
     absoluteLow: 0, absoluteHigh: 2000,
@@ -3338,7 +3338,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     unit: '10^9/L', allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L'],
     refLow: 0.1, refHigh: 0.6,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 2500,
+    absoluteLow: 0, absoluteHigh: 2000,
     plain: defineText({
       en: reviewed('A white blood cell type involved in clearing debris and fighting infection.'),
       zh: reviewed('一种参与清除异物和抵抗感染的白细胞。'),
@@ -3360,7 +3360,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     unit: '10^9/L', allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L'],
     refLow: 0.02, refHigh: 0.52,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 2500,
+    absoluteLow: 0, absoluteHigh: 2000,
     plain: defineText({
       en: reviewed('A white blood cell type that rises with some allergies and parasitic infections.'),
       zh: reviewed('一种在某些过敏和寄生虫感染时升高的白细胞。'),
@@ -3382,7 +3382,7 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     unit: '10^9/L', allowedUnits: ['10^9/L', '10*9/L', 'x10^9/L', '×10^9/L', 'G/L'],
     refLow: 0, refHigh: 0.06,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: false,
-    absoluteLow: 0, absoluteHigh: 2500,
+    absoluteLow: 0, absoluteHigh: 2000,
     plain: defineText({
       en: reviewed('The least common white blood cell type, involved in allergic responses.'),
       zh: reviewed('数量最少的一类白细胞，参与过敏反应。'),

@@ -438,3 +438,31 @@ describe('reference table source hygiene', () => {
     expect(duplicates).toEqual([]);
   });
 });
+describe('differential percentage bounds', () => {
+  // Each of these is a share of ONE white-cell count, so it cannot exceed 100%. absoluteHigh is what
+  // R13 uses to suppress interpretation on an implausible value, so raising it past 100 silently
+  // blinds that guard: a 45% misread as 450% would stop being caught.
+  //
+  // This is not hypothetical. On 2026-07-26 a blanket find-and-replace meant to widen the absolute
+  // COUNT ceiling matched every `absoluteHigh: 100` in the file and moved all five of these to 2500.
+  // Nothing failed, because no test tied a percentage to its natural ceiling. Now one does.
+  //
+  // Deliberately scoped to these five rather than every '%' entry: prothrombin activity and
+  // transferrin saturation legitimately exceed 100%, so a blanket rule on the unit would be wrong.
+  const DIFFERENTIAL_PERCENTAGES = [
+    'neutrophil_pct',
+    'lymphocyte_pct',
+    'monocyte_pct',
+    'eosinophil_pct',
+    'basophil_pct',
+  ];
+
+  it.each(DIFFERENTIAL_PERCENTAGES)('%s cannot be plausible above 100%%', (key) => {
+    const entry = REFERENCE_LABS.find((e) => e.key === key);
+
+    expect(entry).toBeDefined();
+    expect(entry!.unit).toBe('%');
+    expect(entry!.absoluteHigh).not.toBeNull();
+    expect(entry!.absoluteHigh).toBeLessThanOrEqual(100);
+  });
+});
