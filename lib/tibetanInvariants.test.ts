@@ -142,7 +142,9 @@ describe('Tibetan Class B source-output invariants', () => {
 
   it('reports the empty curated corpus and no unsupported authored forms', () => {
     const corpus = extractLocalizedTextCorpus();
-    expect(corpus.calls).toHaveLength(585); // grows with reference data; curatedBo===0 below is the safety check
+    // Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only, bandless,
+    // 'measurement' frame) plus two OCR-spelling aliases: entries add 32 calls; aliases add none.
+    expect(corpus.calls).toHaveLength(617); // curatedBo===0 below remains the safety check
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(pairs).toHaveLength(0);
@@ -304,9 +306,10 @@ describe('Tibetan Class B source-output invariants', () => {
       'bo',
     );
 
-    expect(referenceNames).toHaveLength(158);
-    expect(en).toHaveLength(158);
-    expect(zh).toHaveLength(158);
+    // The same 16-entry plus two-alias rebaseline adds 16 distinct EN/ZH names; aliases add none.
+    expect(referenceNames).toHaveLength(174);
+    expect(en).toHaveLength(174);
+    expect(zh).toHaveLength(174);
     expect(nameCollisionFindings(en)).toEqual([]);
     expect(nameCollisionFindings(zh)).toEqual([]);
     expect(

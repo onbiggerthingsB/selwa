@@ -28,8 +28,10 @@ describe('reference table integrity', () => {
       (entry) => entry.interpretation === 'report-only',
     );
 
-    // The eight body measurements added 2026-07-26 are report-only BY DESIGN: no curated band,
-    // because a sea-level SpO2/pulse/BP band would misrepresent this Lhasa (3,650 m) population.
+    // Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only, bandless,
+    // 'measurement' frame) plus two OCR-spelling aliases. The bone entries extend the prior
+    // 58-key report-only inventory because population-appropriate DXA bands are not curated;
+    // the spelling aliases do not change this inventory.
     expect(reportOnly.map((entry) => entry.key).sort()).toEqual([
       'afp',
       'afu',
@@ -40,6 +42,22 @@ describe('reference table integrity', () => {
       'beta_hydroxybutyrate',
       'blood_ph',
       'bmi',
+      'bone_bmc_l1',
+      'bone_bmc_mean',
+      'bone_bmc_t11',
+      'bone_bmc_t12',
+      'bone_bmd_l1',
+      'bone_bmd_mean',
+      'bone_bmd_t11',
+      'bone_bmd_t12',
+      'bone_t_score_l1',
+      'bone_t_score_mean',
+      'bone_t_score_t11',
+      'bone_t_score_t12',
+      'bone_z_score_l1',
+      'bone_z_score_mean',
+      'bone_z_score_t11',
+      'bone_z_score_t12',
       'ca199',
       'cea',
       'cholylglycine',

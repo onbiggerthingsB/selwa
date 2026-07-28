@@ -35,6 +35,10 @@ const EQUIVALENCE_GROUPS: Record<string, string[]> = {
   seconds: ['s', 'sec', '秒'],
   // BMI notation: the same quantity written three ways, no magnitude difference.
   bmi_notation: ['kg/m2', 'kg/m²', 'kg/m^2'],
+  // Areal bone mineral density notation: the same quantity written three ways, no magnitude
+  // difference. Exactly parallel to bmi_notation. normalizeUnit does not fold the superscript,
+  // so all three spellings must be listed.
+  bmd_areal_notation: ['g/cm2', 'g/cm²', 'g/cm^2'],
   // Per-minute rate (pulse): every form denotes beats per one minute.
   per_minute: ['次/分', 'bpm', '/min', '次/分钟', 'beats/min'],
   // Percent: halfwidth % and fullwidth ％ are the same unit; Chinese reports print both.

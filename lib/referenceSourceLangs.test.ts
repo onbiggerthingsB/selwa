@@ -86,12 +86,12 @@ function observableIndex(): Map<string, string> {
 }
 
 describe('reference names index only source languages', () => {
-  // Index-size tripwire. 735 -> 742 (seven GGT aliases), then 742 -> 752 (ten aliases for
-  // spellings a real report printed that the table already covered otherwise), both 2026-07-26
-  // and both traced to validation/camera-path/. Rebaseline
-  // deliberately when aliases are curated; the invariant being protected is that bo contributes
-  // NOTHING to the index, which the before/after equality below is what actually checks.
-  it('keeps the source-language map bit-exact with the current 968-key index', () => {
+  // Index-size tripwire. Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only,
+  // bandless, 'measurement' frame) plus two OCR-spelling aliases: 968->1034, because every bone
+  // entry adds a key, EN name, ZH name and full-cell alias (64 keys), and the spelling aliases add
+  // two more. The invariant being protected is that bo contributes NOTHING to the index, which the
+  // before/after equality below is what actually checks.
+  it('keeps the source-language map bit-exact with the current 1034-key index', () => {
     expect(SOURCE_LANGS).toEqual(['en', 'zh']);
     expect(LANGS).toEqual(['en', 'zh', 'bo']);
 
@@ -105,8 +105,8 @@ describe('reference names index only source languages', () => {
       afterKeys: after.size,
       ...indexDiff(before, after),
     }).toEqual({
-      beforeKeys: 968,
-      afterKeys: 968,
+      beforeKeys: 1034,
+      afterKeys: 1034,
       added: [],
       removed: [],
       repointed: [],
@@ -129,8 +129,8 @@ describe('reference names index only source languages', () => {
       actualKeys: actual.size,
       ...indexDiff(expected, actual),
     }).toEqual({
-      expectedKeys: 968,
-      actualKeys: 968,
+      expectedKeys: 1034,
+      actualKeys: 1034,
       added: [],
       removed: [],
       repointed: [],

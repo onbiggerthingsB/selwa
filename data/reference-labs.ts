@@ -114,6 +114,68 @@ function bodyMeasurement(input: MeasurementInput): ReferenceEntry {
   };
 }
 
+interface BoneDensitometryInput {
+  key: string;
+  name: LocalizedText;
+  aliases: string[];
+  definition: LocalizedText;
+  unit: string;
+  allowedUnits: string[];
+}
+
+// BONE DENSITOMETRY (DXA). Sixteen rows on a real Lhasa health check, 2026-07-28: BMD, BMC, T值
+// and Z值 at T11, T12, L1 and a 均值 row. An entire modality the table could not name, so the user
+// saw sixteen raw labels and nothing else (validation/camera-path/unresolved-names-2026-07-28.ts).
+//
+// FRAME. A DXA scan is not an assay of any specimen, so these reuse the 'measurement' frame added
+// for height/BP/pulse/SpO2 rather than inventing a new one. That is not a convenience: it is what
+// makes a bone row STRUCTURALLY unreachable from a blood or urine panel (lib/reference.ts
+// specimenSafeMatch), which matters because BMD/BMC/T值/Z值 are generic tokens.
+//
+// REPORT-ONLY AND BANDLESS, ON PURPOSE. A T-score is DEFINED as a distance from a young-adult
+// reference population, and a Z-score from an age-matched one; BMD cutoffs are equipment- and
+// population-dependent. We have no population-appropriate source for a Tibetan cohort at 3,650 m,
+// and a plausible-looking number would be an invented band. The user gets the curated NAME and
+// DEFINITION plus the hospital's own printed range and the existing table-independent chip.
+//
+// ALIASES ARE THE FULL PRINTED CELL, NEVER A BARE QUANTITY. 'T11 BMD', not 'BMD'. T值 and Z值 are
+// STATISTICAL SCORE NAMES, not analytes; a bare one names nothing. Keys carry a bone_ prefix for
+// the same reason — the entry key is indexed alongside the aliases (lib/reference.ts), so a key
+// of 'bmd' would make a bare BMD resolve regardless of what the alias array says.
+//
+// NO unitOptional. It is deliberately absent from this shape, not merely unset: the unitOptional
+// inventory is locked to two dimensionless urine quantities (data/reference-labs.test.ts) and
+// report-only rows never reach unitMatches anyway, so a blank printed unit is already accepted.
+function boneDensitometry(input: BoneDensitometryInput): ReferenceEntry {
+  return {
+    key: input.key,
+    name: input.name,
+    aliases: input.aliases,
+    specimen: 'measurement',
+    interpretation: 'report-only',
+    unit: input.unit,
+    allowedUnits: input.allowedUnits,
+    refLow: null,
+    refHigh: null,
+    criticalLow: null,
+    criticalHigh: null,
+    absoluteLow: null,
+    absoluteHigh: null,
+    // Report-only entries return before R6, so highStakes is the ONLY thing that would route these
+    // to the confirmation screen. FALSE, argued: a bone density number demands no prompt action the
+    // way a potassium or a troponin does, and a densitometry page prints sixteen of these rows at
+    // once — making them all mandatory-confirm would flood one screen and is exactly the
+    // confirm-fatigue the baseline in validation/confirmBurden.ts exists to watch. The reading risk
+    // (a dropped minus sign on a T值) is still covered: R5 routes any low-confidence report-only row
+    // to confirmation.
+    highStakes: false,
+    populationSensitive: false,
+    definition: input.definition,
+    plain: input.definition,
+    source: '',
+  };
+}
+
 function urineReportOnly(input: UrineReportOnlyInput): ReferenceEntry {
   const unit = input.unit ?? 'as reported';
   return {
@@ -1233,7 +1295,15 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ["HCO3", "HCO3-", "CO2", "CO2-CP", "二氧化碳结合力", "碳酸氢根", '碳酸氢盐', '碳酸氢盐（HCO3）'],
+    // '碳酸氢盐（HC03）' is the SAME printed row read with a DIGIT ZERO where the chemical symbol
+    // has a letter O — measured verbatim on a real Lhasa health check, 2026-07-28
+    // (validation/camera-path/unresolved-names-2026-07-28.ts). Deliberately an explicit alias
+    // rather than extending lib/reference.ts's foldOcrConfusables to names: that fold is safe for
+    // UNITS only because the unit vocabulary is closed and its collisions are asserted empty over
+    // the whole shipped inventory. Folding names would widen matching for inputs that are not in
+    // the index at all, turning a disclosed R1 abstention into a possible silent misroute.
+    // normName strips both bracket widths, so this one string also covers '碳酸氢盐(HC03)'.
+    aliases: ["HCO3", "HCO3-", "CO2", "CO2-CP", "二氧化碳结合力", "碳酸氢根", '碳酸氢盐', '碳酸氢盐（HCO3）', '碳酸氢盐（HC03）'],
     unit: "mmol/L", allowedUnits: ["mmol/L", "mEq/L"],
     refLow: 22, refHigh: 29,
     criticalLow: 10, criticalHigh: 40, highStakes: true, populationSensitive: false,
@@ -1874,7 +1944,13 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
     specimen: 'blood',
     interpretation: 'ours',
-    aliases: ["TT3", "Total T3", "T3", "总T3", "总三碘甲状腺原氨酸", "三碘甲腺原氨酸", '三碘甲状腺原氨酸(T3)', '三碘甲状腺原氨酸（T3）'],
+    // A dropped 腺 vs the curated '三碘甲状腺原氨酸(T3)'. This is OCR instability, not a different
+    // measurand: the same photograph produced both spellings across runs
+    // (validation/camera-path/full-report-2026-07-26.md), and 2026-07-28 printed only the corrupt
+    // one. The (T3) suffix is what pins this to TOTAL T3; a bare corrupted stem stays refused,
+    // because the bare CORRECT stem '三碘甲状腺原氨酸' does not resolve either and making the
+    // corruption more permissive than the original would be incoherent.
+    aliases: ["TT3", "Total T3", "T3", "总T3", "总三碘甲状腺原氨酸", "三碘甲腺原氨酸", '三碘甲状腺原氨酸(T3)', '三碘甲状腺原氨酸（T3）', '三碘甲状原氨酸(T3)'],
     unit: "nmol/L", allowedUnits: ["nmol/L"],
     refLow: 1.3, refHigh: 3.1,
     criticalLow: null, criticalHigh: null, highStakes: false, populationSensitive: true,
@@ -3776,6 +3852,264 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     definition: defineText({
       en: reviewed('One liver enzyme divided by another. A calculated ratio, read together with the two enzyme values it comes from.'),
       zh: reviewed('两种肝酶的比值。这是计算值，需与其来源的两项酶结果一起判读。'),
+      bo: fallback('zh'),
+    }),
+  }),
+
+  // ---- Bone densitometry (see boneDensitometry above: measurement frame, report-only, bandless)
+  boneDensitometry({
+    key: 'bone_bmd_t11',
+    name: defineText({
+      en: reviewed('Bone mineral density (T11)'),
+      zh: reviewed('骨密度（T11）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['T11 BMD'],
+    unit: 'g/cm2',
+    allowedUnits: ['g/cm2', 'g/cm²', 'g/cm^2'],
+    definition: defineText({
+      en: reviewed('The amount of bone mineral per unit area, measured at the site labelled T11 on your report.'),
+      zh: reviewed('报告上标注为 T11 的部位所测得的单位面积骨矿物质含量。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_bmc_t11',
+    name: defineText({
+      en: reviewed('Bone mineral content (T11)'),
+      zh: reviewed('骨矿含量（T11）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['T11 BMC'],
+    unit: 'g',
+    allowedUnits: ['g'],
+    definition: defineText({
+      en: reviewed('The total amount of bone mineral measured at the site labelled T11 on your report.'),
+      zh: reviewed('报告上标注为 T11 的部位所测得的骨矿物质总量。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_t_score_t11',
+    name: defineText({
+      en: reviewed('Bone density T-score (T11)'),
+      zh: reviewed('骨密度T值（T11）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['T11 T值'],
+    unit: 'SD',
+    allowedUnits: ['SD'],
+    definition: defineText({
+      en: reviewed('A score that states the bone density measured at the site labelled T11 on your report as a number of standard deviations from a young-adult reference population.'),
+      zh: reviewed('将报告上标注为 T11 的部位所测骨密度，表示为与年轻成人参照人群相差多少个标准差的数值。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_z_score_t11',
+    name: defineText({
+      en: reviewed('Bone density Z-score (T11)'),
+      zh: reviewed('骨密度Z值（T11）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['T11 Z值'],
+    unit: 'SD',
+    allowedUnits: ['SD'],
+    definition: defineText({
+      en: reviewed('A score that states the bone density measured at the site labelled T11 on your report as a number of standard deviations from an age-matched reference population.'),
+      zh: reviewed('将报告上标注为 T11 的部位所测骨密度，表示为与同龄参照人群相差多少个标准差的数值。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_bmd_t12',
+    name: defineText({
+      en: reviewed('Bone mineral density (T12)'),
+      zh: reviewed('骨密度（T12）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['T12 BMD'],
+    unit: 'g/cm2',
+    allowedUnits: ['g/cm2', 'g/cm²', 'g/cm^2'],
+    definition: defineText({
+      en: reviewed('The amount of bone mineral per unit area, measured at the site labelled T12 on your report.'),
+      zh: reviewed('报告上标注为 T12 的部位所测得的单位面积骨矿物质含量。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_bmc_t12',
+    name: defineText({
+      en: reviewed('Bone mineral content (T12)'),
+      zh: reviewed('骨矿含量（T12）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['T12 BMC'],
+    unit: 'g',
+    allowedUnits: ['g'],
+    definition: defineText({
+      en: reviewed('The total amount of bone mineral measured at the site labelled T12 on your report.'),
+      zh: reviewed('报告上标注为 T12 的部位所测得的骨矿物质总量。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_t_score_t12',
+    name: defineText({
+      en: reviewed('Bone density T-score (T12)'),
+      zh: reviewed('骨密度T值（T12）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['T12 T值'],
+    unit: 'SD',
+    allowedUnits: ['SD'],
+    definition: defineText({
+      en: reviewed('A score that states the bone density measured at the site labelled T12 on your report as a number of standard deviations from a young-adult reference population.'),
+      zh: reviewed('将报告上标注为 T12 的部位所测骨密度，表示为与年轻成人参照人群相差多少个标准差的数值。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_z_score_t12',
+    name: defineText({
+      en: reviewed('Bone density Z-score (T12)'),
+      zh: reviewed('骨密度Z值（T12）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['T12 Z值'],
+    unit: 'SD',
+    allowedUnits: ['SD'],
+    definition: defineText({
+      en: reviewed('A score that states the bone density measured at the site labelled T12 on your report as a number of standard deviations from an age-matched reference population.'),
+      zh: reviewed('将报告上标注为 T12 的部位所测骨密度，表示为与同龄参照人群相差多少个标准差的数值。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_bmd_l1',
+    name: defineText({
+      en: reviewed('Bone mineral density (L1)'),
+      zh: reviewed('骨密度（L1）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['L1 BMD'],
+    unit: 'g/cm2',
+    allowedUnits: ['g/cm2', 'g/cm²', 'g/cm^2'],
+    definition: defineText({
+      en: reviewed('The amount of bone mineral per unit area, measured at the site labelled L1 on your report.'),
+      zh: reviewed('报告上标注为 L1 的部位所测得的单位面积骨矿物质含量。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_bmc_l1',
+    name: defineText({
+      en: reviewed('Bone mineral content (L1)'),
+      zh: reviewed('骨矿含量（L1）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['L1 BMC'],
+    unit: 'g',
+    allowedUnits: ['g'],
+    definition: defineText({
+      en: reviewed('The total amount of bone mineral measured at the site labelled L1 on your report.'),
+      zh: reviewed('报告上标注为 L1 的部位所测得的骨矿物质总量。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_t_score_l1',
+    name: defineText({
+      en: reviewed('Bone density T-score (L1)'),
+      zh: reviewed('骨密度T值（L1）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['L1 T值'],
+    unit: 'SD',
+    allowedUnits: ['SD'],
+    definition: defineText({
+      en: reviewed('A score that states the bone density measured at the site labelled L1 on your report as a number of standard deviations from a young-adult reference population.'),
+      zh: reviewed('将报告上标注为 L1 的部位所测骨密度，表示为与年轻成人参照人群相差多少个标准差的数值。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_z_score_l1',
+    name: defineText({
+      en: reviewed('Bone density Z-score (L1)'),
+      zh: reviewed('骨密度Z值（L1）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['L1 Z值'],
+    unit: 'SD',
+    allowedUnits: ['SD'],
+    definition: defineText({
+      en: reviewed('A score that states the bone density measured at the site labelled L1 on your report as a number of standard deviations from an age-matched reference population.'),
+      zh: reviewed('将报告上标注为 L1 的部位所测骨密度，表示为与同龄参照人群相差多少个标准差的数值。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_bmd_mean',
+    name: defineText({
+      en: reviewed('Bone mineral density (mean)'),
+      zh: reviewed('骨密度（均值）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['均值 BMD'],
+    unit: 'g/cm2',
+    allowedUnits: ['g/cm2', 'g/cm²', 'g/cm^2'],
+    definition: defineText({
+      en: reviewed('The amount of bone mineral per unit area, for the row labelled 均值 (mean) on your report.'),
+      zh: reviewed('报告上标注为“均值”一行的单位面积骨矿物质含量。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_bmc_mean',
+    name: defineText({
+      en: reviewed('Bone mineral content (mean)'),
+      zh: reviewed('骨矿含量（均值）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['均值 BMC'],
+    unit: 'g',
+    allowedUnits: ['g'],
+    definition: defineText({
+      en: reviewed('The total amount of bone mineral, for the row labelled 均值 (mean) on your report.'),
+      zh: reviewed('报告上标注为“均值”一行的骨矿物质总量。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_t_score_mean',
+    name: defineText({
+      en: reviewed('Bone density T-score (mean)'),
+      zh: reviewed('骨密度T值（均值）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['均值 T值'],
+    unit: 'SD',
+    allowedUnits: ['SD'],
+    definition: defineText({
+      en: reviewed('A score that states the bone density on the row labelled 均值 (mean) on your report as a number of standard deviations from a young-adult reference population.'),
+      zh: reviewed('将报告上标注为“均值”一行的骨密度，表示为与年轻成人参照人群相差多少个标准差的数值。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  boneDensitometry({
+    key: 'bone_z_score_mean',
+    name: defineText({
+      en: reviewed('Bone density Z-score (mean)'),
+      zh: reviewed('骨密度Z值（均值）'),
+      bo: fallback('zh'),
+    }),
+    aliases: ['均值 Z值'],
+    unit: 'SD',
+    allowedUnits: ['SD'],
+    definition: defineText({
+      en: reviewed('A score that states the bone density on the row labelled 均值 (mean) on your report as a number of standard deviations from an age-matched reference population.'),
+      zh: reviewed('将报告上标注为“均值”一行的骨密度，表示为与同龄参照人群相差多少个标准差的数值。'),
       bo: fallback('zh'),
     }),
   }),

@@ -119,10 +119,13 @@ describe('direct Tibetan localization audit', () => {
     expect(DISCLAIMER_TEXTS).toHaveLength(5);
     expect(Object.keys(UI_COPY)).toHaveLength(30);
     expect(Object.keys(CONSENT_COPY)).toHaveLength(6);
-    expect(REFERENCE_LABS).toHaveLength(158);
+    // Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only, bandless,
+    // 'measurement' frame) plus two OCR-spelling aliases: entries add 16 table rows and three
+    // audited localized fields each; aliases do not add audited copies.
+    expect(REFERENCE_LABS).toHaveLength(174);
 
     const copies = auditedCopies();
-    expect(copies).toHaveLength(5 + 30 + 6 + (158 * 3) + 1);
+    expect(copies).toHaveLength(5 + 30 + 6 + (174 * 3) + 1);
     expect(
       copies.find(({ context }) => context === SUMMARY_DIRECT_BO_CONTEXT)?.copy,
       'the sole direct-bo exception must stay a verbatim unverified OCR token',

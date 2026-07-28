@@ -292,7 +292,10 @@ describe('Tibetan reviewer packet export', () => {
   });
 
   it('locks the three measured inventories and authored component tally', () => {
-    expect(packet.names).toHaveLength(158);
+    // Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only, bandless,
+    // 'measurement' frame) plus two OCR-spelling aliases: the entries add 16 name rows; aliases
+    // are embedded in rows and do not move the name, term, or floor inventories.
+    expect(packet.names).toHaveLength(174);
     expect(GLOSSARY_TERM_COMPONENT_COUNTS).toEqual({
       comparators: 6,
       coreNegators: 15,
@@ -319,9 +322,11 @@ describe('Tibetan reviewer packet export', () => {
       .toEqual(['core-negator', 'polarity']);
   });
 
-  it('exports all 158 distinct names with definition context, specimen, aliases, and units', () => {
-    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(158);
-    expect(new Set(packet.names.map(({ en }) => en))).toHaveLength(158);
+  it('exports all 174 distinct names with definition context, specimen, aliases, and units', () => {
+    // Same 2026-07-28 rebaseline: 16 bone densitometry entries (report-only, bandless,
+    // 'measurement' frame) plus two OCR-spelling aliases. Only the entries add distinct names.
+    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(174);
+    expect(new Set(packet.names.map(({ en }) => en))).toHaveLength(174);
     // 6 -> 16 on 2026-07-26. The 6 pre-existing urine wildcards, plus 10 report-only entries whose
     // printed unit genuinely varies by assay or vendor (hepatitis serology in COI/S-CO/IU-mL,
     // thyroid antibodies, CA19-9, creatinine clearance, cholylglycine). For those there is no
@@ -415,7 +420,9 @@ describe('Tibetan reviewer packet export', () => {
         parseCsv(readFileSync(path.join(output, fileName), 'utf8')),
       ]),
     );
-    expect(parsed.names.rows).toHaveLength(158);
+    // The 16 bone densitometry entries (report-only, bandless, 'measurement' frame) plus two
+    // OCR-spelling aliases add 16 name rows and no floor rows.
+    expect(parsed.names.rows).toHaveLength(174);
     expect(parsed.terms.rows).toHaveLength(34);
     expect(parsed.floor.rows).toHaveLength(162);
     expect(parsed.decisions.rows).toHaveLength(1);
@@ -423,7 +430,7 @@ describe('Tibetan reviewer packet export', () => {
       expect(sheet.rows.every((row) => row.bo === '')).toBe(true);
     }
     const rows = readReviewedPacket(output);
-    expect(rows).toHaveLength(158 + 162);
+    expect(rows).toHaveLength(174 + 162);
     expect(rows.every(({ bo }) => bo === '')).toBe(true);
   });
 
@@ -454,8 +461,11 @@ describe('Tibetan reviewer packet export', () => {
 
   it('recomputes the exact current bo baseline hashes without editing their lock files', () => {
     const checklist = buildRebaselineChecklist(extractLocalizedTextCorpus({ repoRoot: process.cwd() }));
+    // Rebaselined for 16 bone densitometry entries (report-only, bandless, 'measurement' frame)
+    // plus two OCR-spelling aliases. Aliases do not affect this hash; every new bo value remains a
+    // zh fallback, so this must equal the zh baseline.
     expect(checklist).toEqual({
-      referenceBaselineBo: 'df60a2b8c16e383f043cb88a204c58cef96aa524c2b7c5cedbf4aca6d4715a32',
+      referenceBaselineBo: 'bd49dd533b8a588e85a2c56a612f103ab7dabaf4fbb9aa7dacf81c5540587b01',
       disclaimerBaselineBo: '26b37ac41f7ab7ca787474a8f0bd549f24937226f475fa873e7dffb3f0ccde4b',
       directContexts: [],
       expectedHashes: {},

@@ -7,17 +7,16 @@ import { UI_COPY } from '@/lib/uiCopy';
 
 // Captured from clean pre-refactor HEAD 9c5100a85565bba784bac2ff488bd28a6e2720bb.
 // Hash input is JSON.stringify's UTF-8 bytes with the property order below and no trailing LF.
-// Rebaselined 2026-07-26 for the remaining-analyte curation pass: 33 report-only entries added, the
-// 13C urea-breath entry deliberately NOT curated, and nine definitions corrected for claims we
-// cannot support (tumour markers are not screening tests; tPSA does not simply "rise"; the occult-
-// blood strip reads haem, not cells; serum globulin excludes fibrinogen). zh and bo remain
-// BYTE-IDENTICAL, which is the invariant this lock exists for: bo still falls back to zh for every
-// reference string, i.e. no unreviewed Tibetan entered the table.
+// Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only, bandless,
+// 'measurement' frame) plus two OCR-spelling aliases. The entries add localized names and
+// definitions; aliases do not enter this hash. zh and bo remain BYTE-IDENTICAL, which is the
+// invariant this lock exists for: bo still falls back to zh for every reference string, i.e. no
+// unreviewed Tibetan entered the table.
 const REFERENCE_BASELINE = {
-  count: 158,
-  en: '72caaddf4b95b4742bd9783c412783bcb0c83a9229a0e91f3eff3ba5414c3621',
-  zh: 'df60a2b8c16e383f043cb88a204c58cef96aa524c2b7c5cedbf4aca6d4715a32',
-  bo: 'df60a2b8c16e383f043cb88a204c58cef96aa524c2b7c5cedbf4aca6d4715a32',
+  count: 174,
+  en: '1b92c3fc8b3dac5d3e1956af094707723f3fe78736f8aa8e34a9215975bb2920',
+  zh: 'bd49dd533b8a588e85a2c56a612f103ab7dabaf4fbb9aa7dacf81c5540587b01',
+  bo: 'bd49dd533b8a588e85a2c56a612f103ab7dabaf4fbb9aa7dacf81c5540587b01',
 } as const;
 
 const DISCLAIMER_KEYS = [

@@ -511,10 +511,11 @@ export function buildTibetanReviewPacket(
   // every UI feature (Feature 2 added 34), and a production tool must not crash when the app
   // gains a string. The duplicate-id and excludedDirectBo checks below still catch a corrupt
   // or unsafe corpus; curatedBo === 0 is asserted corpus-wide in the Tibetan test layer.
-  // 337 -> 353 on 2026-07-26: eight body-measurement entries, each contributing a name and a
-  // definition (their `plain` reuses the definition call, as every report-only entry does).
-  if (referenceCalls.length !== 422) {
-    throw new Error(`Expected 422 reference calls; got ${referenceCalls.length}.`);
+  // Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only, bandless,
+  // 'measurement' frame) plus two OCR-spelling aliases: the entries contribute one name and one
+  // definition each (their `plain` reuses the definition); aliases add no reference calls.
+  if (referenceCalls.length !== 454) {
+    throw new Error(`Expected 454 reference calls; got ${referenceCalls.length}.`);
   }
   if (new Set(corpus.calls.map(({ id }) => id)).size !== corpus.calls.length) {
     throw new Error('Localized corpus contains duplicate semantic ids; refusing to export ambiguity.');
@@ -530,11 +531,13 @@ export function buildTibetanReviewPacket(
   const floor = buildFloorStringRows(corpus);
   const decisions = buildDecisionRows();
 
-  if (names.length !== 158) throw new Error(`Expected 158 glossary names; got ${names.length}.`);
+  // The same rebaseline adds one glossary name per bone entry; the two OCR-spelling aliases are
+  // carried inside their existing/new name rows and therefore do not add rows.
+  if (names.length !== 174) throw new Error(`Expected 174 glossary names; got ${names.length}.`);
   if (terms.length !== 34) throw new Error(`Expected 34 distinct glossary terms; got ${terms.length}.`);
   // floor.length is NOT hard-asserted: the packet legitimately exports however many UI floor
   // strings exist, and that count grows with every feature. The reviewer simply receives all
-  // of them. names (158) and terms (34) stay exact — they are reference/authored, not UI.
+  // of them. names (174) and terms (34) stay exact — they are reference/authored, not UI.
   return {
     names,
     terms,

@@ -110,7 +110,7 @@ Run all three and paste the output into your working notes. These are the number
 ```bash
 npx tsc --noEmit                          # clean
 npx vitest run --pool=threads             # 90 files, 1147 passed | 41 skipped
-npx tsx validation/real-corpus/run.ts     # see below
+node --import tsx validation/real-corpus/run.ts     # plain tsx uses sandbox-blocked IPC
 ```
 
 `--pool=threads` is **required**; the default forks pool fails under load in this repo.
@@ -696,17 +696,18 @@ I ran `npx vitest run --pool=threads` at `32a882a`: **90 files, 1147 passed, 41 
 | 7 | `lib/localizedTextCorpus.test.ts:69` | reference calls | `422` | `454` |
 | 8 | `lib/localizedTextCorpus.test.ts:70` | `fields` | `{name:158, plain:106, definition:158}` | `{name:174, plain:106, definition:174}` — **`plain` must NOT move**: helper-built entries assign `plain: input.definition` and therefore contribute no `plain:` call site |
 | 9 | `lib/localizedTextCorpus.test.ts:71-72` | `nameKeys` length and Set size | `158` | `174` (both) |
-| 10 | `lib/referenceSourceLangs.test.ts:94,108,109,132,133` | index key count (five literals, incl. the test title) | `968` | `1032` = 968 + 16×(key + EN name + ZH name + 1 alias) |
+| 10 | `lib/referenceSourceLangs.test.ts:94,108,109,132,133` | index key count (five literals, incl. the test title) | `968` | `1034` = 968 + 16×(key + EN name + ZH name + 1 alias) + 2 OCR-spelling aliases |
 | 11 | **`lib/tibetanImport.ts:516-517`** | `if (referenceCalls.length !== 422) throw` — **production source, not a test** | `422` | `454` |
 | 12 | **`lib/tibetanImport.ts:533`** (+ comment at `:537`) | `if (names.length !== 158) throw` | `158` | `174` |
 | 13 | `lib/tibetanImport.test.ts:295,322,323,324,418` | `packet.names` length / distinct zh / distinct en / parsed rows | `158` | `174` |
+| 13a | `lib/tibetanImport.test.ts:458` | rebaseline checklist `referenceBaselineBo` hash | `df60a2b…` | **must equal the new `zh` hash byte for byte**; this failure is initially masked by the production guard at `lib/tibetanImport.ts:516` |
 | 14 | `lib/tibetanImport.test.ts:426` | `expect(rows).toHaveLength(158 + 162)` | `158 + 162` | `174 + 162` |
 | 15 | `lib/tibetanInvariants.test.ts:145` | `corpus.calls` | `585` | `617` |
 | 16 | `lib/tibetanInvariants.test.ts:307,308,309` | reference names / en / zh | `158` | `174` |
 | 17 | `lib/tibetanWellFormedness.test.ts:36` | `corpus.calls` | `585` | `617` |
 | 18 | `lib/directBoAudit.test.ts:122` | `REFERENCE_LABS` length | `158` | `174` |
-| 19 | `lib/directBoAudit.test.ts:125` | `5 + 30 + 6 + (158 * 3) + 1` | `158 * 3` | `174 * 3` |
-| 20 | `data/reference-labs.test.ts:33-95` | the sorted report-only key list | 59 keys | +16, inserted **contiguously between `'bmi'` and `'ca199'`**: `bone_bmc_l1, bone_bmc_mean, bone_bmc_t11, bone_bmc_t12, bone_bmd_l1, bone_bmd_mean, bone_bmd_t11, bone_bmd_t12, bone_t_score_l1, bone_t_score_mean, bone_t_score_t11, bone_t_score_t12, bone_z_score_l1, bone_z_score_mean, bone_z_score_t11, bone_z_score_t12` |
+| 19 | `lib/directBoAudit.test.ts:125` | `5 + 30 + 6 + (158 * 3) + 1` | `158 * 3` | `174 * 3` — a latent lock, **not a separate initial red failure**: the earlier length assertion at `:122` aborts this same test before `:125` runs |
+| 20 | `data/reference-labs.test.ts:33-95` | the sorted report-only key list | 58 keys | +16, inserted **contiguously between `'bmi'` and `'ca199'`**: `bone_bmc_l1, bone_bmc_mean, bone_bmc_t11, bone_bmc_t12, bone_bmd_l1, bone_bmd_mean, bone_bmd_t11, bone_bmd_t12, bone_t_score_l1, bone_t_score_mean, bone_t_score_t11, bone_t_score_t12, bone_z_score_l1, bone_z_score_mean, bone_z_score_t11, bone_z_score_t12` |
 | 21 | `data/unit-whitelist-audit.test.ts` | `EQUIVALENCE_GROUPS` | — | add `bmd_areal_notation` (Step 6) |
 
 ### 8.2 Locks that must NOT move — if any of these goes red, STOP; it is a bug in the change
@@ -741,14 +742,14 @@ I ran `npx vitest run --pool=threads` at `32a882a`: **90 files, 1147 passed, 41 
 ```bash
 npx tsc --noEmit
 npx vitest run --pool=threads          # forks pool fails under load — threads is required
-npx tsx validation/real-corpus/run.ts
+node --import tsx validation/real-corpus/run.ts
 ```
 
 **Acceptance criteria — all must hold:**
 
 1. `npx tsc --noEmit` clean.
 2. `npx vitest run --pool=threads` green, with `90 → 91` test files (your new file) and `1147 + N` passing.
-3. `npx tsx validation/real-corpus/run.ts` output is **byte-identical** to the §3 baseline, including `✓ US safety gate: 0 confidently-wrong rows`. None of the 22 target names appears in any committed corpus, so any movement is an unintended widening — investigate, do not accept.
+3. `node --import tsx validation/real-corpus/run.ts` output is **byte-identical** to the §3 baseline, including `✓ US safety gate: 0 confidently-wrong rows`. None of the 22 target names appears in any committed corpus, so any movement is an unintended widening — investigate, do not accept.
 4. **Recognition, name-level (this is what you can verify):** of the 22 frozen names, **18 newly resolve** (16 bone + `HC03` + T3), and **4 remain deliberately unresolved** with reasons recorded (`血清胱抑素`, `检测结果:DOB`, `基础代谢率`, `其他`).
 5. **Recognition, row-level (report this as a prediction for the human who holds the report):** 107/129 = 82.9% → **125/129 = 96.9%**. Each of the 18 names corresponds to exactly one row. You cannot re-measure this without the report; say so rather than asserting it.
 6. `validation/camera-path/cameraPath.test.ts` still resolves **26/26** distinct camera names on the CBC page.
@@ -756,7 +757,7 @@ npx tsx validation/real-corpus/run.ts
 
 ### Step 9b — record the measurement
 
-Add `validation/camera-path/full-report-2026-07-28.md`, following the structure of `full-report-2026-07-26.md`. State: no images or patient data committed; recognition before (107/129, 82.9%) and after (predicted 125/129, 96.9%); what was curated and why bone density is report-only and bandless; the three declined names with their reasons; and the known limitation that `parsePrintedRange` returns `null` for a range using U+2212 MINUS SIGN (safe — it defers).
+Add `validation/camera-path/full-report-2026-07-28.md`, following the structure of `full-report-2026-07-26.md`. State: no images or patient data committed; recognition before (107/129, 82.9%) and after (predicted 125/129, 96.9%); what was curated and why bone density is report-only and bandless; the four declined names with their reasons; and the known limitation that `parsePrintedRange` returns `null` for a range using U+2212 MINUS SIGN (safe — it defers).
 
 ---
 

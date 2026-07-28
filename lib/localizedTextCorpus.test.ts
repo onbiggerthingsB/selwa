@@ -18,17 +18,16 @@ describe('static localized-text corpus', () => {
     const corpus = extractLocalizedTextCorpus();
     const fallbackBo = corpus.calls.filter((entry) => entry.variants.bo.kind === 'fallback');
 
-    // Topology tripwire. Latest move 2026-07-26: curating the remaining uncurated analytes from the
-    // real report adds 33 report-only entries (a name + definition each) and the measurement
-    // unit-contradiction guard adds one flag message: 516->585 calls, 515->584 fallbacks, 15 files
-    // unchanged. The 13C urea-breath entry was NOT curated: it is a breath assay with no applicable
-    // specimen frame, and its printed abbreviation DOB collides with date of birth.
+    // Topology tripwire. Latest move 2026-07-28: 16 bone densitometry entries (report-only,
+    // bandless, 'measurement' frame) plus two OCR-spelling aliases. The entries add one name and
+    // one definition each, while aliases add no localized calls: 585->617 calls, 584->616
+    // fallbacks, with 15 source files unchanged.
     // Rebaseline deliberately when a feature adds strings — and
     // confirm, as the two assertions below do, that the growth is all fallback and none of it is
     // direct (unreviewed) Tibetan.
     expect(corpus.sourceFiles).toHaveLength(15);
-    expect(corpus.calls).toHaveLength(585);
-    expect(fallbackBo).toHaveLength(584);
+    expect(corpus.calls).toHaveLength(617);
+    expect(fallbackBo).toHaveLength(616);
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(corpus.excludedDirectBo[0].reason).toBe('verbatim-ocr-echo');
@@ -66,10 +65,13 @@ describe('static localized-text corpus', () => {
       .filter((entry) => entry.reference?.field === 'name')
       .map((entry) => entry.reference!.key);
 
-    expect(reference).toHaveLength(422);
-    expect(fields).toEqual({ name: 158, plain: 106, definition: 158 });
-    expect(nameKeys).toHaveLength(158);
-    expect(new Set(nameKeys)).toHaveLength(158);
+    // Rebaselined for the same 16 bone densitometry entries (report-only, bandless,
+    // 'measurement' frame) plus two OCR-spelling aliases: each entry adds a name and definition,
+    // aliases add no reference role, and helper reuse keeps plain fixed at 106.
+    expect(reference).toHaveLength(454);
+    expect(fields).toEqual({ name: 174, plain: 106, definition: 174 });
+    expect(nameKeys).toHaveLength(174);
+    expect(new Set(nameKeys)).toHaveLength(174);
   });
 
   it('preserves every production placeholder expression and its order', () => {
