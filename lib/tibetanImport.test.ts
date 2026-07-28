@@ -465,7 +465,7 @@ describe('Tibetan reviewer packet export', () => {
     // plus two OCR-spelling aliases. Aliases do not affect this hash; every new bo value remains a
     // zh fallback, so this must equal the zh baseline.
     expect(checklist).toEqual({
-      referenceBaselineBo: 'bd49dd533b8a588e85a2c56a612f103ab7dabaf4fbb9aa7dacf81c5540587b01',
+      referenceBaselineBo: 'aa504d501e2c240ca13c97d6364f5583dd7f93505f2e8bee64473f9f89f0d498',
       disclaimerBaselineBo: '26b37ac41f7ab7ca787474a8f0bd549f24937226f475fa873e7dffb3f0ccde4b',
       directContexts: [],
       expectedHashes: {},

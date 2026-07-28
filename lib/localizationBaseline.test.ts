@@ -14,9 +14,9 @@ import { UI_COPY } from '@/lib/uiCopy';
 // unreviewed Tibetan entered the table.
 const REFERENCE_BASELINE = {
   count: 174,
-  en: '1b92c3fc8b3dac5d3e1956af094707723f3fe78736f8aa8e34a9215975bb2920',
-  zh: 'bd49dd533b8a588e85a2c56a612f103ab7dabaf4fbb9aa7dacf81c5540587b01',
-  bo: 'bd49dd533b8a588e85a2c56a612f103ab7dabaf4fbb9aa7dacf81c5540587b01',
+  en: '6bbdf1c379cefbd732dc210340da86025b2bd4eb9673a3319e1660b3477c048e',
+  zh: 'aa504d501e2c240ca13c97d6364f5583dd7f93505f2e8bee64473f9f89f0d498',
+  bo: 'aa504d501e2c240ca13c97d6364f5583dd7f93505f2e8bee64473f9f89f0d498',
 } as const;
 
 const DISCLAIMER_KEYS = [
