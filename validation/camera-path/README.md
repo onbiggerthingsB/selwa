@@ -91,6 +91,34 @@ by measurement rather than argument, that `chipWrong === 0` is **necessary but n
 it verifies that our displayed comparison does not contradict the row we were given, not that the
 row is what the page says.
 
+### These two errors are arithmetically invisible (measured 2026-07-31)
+
+The obvious guard for a five-part differential is coherence: absolute ≈ percentage × WBC / 100, and
+the five percentages sum to ~100. Tested against these exact rows, with WBC 6.84:
+
+| | BASO abs | BASO pct | implied abs | deviation | pct sum |
+|---|---|---|---|---|---|
+| truth | 0.02 | 0.30 | 0.0205 | 0.0005 | 100.30 |
+| OCR | 0.01 | 0.10 | 0.0068 | **0.0032** | **100.10** |
+
+**Neither check fires.** The OCR deviation of 0.0032 is *identical* to EO's deviation in the TRUTH
+data, so it is indistinguishable from normal rounding. And the percentage sum moves from 100.30 to
+100.10 — i.e. *closer* to 100, so a sum check would read the corrupted report as marginally
+healthier than the correct one.
+
+Two reasons, both structural: BASO# and BASO% were misread **together and coherently** (0.10% really
+does imply ~0.01), and basophils are 0.3% of the differential, too small a term to move any sum.
+
+A differential-coherence check was therefore NOT added. It would catch large digit errors — none of
+which this measurement observed — while leaving the failure mode we did observe uncaught, and a
+control that reads as coverage without providing it is a failure pattern this project has already
+hit three times (alias refusal that bounded nothing; a banner that did not suppress; chipWrong === 0).
+
+The finding is evidence for the architecture argument in `docs/PLAN-on-device-extraction.md`:
+row-association errors need a **geometric** fix — binding computed from cell coordinates in our own
+code, and verifiable by reconstructing the table — because no arithmetic over the extracted values
+can see them.
+
 `cameraPath.test.ts` pins all of the above, including a deterministic demonstration of the
 chip blindness. The two errors are asserted **as errors**: do not "fix" the frozen rows.
 
