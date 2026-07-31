@@ -65,7 +65,7 @@ function median(values: readonly number[]): number {
  * Cluster cells into columns by horizontal overlap. Uses the cell's own x-extent rather than a fixed
  * grid, because printed tables are not pixel-aligned and a photograph is never square to the page.
  */
-function clusterColumns(cells: readonly Cell[]): Cell[][] {
+export function clusterColumns(cells: readonly Cell[]): Cell[][] {
   const byX = [...cells].sort((a, b) => a.x - b.x);
   const columns: Cell[][] = [];
   for (const cell of byX) {
