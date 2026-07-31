@@ -1060,11 +1060,29 @@ a {
   color: var(--ink-muted);
   margin-left: 6px;
 }
+/* The analyte name OUR TABLE matched, shown under the printed name rather than in place of it.
+   Muted and secondary on purpose: the printed line is what the user checks against the paper, and
+   a disagreement between the two lines is a signal we want visible rather than smoothed over. */
+.confirm-matched {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin-top: 2px;
+}
+.confirm-matched .zh {
+  font-family: var(--font-cjk);
+  margin-left: 6px;
+}
 .confirm-inputs {
   display: grid;
   grid-template-columns: 1fr 110px;
   gap: var(--s2);
   margin-top: var(--s3);
+}
+/* The printed range gets a full-width row of its own. It is the other input to the status chip,
+   so it is not a lesser field than the value — it just does not pair with a unit. */
+.confirm-inputs-wide {
+  grid-template-columns: 1fr;
+  margin-top: var(--s2);
 }
 .confirm-inputs input {
   font-family: var(--font-body);

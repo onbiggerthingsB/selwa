@@ -24,10 +24,22 @@ export function ConfirmValues({
 }) {
   const toConfirm = report.rows.filter((r) => r.needsConfirm);
 
-  const [edits, setEdits] = useState<Record<number, { value: string; unit: string }>>(() => {
-    const init: Record<number, { value: string; unit: string }> = {};
+  // printedRange is EDITABLE because the status chip is arithmetic on the printed value against the
+  // printed RANGE (lib/summary.ts). A misread range produces a wrong chip exactly as easily as a
+  // misread value — and until 2026-07-31 this screen could not show it, so a user checked the value,
+  // saw it was right, confirmed, and the wrong chip shipped carrying their confirmation. That is
+  // worse than no confirmation: it converts an unverified reading into an endorsed one.
+  type RowEdit = { value: string; unit: string; printedRange: string };
+  const [edits, setEdits] = useState<Record<number, RowEdit>>(() => {
+    const init: Record<number, RowEdit> = {};
     report.rows.forEach((r, i) => {
-      if (r.needsConfirm) init[i] = { value: r.extracted.value ?? '', unit: r.extracted.unit ?? '' };
+      if (r.needsConfirm) {
+        init[i] = {
+          value: r.extracted.value ?? '',
+          unit: r.extracted.unit ?? '',
+          printedRange: r.extracted.printedRange ?? '',
+        };
+      }
     });
     return init;
   });
@@ -40,7 +52,14 @@ export function ConfirmValues({
 
   function submit() {
     const rows = report.rows.map((r, i) =>
-      edits[i] ? { ...r.extracted, value: edits[i].value, unit: edits[i].unit } : r.extracted,
+      edits[i]
+        ? {
+            ...r.extracted,
+            value: edits[i].value,
+            unit: edits[i].unit,
+            printedRange: edits[i].printedRange,
+          }
+        : r.extracted,
     );
     const extraction: LabExtraction = { rows };
     const regrounded: GroundedReport = {
@@ -68,9 +87,20 @@ export function ConfirmValues({
         {report.rows.map((r, i) =>
           r.needsConfirm ? (
             <li key={i} className="confirm-row">
-              <div className="confirm-name">
-                {r.entry && r.action === 'classify' ? (
-                  (() => {
+              {/*
+                The PRINTED name leads, always. This screen asks the user to check our reading
+                against the paper in their hand, and the only string that exists on that paper is
+                the printed one. Showing our curated name in its place — which this did until
+                2026-07-31 — conceals the failure it most needs to expose: a row whose value was
+                bound to the wrong analyte still displays a confident, correct-looking curated name,
+                so a mispairing is invisible to the person checking it.
+                Our matched name stays, below and marked as ours, because it is useful context and
+                a mismatch between the two lines is itself a signal worth seeing.
+              */}
+              <div className="confirm-name">{r.extracted.name}</div>
+              {r.entry && r.action === 'classify' && (
+                <div className="confirm-matched">
+                  {(() => {
                     const names = resolvePrimarySecondary(r.entry.name, lang);
                     return (
                       <>
@@ -86,11 +116,9 @@ export function ConfirmValues({
                         )}
                       </>
                     );
-                  })()
-                ) : (
-                  r.extracted.name
-                )}
-              </div>
+                  })()}
+                </div>
+              )}
               <div className="confirm-inputs">
                 <input
                   className="num"
@@ -103,6 +131,17 @@ export function ConfirmValues({
                   aria-label={`${resolveText(UI_COPY.unit, lang).text} ${i}`}
                   value={edits[i].unit}
                   onChange={(e) => setEdits({ ...edits, [i]: { ...edits[i], unit: e.target.value } })}
+                />
+              </div>
+              <div className="confirm-inputs confirm-inputs-wide">
+                <input
+                  className="confirm-range"
+                  aria-label={`${resolveText(UI_COPY.reportRange, lang).text} ${i}`}
+                  placeholder={resolveText(UI_COPY.reportRange, lang).text.trim()}
+                  value={edits[i].printedRange}
+                  onChange={(e) =>
+                    setEdits({ ...edits, [i]: { ...edits[i], printedRange: e.target.value } })
+                  }
                 />
               </div>
               <p className="confirm-hint">

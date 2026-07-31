@@ -68,8 +68,8 @@ export const UI_COPY = {
     bo: fallback('zh'),
   }),
   confirmHelp: defineText({
-    en: reviewed('Let’s double-check a few results from your photo. Please confirm each result and unit below matches your report exactly.'),
-    zh: reviewed('让我们核对照片中的几项结果。请确认下面每项结果和单位与您的报告完全一致。'),
+    en: reviewed('Let’s double-check a few results from your photo. Please confirm the result, the unit and the range below all match your report exactly.'),
+    zh: reviewed('让我们核对照片中的几项结果。请确认下面的结果、单位和范围都与您的报告完全一致。'),
     bo: fallback('zh'),
   }),
   result: defineText({

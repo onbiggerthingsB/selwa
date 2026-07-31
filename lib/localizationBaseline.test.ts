@@ -43,9 +43,15 @@ const LEGACY_UI_COPY = {
   language: { en: 'Language', zh: '语言' },
   confirmEyebrow: { en: 'One quick step', zh: '快速一步' },
   confirmHeading: { en: 'Please check these readings', zh: '请核对这些结果' },
+  // DELIBERATE DIVERGENCE from the pre-refactor string, 2026-07-31. The confirmation screen gained
+  // an editable printed-range field, because the status chip is arithmetic on value against RANGE
+  // and the screen previously could not show or correct it. The old instruction named only "result
+  // and unit", so it under-described the task by exactly the field we added to close the gap — an
+  // instruction that tells a user to check two of three things is worse here than none. Everything
+  // else in this lock remains byte-identical.
   confirmHelp: {
-    en: 'Let’s double-check a few results from your photo. Please confirm each result and unit below matches your report exactly.',
-    zh: '让我们核对照片中的几项结果。请确认下面每项结果和单位与您的报告完全一致。',
+    en: 'Let’s double-check a few results from your photo. Please confirm the result, the unit and the range below all match your report exactly.',
+    zh: '让我们核对照片中的几项结果。请确认下面的结果、单位和范围都与您的报告完全一致。',
   },
   result: { en: 'result', zh: '结果' },
   unit: { en: 'unit', zh: '单位' },
