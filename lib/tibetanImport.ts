@@ -170,6 +170,13 @@ export const TIBETAN_UNIT_VOCABULARY = [
 
 export interface GlossaryNameRow {
   key: string;
+  /**
+   * Which localized field this row carries. Mode 1 (the patient reading alone) needs BOTH: a
+   * translated name over an untranslated definition tells a Tibetan reader the label of something
+   * they still cannot read. Kept as an explicit column so a reviewer can see at a glance whether
+   * they are naming a test or explaining one — different work, different risk.
+   */
+  field: 'name' | 'definition';
   zh: string;
   en: string;
   unit: string;
@@ -439,29 +446,57 @@ export function buildFloorStringRows(
 }
 
 function buildGlossaryNameRows(corpus: LocalizedTextCorpus): GlossaryNameRow[] {
-  const calls = new Map(
+  const callsFor = (field: 'name' | 'definition') => new Map(
     corpus.calls
-      .filter((entry) => entry.reference?.field === 'name')
+      .filter((entry) => entry.reference?.field === field)
       .map((entry) => [entry.reference!.key, entry]),
   );
-  return REFERENCE_LABS.map((entry) => {
-    const call = calls.get(entry.key);
-    if (!call) throw new Error(`Missing extracted name call for ${entry.key}.`);
-    return {
-      key: entry.key,
-      zh: resolveText(entry.name, 'zh').text,
-      en: resolveText(entry.name, 'en').text,
-      unit: entry.unit,
-      context: `${resolveText(entry.definition, 'en').text} Specimen: ${entry.specimen}.`,
-      specimen: entry.specimen,
-      aliases: JSON.stringify({
-        unscoped: entry.aliases,
-        ...(entry.specimenAliases ?? {}),
-      }),
-      id: call.id,
-      sourceHash: call.sourceHash,
-      bo: '',
-    };
+  const nameCalls = callsFor('name');
+  const definitionCalls = callsFor('definition');
+
+  // `entry.plain` is deliberately NOT exported. It feeds summary.glossary, which lib/types.ts
+  // declares and no component renders — paying a reviewer for a string no user can see would be
+  // waste, and a translated-but-invisible string later reads as coverage we do not have.
+  return REFERENCE_LABS.flatMap((entry): GlossaryNameRow[] => {
+    const nameCall = nameCalls.get(entry.key);
+    const definitionCall = definitionCalls.get(entry.key);
+    if (!nameCall) throw new Error(`Missing extracted name call for ${entry.key}.`);
+    if (!definitionCall) throw new Error(`Missing extracted definition call for ${entry.key}.`);
+    const aliases = JSON.stringify({
+      unscoped: entry.aliases,
+      ...(entry.specimenAliases ?? {}),
+    });
+    return [
+      {
+        key: entry.key,
+        field: 'name',
+        zh: resolveText(entry.name, 'zh').text,
+        en: resolveText(entry.name, 'en').text,
+        unit: entry.unit,
+        // The definition is CONTEXT on a name row: it tells the translator what the test is.
+        context: `${resolveText(entry.definition, 'en').text} Specimen: ${entry.specimen}.`,
+        specimen: entry.specimen,
+        aliases,
+        id: nameCall.id,
+        sourceHash: nameCall.sourceHash,
+        bo: '',
+      },
+      {
+        key: entry.key,
+        field: 'definition',
+        zh: resolveText(entry.definition, 'zh').text,
+        en: resolveText(entry.definition, 'en').text,
+        unit: entry.unit,
+        // Mirrored: on a definition row the NAME is the context, so the reviewer knows which
+        // analyte this sentence explains.
+        context: `Definition of ${resolveText(entry.name, 'en').text} (${resolveText(entry.name, 'zh').text}). Specimen: ${entry.specimen}.`,
+        specimen: entry.specimen,
+        aliases,
+        id: definitionCall.id,
+        sourceHash: definitionCall.sourceHash,
+        bo: '',
+      },
+    ];
   });
 }
 
@@ -533,7 +568,9 @@ export function buildTibetanReviewPacket(
 
   // The same rebaseline adds one glossary name per bone entry; the two OCR-spelling aliases are
   // carried inside their existing/new name rows and therefore do not add rows.
-  if (names.length !== 174) throw new Error(`Expected 174 glossary names; got ${names.length}.`);
+  // 174 -> 348 on 2026-07-31: every entry now exports a name row AND a definition row, because
+  // Mode 1 (patient reading alone) is unusable with an untranslated definition. `plain` stays out.
+  if (names.length !== 348) throw new Error(`Expected 348 glossary rows; got ${names.length}.`);
   if (terms.length !== 34) throw new Error(`Expected 34 distinct glossary terms; got ${terms.length}.`);
   // floor.length is NOT hard-asserted: the packet legitimately exports however many UI floor
   // strings exist, and that count grows with every feature. The reviewer simply receives all
@@ -549,7 +586,7 @@ export function buildTibetanReviewPacket(
 
 function nameCsv(packet: TibetanReviewPacket): string {
   return serializeCsv(
-    ['key', 'zh', 'en', 'unit', 'context', 'specimen', 'aliases', 'id', 'sourceHash', 'bo'],
+    ['key', 'field', 'zh', 'en', 'unit', 'context', 'specimen', 'aliases', 'id', 'sourceHash', 'bo'],
     packet.names.map((row) => ({ ...row })),
   );
 }
@@ -732,7 +769,7 @@ export function readReviewedPacket(packetDirectory: string): ReviewedImportRow[]
   requiredColumns(
     names,
     REVIEW_PACKET_FILES.names,
-    ['key', 'zh', 'en', 'unit', 'context', 'specimen', 'aliases', 'id', 'sourceHash', 'bo'],
+    ['key', 'field', 'zh', 'en', 'unit', 'context', 'specimen', 'aliases', 'id', 'sourceHash', 'bo'],
   );
   requiredColumns(
     floor,
@@ -1958,7 +1995,7 @@ export function planPacketCompleteness(input: {
 
   const expected = new Set<string>();
   for (const call of corpus.calls) {
-    if (call.reference?.field === 'name') {
+    if (call.reference?.field === 'name' || call.reference?.field === 'definition') {
       if (labKeys.has(call.reference.key)) expected.add(`glossary-names:${call.id}`);
       continue;
     }

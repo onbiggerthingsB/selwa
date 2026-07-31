@@ -196,7 +196,7 @@ const FLOOR_COLUMNS = [
   'id', 'zh', 'en', 'screen', 'leakage-note', 'sourceHash', 'alternatives', 'placeholders', 'bo',
 ];
 const NAME_COLUMNS = [
-  'key', 'zh', 'en', 'unit', 'context', 'specimen', 'aliases', 'id', 'sourceHash', 'bo',
+  'key', 'field', 'zh', 'en', 'unit', 'context', 'specimen', 'aliases', 'id', 'sourceHash', 'bo',
 ];
 
 /** Writes one reviewer's packet directory on disk. manifest: null omits the manifest entirely. */
@@ -295,7 +295,9 @@ describe('Tibetan reviewer packet export', () => {
     // Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only, bandless,
     // 'measurement' frame) plus two OCR-spelling aliases: the entries add 16 name rows; aliases
     // are embedded in rows and do not move the name, term, or floor inventories.
-    expect(packet.names).toHaveLength(174);
+    // 174 -> 348 on 2026-07-31: each entry now exports a name row AND a definition row. Mode 1
+    // (the patient reading alone) is unusable with a translated name over a Chinese definition.
+    expect(packet.names).toHaveLength(348);
     expect(GLOSSARY_TERM_COMPONENT_COUNTS).toEqual({
       comparators: 6,
       coreNegators: 15,
@@ -322,21 +324,24 @@ describe('Tibetan reviewer packet export', () => {
       .toEqual(['core-negator', 'polarity']);
   });
 
-  it('exports all 174 distinct names with definition context, specimen, aliases, and units', () => {
-    // Same 2026-07-28 rebaseline: 16 bone densitometry entries (report-only, bandless,
-    // 'measurement' frame) plus two OCR-spelling aliases. Only the entries add distinct names.
-    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(174);
-    expect(new Set(packet.names.map(({ en }) => en))).toHaveLength(174);
+  it('exports a name row and a definition row per entry, with mirrored context', () => {
+    // 348 rows, 341 distinct zh strings: 174 names are all distinct, but 7 entries share a
+    // definition with another entry, so the definitions contribute 167 rather than 174.
+    expect(packet.names.filter(({ field }) => field === 'name')).toHaveLength(174);
+    expect(packet.names.filter(({ field }) => field === 'definition')).toHaveLength(174);
+    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(341);
     // 6 -> 16 on 2026-07-26. The 6 pre-existing urine wildcards, plus 10 report-only entries whose
     // printed unit genuinely varies by assay or vendor (hepatitis serology in COI/S-CO/IU-mL,
     // thyroid antibodies, CA19-9, creatinine clearance, cholylglycine). For those there is no
     // curated unit family to contradict, and 'as reported' says so explicitly rather than
     // pretending incompatible units are equivalent.
-    expect(packet.names.filter(({ unit }) => unit === 'as reported')).toHaveLength(16);
+    expect(packet.names.filter(({ unit, field }) => unit === 'as reported' && field === 'name')).toHaveLength(16);
     for (const row of packet.names) {
       const entry = REFERENCE_LABS.find(({ key }) => key === row.key)!;
       expect(row.context).toBe(
-        `${resolveText(entry.definition, 'en').text} Specimen: ${entry.specimen}.`,
+        row.field === 'name'
+          ? `${resolveText(entry.definition, 'en').text} Specimen: ${entry.specimen}.`
+          : `Definition of ${resolveText(entry.name, 'en').text} (${resolveText(entry.name, 'zh').text}). Specimen: ${entry.specimen}.`,
       );
       if (resolveText(entry.plain, 'en').text !== resolveText(entry.definition, 'en').text) {
         expect(row.context).not.toContain(resolveText(entry.plain, 'en').text + ' Specimen:');
@@ -346,7 +351,7 @@ describe('Tibetan reviewer packet export', () => {
         unscoped: entry.aliases,
         ...(entry.specimenAliases ?? {}),
       });
-      expect(row.id).toBe(`REFERENCE_LABS.${entry.key}.name`);
+      expect(row.id).toBe(`REFERENCE_LABS.${entry.key}.${row.field}`);
       expect(row.sourceHash).toMatch(/^[a-f0-9]{64}$/u);
     }
   });
@@ -422,7 +427,7 @@ describe('Tibetan reviewer packet export', () => {
     );
     // The 16 bone densitometry entries (report-only, bandless, 'measurement' frame) plus two
     // OCR-spelling aliases add 16 name rows and no floor rows.
-    expect(parsed.names.rows).toHaveLength(174);
+    expect(parsed.names.rows).toHaveLength(348);
     expect(parsed.terms.rows).toHaveLength(34);
     expect(parsed.floor.rows).toHaveLength(162);
     expect(parsed.decisions.rows).toHaveLength(1);
@@ -430,7 +435,7 @@ describe('Tibetan reviewer packet export', () => {
       expect(sheet.rows.every((row) => row.bo === '')).toBe(true);
     }
     const rows = readReviewedPacket(output);
-    expect(rows).toHaveLength(174 + 162);
+    expect(rows).toHaveLength(348 + 162);
     expect(rows.every(({ bo }) => bo === '')).toBe(true);
   });
 
