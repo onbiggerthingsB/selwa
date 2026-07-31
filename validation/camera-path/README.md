@@ -54,6 +54,29 @@ in `field-lhasa.ts` dropped that asterisk; the OCR did not.
 (the page prints 平均血红蛋白含量, 红细胞分布宽度标准差, 红细胞分布宽度变异系数, 血小板, 大血小板数目;
 the fixture recorded 平均血红蛋白量, …SD, …CV, 血小板计数, 大血小板计数).
 
+> **UNRESOLVED, added 2026-07-31 — the basis for the two claims above is not recorded.**
+>
+> Both statements resolve a disagreement between the hand transcription and the OCR *in the OCR's
+> favour*, and neither says how that was decided. The photograph is deliberately not committed, so it
+> cannot be rechecked from this repository. If the call was made by looking at the page, it is sound
+> and should say so. If it was made by preferring the model's reading, it is circular — the model
+> cannot be its own ground truth.
+>
+> This matters more than five names. `field-lhasa.ts` is the **only** hand-transcribed ground truth
+> in the project, and every recognition figure ever quoted is measured against it. If 5 of its 27
+> names are wrong, the instrument is 18.5% wrong on names — and that figure sits at the top of the
+> published range for human medical-record abstraction error (0.7%–20.8%), which is unsettling
+> corroboration rather than reassurance.
+>
+> The fixture has NOT been "corrected" here. Editing ground truth on unverifiable grounds is the
+> error this note exists to flag, not a fix for it. What is needed is a recheck against the original
+> photograph, by someone holding it, with the basis written down.
+>
+> This is also direct local evidence for the Phase 0 design in
+> `docs/PLAN-on-device-extraction.md`: it is why that plan calls for **two transcribers on an
+> overlapping subset**, so the project can state its own inter-transcriber agreement instead of
+> assuming a single human reading is truth.
+
 **Values: 23/25 correct. Two wrong, in every run.**
 
 | row | printed | run 1 | run 2 | run 3 |
