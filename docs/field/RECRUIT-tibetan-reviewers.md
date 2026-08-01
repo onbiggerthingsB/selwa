@@ -6,7 +6,7 @@
 
 安全底线（写进了代码，不是口号）：人工智能**只做文字识别**（读出纸上印的字）；所有**含义**都来自一张人工编纂、人工审定的对照表；应用绝不输出任何无法与纸面原文核对的内容，也**绝不做诊断**。
 
-请了解：这是一个**学生研究项目**，不是商业产品，未公开发布。项目已私下部署，有 1184 项自动化测试，代码库目前为私有。
+请了解：这是一个**学生研究项目**，不是商业产品，未公开发布。项目已私下部署，有 1210 项自动化测试，代码库目前为私有。
 
 ## 为什么应用里现在一个藏文字都没有
 
@@ -29,14 +29,14 @@
 
 | 文件 | 行数 | 内容 |
 |---|---|---|
-| glossary-names.csv | 348 行 | 化验指标的**名称与释义**，各 174 条。例：名称「血红蛋白」+ 释义「红细胞里携带氧气的蛋白。」 |
+| glossary-names.csv | 350 行 | 化验指标的**名称与释义**，各 175 条。例：名称「血红蛋白」+ 释义「红细胞里携带氧气的蛋白。」 |
 | floor-strings.csv | 162 行 | 界面与安全提示语。例："报告读取服务暂时不可用。请稍后重试。" |
 | glossary-terms.csv | 34 行 | 参考术语表，**仅供阅读**。在此表中填写任何内容都会导致整包导入中止（这是有意设置的保护） |
 | decisions.csv | 1 行 | 一个开放的术语政策问题，请您给出意见 |
 | manifest.csv | — | 填写您的姓名、联系方式、日期 |
 | INSTRUCTIONS.md | — | 双语操作说明，已写好 |
 
-**需要翻译的总量：510 行**（174 条名称 + 174 条释义 + 162 条界面提示语），均为短句和词条，不是长篇文章。请在 Google Sheets 或 LibreOffice 中工作，导出为 UTF-8 编码的 CSV（Excel 会损坏藏文）。实际工作量约为几次工作时段，不需要数周——但节奏由您掌握，**质量远比速度重要**。
+**需要翻译的总量：512 行**（175 条名称 + 175 条释义 + 162 条界面提示语），均为短句和词条，不是长篇文章。请在 Google Sheets 或 LibreOffice 中工作，导出为 UTF-8 编码的 CSV（Excel 会损坏藏文）。实际工作量约为几次工作时段，不需要数周——但节奏由您掌握，**质量远比速度重要**。
 
 ## 双人独立审校制度——为什么一个人不能审定自己的译文
 
@@ -83,6 +83,6 @@
 
 The app currently ships **zero** Tibetan strings, deliberately. Machine translation into Tibetan cannot be verified: no COMET-style metric exists for Tibetan, health-domain ZH→BO d-BLEU is about 9.4, and the TLUE benchmark (EMNLP 2025) found experts approved only 28.74% of Claude's Tibetan output despite a BLEU of 34.8 — "fluent but wrong", which in medicine is worse than showing nothing. The same TLUE work found that two rounds of human revision brought fixed content to 100% acceptability. That is our model: a small, fixed, human-reviewed set of strings — never live generation.
 
-We seek **two different people**: (1) a Chinese–Tibetan translator competent in biomedical terminology, and (2) an independent reviewer checking meaning, register, and comprehensibility for ordinary readers, especially elderly rural readers. Each works independently on an identical packet of **510 short rows** (174 analyte names + 174 analyte definitions + 162 interface/safety strings). The importer (enforced in code) rejects duplicated packets, matching identities, and any row where the two disagree — it never picks a winner. One honest caveat, stated plainly: this mechanism is a control against mistakes and shortcuts, not against deliberate collusion — we do not pretend otherwise. Nobody may approve their own translation; we frame this rule as patient safety and professional respect, not distrust. Reviewer names are recorded in the project's version history. Anything a reviewer is unsure of must be left **empty**: empty means "not published"; wrong means a patient may read it.
+We seek **two different people**: (1) a Chinese–Tibetan translator competent in biomedical terminology, and (2) an independent reviewer checking meaning, register, and comprehensibility for ordinary readers, especially elderly rural readers. Each works independently on an identical packet of **512 short rows** (175 analyte names + 175 analyte definitions + 162 interface/safety strings). The importer (enforced in code) rejects duplicated packets, matching identities, and any row where the two disagree — it never picks a winner. One honest caveat, stated plainly: this mechanism is a control against mistakes and shortcuts, not against deliberate collusion — we do not pretend otherwise. Nobody may approve their own translation; we frame this rule as patient safety and professional respect, not distrust. Reviewer names are recorded in the project's version history. Anything a reviewer is unsure of must be left **empty**: empty means "not published"; wrong means a patient may read it.
 
 Compensation and contact details: see the placeholders above.
