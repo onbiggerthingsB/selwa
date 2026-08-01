@@ -47,6 +47,12 @@ export const EXTRACTION_PROMPT = [
   'Do NOT infer specimen from the analyte name, value, or reference range; only an explicitly printed specimen word or panel heading counts.',
   'Do NOT infer, calculate, convert units, translate, or supply values that are not printed. Use null for an absent or unreadable value, unit, or printed reference range.',
   'Do NOT classify results as normal/abnormal and do NOT add reference ranges from your own knowledge — only copy the range printed on the page.',
+  // A real 健康体检报告 (2026-07-26 corpus) prints an advice page headed 「健康建议」 carrying lines
+  // like 「空腹血糖保持在：3.9~6.0 mmol/L」 and 「总胆固醇保持在：2.8~5.2 mmol/L」. Those are TARGETS
+  // recommended to the reader, not measurements of the reader — but they use analyte names our table
+  // recognises, with real units, so a row extracted from them would render as this person's result.
+  // Nothing in this prompt previously distinguished them.
+  'Some sections print RECOMMENDED TARGETS rather than measured results — advice, recommendation and summary sections such as 健康建议, 健康指导 or 体检小结, with wording like "保持在" / "should be kept below". These are goals for the reader, not measurements of the reader. Extract NO rows from such sections. Extract only rows from a results table where a value measured for this patient is printed.',
   PRINTED_FLAG_COPY_INSTRUCTION,
   'Preserve decimal points exactly (e.g. 7.0 is not 70). For each row, report your reading confidence as low, medium, or high.',
   'Return only the structured rows.',
