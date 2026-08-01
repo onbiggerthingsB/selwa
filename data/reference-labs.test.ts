@@ -38,6 +38,7 @@ describe('reference table integrity', () => {
       'albumin_globulin_ratio',
       'anion_gap',
       'ast_alt_ratio',
+      'basal_metabolic_rate',
       'base_excess',
       'beta_hydroxybutyrate',
       'blood_ph',

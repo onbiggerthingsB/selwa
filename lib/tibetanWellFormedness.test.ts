@@ -35,7 +35,7 @@ describe('Tibetan Class A well-formedness', () => {
 
     // Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only, bandless,
     // 'measurement' frame) plus two OCR-spelling aliases: entries add 32 calls; aliases add none.
-    expect(corpus.calls).toHaveLength(617); // curatedBo===0 below remains the safety check
+    expect(corpus.calls).toHaveLength(619); // curatedBo===0 below remains the safety check
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(corpus.excludedDirectBo[0].reason).toBe('verbatim-ocr-echo');

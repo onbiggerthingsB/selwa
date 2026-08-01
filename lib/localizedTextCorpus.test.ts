@@ -26,8 +26,8 @@ describe('static localized-text corpus', () => {
     // confirm, as the two assertions below do, that the growth is all fallback and none of it is
     // direct (unreviewed) Tibetan.
     expect(corpus.sourceFiles).toHaveLength(15);
-    expect(corpus.calls).toHaveLength(617);
-    expect(fallbackBo).toHaveLength(616);
+    expect(corpus.calls).toHaveLength(619);
+    expect(fallbackBo).toHaveLength(618);
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(corpus.excludedDirectBo[0].reason).toBe('verbatim-ocr-echo');
@@ -68,10 +68,10 @@ describe('static localized-text corpus', () => {
     // Rebaselined for the same 16 bone densitometry entries (report-only, bandless,
     // 'measurement' frame) plus two OCR-spelling aliases: each entry adds a name and definition,
     // aliases add no reference role, and helper reuse keeps plain fixed at 106.
-    expect(reference).toHaveLength(454);
-    expect(fields).toEqual({ name: 174, plain: 106, definition: 174 });
-    expect(nameKeys).toHaveLength(174);
-    expect(new Set(nameKeys)).toHaveLength(174);
+    expect(reference).toHaveLength(456);
+    expect(fields).toEqual({ name: 175, plain: 106, definition: 175 });
+    expect(nameKeys).toHaveLength(175);
+    expect(new Set(nameKeys)).toHaveLength(175);
   });
 
   it('preserves every production placeholder expression and its order', () => {

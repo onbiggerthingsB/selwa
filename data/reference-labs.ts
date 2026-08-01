@@ -3390,6 +3390,22 @@ export const REFERENCE_LABS: ReferenceEntry[] = [
     }),
   }),
   bodyMeasurement({
+    key: 'basal_metabolic_rate',
+    name: defineText({ en: reviewed('Basal metabolic rate'), zh: reviewed('基础代谢率'), bo: fallback('zh') }),
+    aliases: ['BMR', '基础代谢率', '基础代谢'],
+    // 'as reported' because the unit genuinely varies by instrument and this is the one entry where
+    // we have seen the unusual form: the 2026-03-25 Lhasa 一般常规检查 panel printed it as a bare
+    // percentage (30.00 %), where body-composition analysers more commonly report kcal/day. We do
+    // not know which convention a given machine uses, so we assert no unit family.
+    unit: 'as reported',
+    allowedUnits: ['as reported'],
+    definition: defineText({
+      en: reviewed('The energy your body uses at rest, as measured or estimated by the instrument. How it is expressed differs between machines, so the unit printed on your report is the one that applies.'),
+      zh: reviewed('身体在静息状态下消耗的能量，由仪器测得或推算。不同仪器的表示方式不同，因此以报告上打印的单位为准。'),
+      bo: fallback('zh'),
+    }),
+  }),
+  bodyMeasurement({
     key: 'oxygen_saturation',
     name: defineText({ en: reviewed('Blood oxygen saturation'), zh: reviewed('血氧饱和度'), bo: fallback('zh') }),
     aliases: ['SpO2', 'SpO₂', 'SaO2', '血氧饱和度', '血氧'],

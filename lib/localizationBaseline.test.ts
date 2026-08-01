@@ -13,10 +13,10 @@ import { UI_COPY } from '@/lib/uiCopy';
 // invariant this lock exists for: bo still falls back to zh for every reference string, i.e. no
 // unreviewed Tibetan entered the table.
 const REFERENCE_BASELINE = {
-  count: 174,
-  en: '6bbdf1c379cefbd732dc210340da86025b2bd4eb9673a3319e1660b3477c048e',
-  zh: 'aa504d501e2c240ca13c97d6364f5583dd7f93505f2e8bee64473f9f89f0d498',
-  bo: 'aa504d501e2c240ca13c97d6364f5583dd7f93505f2e8bee64473f9f89f0d498',
+  count: 175,
+  en: 'dac2d5a7845b727dea6548dc1ada467dfaaba597bcbe18af2f759b83b79dc988',
+  zh: '24e367a9f85ed0afa1fc5fba68566f5b11b677697598c2686a2cbf9d796b4d4e',
+  bo: '24e367a9f85ed0afa1fc5fba68566f5b11b677697598c2686a2cbf9d796b4d4e',
 } as const;
 
 const DISCLAIMER_KEYS = [

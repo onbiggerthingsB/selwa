@@ -11,7 +11,14 @@
 // what we curated, what we curated under a different spelling, and what we deliberately declined.
 
 /** GOAL A — bone densitometry. An entire modality the table did not cover. */
+// Measurement-frame rows: reachable only when no specimen is printed, never from a blood or urine
+// panel. 基础代谢率 joins these because it is a body measurement, not because it is bone density.
 export const BONE_DENSITOMETRY_NAMES_2026_07_28 = [
+  // Curated 2026-07-31 after reading the 一般常规检查 page directly. The 2026-07-28 pass declined it
+  // as "out of scope; no frame decided" — the frame already existed ('measurement'); the real
+  // obstacle was the unit, since the page prints a bare percentage (30.00 %) where body-composition
+  // analysers more often report kcal/day. The entry therefore asserts no unit family.
+  ['基础代谢率', 'basal_metabolic_rate'],
   ['T11 BMD', 'bone_bmd_t11'],
   ['T11 BMC', 'bone_bmc_t11'],
   ['T11 T值', 'bone_t_score_t11'],
@@ -57,6 +64,5 @@ export const DECLINED_NAMES_2026_07_28 = [
       + "specimen: 'blood' (it is a breath assay) and its DOB abbreviation collides with date of "
       + 'birth. It needs a breath specimen frame first.',
   ],
-  ['基础代谢率', 'Basal metabolic rate. Out of scope for this pass; no frame decided.'],
   ['其他', 'A literal "other" row. Not an analyte.'],
 ] as const;

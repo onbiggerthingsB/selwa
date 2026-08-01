@@ -297,7 +297,7 @@ describe('Tibetan reviewer packet export', () => {
     // are embedded in rows and do not move the name, term, or floor inventories.
     // 174 -> 348 on 2026-07-31: each entry now exports a name row AND a definition row. Mode 1
     // (the patient reading alone) is unusable with a translated name over a Chinese definition.
-    expect(packet.names).toHaveLength(348);
+    expect(packet.names).toHaveLength(350);
     expect(GLOSSARY_TERM_COMPONENT_COUNTS).toEqual({
       comparators: 6,
       coreNegators: 15,
@@ -327,15 +327,15 @@ describe('Tibetan reviewer packet export', () => {
   it('exports a name row and a definition row per entry, with mirrored context', () => {
     // 348 rows, 341 distinct zh strings: 174 names are all distinct, but 7 entries share a
     // definition with another entry, so the definitions contribute 167 rather than 174.
-    expect(packet.names.filter(({ field }) => field === 'name')).toHaveLength(174);
-    expect(packet.names.filter(({ field }) => field === 'definition')).toHaveLength(174);
-    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(341);
+    expect(packet.names.filter(({ field }) => field === 'name')).toHaveLength(175);
+    expect(packet.names.filter(({ field }) => field === 'definition')).toHaveLength(175);
+    expect(new Set(packet.names.map(({ zh }) => zh))).toHaveLength(343);
     // 6 -> 16 on 2026-07-26. The 6 pre-existing urine wildcards, plus 10 report-only entries whose
     // printed unit genuinely varies by assay or vendor (hepatitis serology in COI/S-CO/IU-mL,
     // thyroid antibodies, CA19-9, creatinine clearance, cholylglycine). For those there is no
     // curated unit family to contradict, and 'as reported' says so explicitly rather than
     // pretending incompatible units are equivalent.
-    expect(packet.names.filter(({ unit, field }) => unit === 'as reported' && field === 'name')).toHaveLength(16);
+    expect(packet.names.filter(({ unit, field }) => unit === 'as reported' && field === 'name')).toHaveLength(17);
     for (const row of packet.names) {
       const entry = REFERENCE_LABS.find(({ key }) => key === row.key)!;
       expect(row.context).toBe(
@@ -427,7 +427,7 @@ describe('Tibetan reviewer packet export', () => {
     );
     // The 16 bone densitometry entries (report-only, bandless, 'measurement' frame) plus two
     // OCR-spelling aliases add 16 name rows and no floor rows.
-    expect(parsed.names.rows).toHaveLength(348);
+    expect(parsed.names.rows).toHaveLength(350);
     expect(parsed.terms.rows).toHaveLength(34);
     expect(parsed.floor.rows).toHaveLength(162);
     expect(parsed.decisions.rows).toHaveLength(1);
@@ -435,7 +435,7 @@ describe('Tibetan reviewer packet export', () => {
       expect(sheet.rows.every((row) => row.bo === '')).toBe(true);
     }
     const rows = readReviewedPacket(output);
-    expect(rows).toHaveLength(348 + 162);
+    expect(rows).toHaveLength(350 + 162);
     expect(rows.every(({ bo }) => bo === '')).toBe(true);
   });
 
@@ -470,7 +470,7 @@ describe('Tibetan reviewer packet export', () => {
     // plus two OCR-spelling aliases. Aliases do not affect this hash; every new bo value remains a
     // zh fallback, so this must equal the zh baseline.
     expect(checklist).toEqual({
-      referenceBaselineBo: 'aa504d501e2c240ca13c97d6364f5583dd7f93505f2e8bee64473f9f89f0d498',
+      referenceBaselineBo: '24e367a9f85ed0afa1fc5fba68566f5b11b677697598c2686a2cbf9d796b4d4e',
       disclaimerBaselineBo: '26b37ac41f7ab7ca787474a8f0bd549f24937226f475fa873e7dffb3f0ccde4b',
       directContexts: [],
       expectedHashes: {},

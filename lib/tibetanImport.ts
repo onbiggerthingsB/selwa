@@ -549,8 +549,8 @@ export function buildTibetanReviewPacket(
   // Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only, bandless,
   // 'measurement' frame) plus two OCR-spelling aliases: the entries contribute one name and one
   // definition each (their `plain` reuses the definition); aliases add no reference calls.
-  if (referenceCalls.length !== 454) {
-    throw new Error(`Expected 454 reference calls; got ${referenceCalls.length}.`);
+  if (referenceCalls.length !== 456) {
+    throw new Error(`Expected 456 reference calls; got ${referenceCalls.length}.`);
   }
   if (new Set(corpus.calls.map(({ id }) => id)).size !== corpus.calls.length) {
     throw new Error('Localized corpus contains duplicate semantic ids; refusing to export ambiguity.');
@@ -570,7 +570,7 @@ export function buildTibetanReviewPacket(
   // carried inside their existing/new name rows and therefore do not add rows.
   // 174 -> 348 on 2026-07-31: every entry now exports a name row AND a definition row, because
   // Mode 1 (patient reading alone) is unusable with an untranslated definition. `plain` stays out.
-  if (names.length !== 348) throw new Error(`Expected 348 glossary rows; got ${names.length}.`);
+  if (names.length !== 350) throw new Error(`Expected 350 glossary rows; got ${names.length}.`);
   if (terms.length !== 34) throw new Error(`Expected 34 distinct glossary terms; got ${terms.length}.`);
   // floor.length is NOT hard-asserted: the packet legitimately exports however many UI floor
   // strings exist, and that count grows with every feature. The reviewer simply receives all
