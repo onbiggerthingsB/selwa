@@ -185,11 +185,11 @@ winner.
   hospital reports, the other says lab reports are all in Chinese so no fixed usage exists. The
   source has been requested.
 - Whether the collocation rule is a general convention or a personal one. Reviewer 1 has named a
-  source (translation standards in the 初中藏文课本) but flags that he does not know its current
+  source (translation standards in the 初中藏文课本) but flags that they do not know its current
   status. **Deliberately not chased.** The question only bites at reconciliation, and definitions
   cannot reach reconciliation until a second reviewer translates them. When it does bite, putting
-  real rows in front of reviewer 1 answers it better than a citation would, and costs him nothing.
+  real rows in front of reviewer 1 answers it better than a citation would, and costs them nothing.
   Until then, treat every collocation-driven difference as unresolved rather than as conflict —
-  returning it would be asking a translator to break a rule he was taught.
+  returning it would be asking a translator to break a rule they were taught.
 - All 174 definitions currently have one opinion. They cannot be published under the two-person
   rule until a second reviewer translates them independently.
