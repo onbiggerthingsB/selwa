@@ -403,16 +403,27 @@ describe('Tibetan reviewer packet export', () => {
     expect(JSON.stringify(packet)).not.toMatch(/[\u0F00-\u0FFF]/u);
   });
 
-  it('carries the unresolved 秒 policy as a decision rather than engineering copy', () => {
-    expect(packet.decisions).toEqual([
-      expect.objectContaining({
-        id: SECONDS_POLICY_DECISION_ID,
-        status: 'unresolved',
-        decision: '',
-      }),
-    ]);
-    expect(packet.decisions[0].question).toContain('秒');
-    expect(packet.decisions[0].question).toContain('no-CJK');
+  it('carries unresolved policy questions as decisions rather than engineering copy', () => {
+    // 1 -> 5 on 2026-08-01. The first two independent submissions agreed on 1 name of 174, and 93
+    // of the differences turned out to be a systematic choice of strategy rather than a slip. The
+    // four added questions are what those rows actually turn on, so a ruling resolves them in
+    // bulk instead of row by row. Every one stays unresolved and undecided in the packet:
+    // engineering records the question, reviewers answer it.
+    expect(packet.decisions).toHaveLength(5);
+    expect(packet.decisions.every((d) => d.status === 'unresolved' && d.decision === '')).toBe(true);
+    expect(packet.decisions.map((d) => d.id)).toContain(SECONDS_POLICY_DECISION_ID);
+
+    const seconds = packet.decisions.find((d) => d.id === SECONDS_POLICY_DECISION_ID)!;
+    expect(seconds.question).toContain('秒');
+    expect(seconds.question).toContain('no-CJK');
+
+    // The questions name the CHINESE term and describe each strategy, never quoting the Tibetan a
+    // previous reviewer wrote. A draft pasted into a decision row would anchor the next reviewer's
+    // vocabulary before they translate a word, which is what the zero-Tibetan assertion below
+    // protects. The side-by-side belongs in the reconciliation packet, not this one.
+    for (const decision of packet.decisions) {
+      expect(`${decision.question} ${decision.notes}`).not.toMatch(/[\u0F00-\u0FFF]/u);
+    }
   });
 
   it('writes four parseable CSVs and imports only the two source-bound sheets', () => {
@@ -430,7 +441,7 @@ describe('Tibetan reviewer packet export', () => {
     expect(parsed.names.rows).toHaveLength(350);
     expect(parsed.terms.rows).toHaveLength(34);
     expect(parsed.floor.rows).toHaveLength(162);
-    expect(parsed.decisions.rows).toHaveLength(1);
+    expect(parsed.decisions.rows).toHaveLength(5);
     for (const sheet of [parsed.names, parsed.terms, parsed.floor]) {
       expect(sheet.rows.every((row) => row.bo === '')).toBe(true);
     }

@@ -524,15 +524,65 @@ function buildGlossaryTermRows(): GlossaryTermRow[] {
     .sort((left, right) => left.term.localeCompare(right.term, 'zh'));
 }
 
+// The first two independent submissions (2026-08-01) agreed on 1 name out of 174. Measured, that
+// was not carelessness: 93 of the differences are a systematic choice of strategy, not a slip. The
+// four questions below are what those 93 rows actually turn on, so settling them resolves most of
+// the disagreement at once instead of arguing row by row.
+//
+// NO TIBETAN APPEARS HERE, deliberately. The packet is asserted to contain zero Tibetan characters
+// so that a reviewer receiving it starts from a blank slate; pasting an existing draft into a
+// decision row would anchor the next reviewer's vocabulary before they translate a word. The
+// questions therefore name the CHINESE term and describe each strategy. Reviewers 1 and 2 hold
+// their own files and can look up the exact strings; the side-by-side belongs in the separate
+// reconciliation packet, which is not this artifact.
+//
+// Engineering does not answer these.
 function buildDecisionRows(): DecisionRow[] {
-  return [{
-    id: SECONDS_POLICY_DECISION_ID,
-    question:
-      'Does Tibetan copy preserve the printed unit 秒 verbatim — matching the report in the patient\'s hand, violating no-CJK — or substitute a Tibetan/Latin token — satisfying no-CJK, diverging from the printed report?',
-    status: 'unresolved',
-    decision: '',
-    notes: 'Engineering must not choose. A2 rejects the first option; B5 rejects the second.',
-  }];
+  return [
+    {
+      id: SECONDS_POLICY_DECISION_ID,
+      question:
+        'Does Tibetan copy preserve the printed unit 秒 verbatim — matching the report in the patient\'s hand, violating no-CJK — or substitute a Tibetan/Latin token — satisfying no-CJK, diverging from the printed report?',
+      status: 'unresolved',
+      decision: '',
+      notes: 'Engineering must not choose. A2 rejects the first option; B5 rejects the second.',
+    },
+    {
+      id: 'term-strategy-transliterate-or-describe',
+      question:
+        'For an international term with no settled Tibetan word, do we TRANSLITERATE the international term, or BUILD a descriptive Tibetan coinage? The two submissions split on this for at least 8 names, including 血红蛋白, 糖化血红蛋白 and 肌酐.',
+      status: 'unresolved',
+      decision: '',
+      notes:
+        'The deciding question is not which is more correct, but which one an elderly reader RECOVERS THE MEANING OF, unaided, with nobody present to explain. A transliteration only works for a reader who can connect it back to the international word. Answer from the reader test if one has been run; otherwise state your reasoning.',
+    },
+    {
+      id: 'term-word-for-cell',
+      question:
+        'Which Tibetan word for the blood CELL should be standard across the table? The two submissions used different words consistently, affecting at least 20 names including 白细胞计数, 红细胞计数 and 平均红细胞体积.',
+      status: 'unresolved',
+      decision: '',
+      notes: 'One ruling settles about 20 rows. Please also say whether the choice differs between written and spoken register.',
+    },
+    {
+      id: 'term-word-for-blood',
+      question:
+        'Which Tibetan word for BLOOD should be standard? The two submissions used different words in 7 names including 血红蛋白, 红细胞压积 and 空腹血糖; the second submission never uses the first submission\'s word at all.',
+      status: 'unresolved',
+      decision: '',
+      notes:
+        'If one of the two is simply not the standard word for blood, say so plainly. That would make this a correction rather than a policy choice, and those rows should be fixed rather than voted on.',
+    },
+    {
+      id: 'chinese-left-inside-tibetan',
+      question:
+        'When no Tibetan term exists, may a CHINESE term be left inline inside an otherwise-Tibetan sentence? One submission does this in 51 definitions (e.g. the Chinese words for insulin and creatinine sit inside Tibetan prose) and once inside a name.',
+      status: 'unresolved',
+      decision: '',
+      notes:
+        'The brief offered only translate or leave blank; inline Chinese is a third option nobody specified, so this is our omission rather than a reviewer error. Weigh it against the fact that our reader is specifically someone who cannot read Chinese, with nobody beside them to point at the page.',
+    },
+  ];
 }
 
 export function buildTibetanReviewPacket(
