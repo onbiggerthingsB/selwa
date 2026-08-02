@@ -73,6 +73,18 @@ word), and he confirmed on inspection that it was a typo.
 Had the process simply returned every disagreement, a self-consistent system would have been sent
 back as an error, and its author told his professional judgement was rejected.
 
+**Confirmed and amended by its author on 2026-08-02.** Asked again, he confirmed 红细胞压积 was a
+slip and supplied a replacement string. Not quoted here, for the same reason nothing else is.
+
+Two things about that amendment are worth stating, because they will recur. First, it is the author
+correcting his own submission, not a second person overruling him, so it does not touch the
+two-person rule — the amended row still needs reviewer 2's independent row to agree before anything
+publishes. Second, we flagged the row before he looked at it, and feedback pulls answers. This one is
+safe because the rule he applied is one he had already stated to us unprompted, and the row deviated
+from *his* rule rather than converging on ours. That will not be true of every correction. The
+original submission is kept unmodified and the amendment recorded separately, so which is which stays
+auditable.
+
 ## A translation criterion our brief never mentioned
 
 Reviewer 1, unprompted: 要美观，要好听，读起来要顺口 — collocation and euphony. He gave a concrete
@@ -85,6 +97,26 @@ to an elderly patient, so how a term sounds is a functional property.
 It also has a consequence for measurement: **if word choice legitimately varies with what precedes
 it, then exact-match comparison between two translators is measuring the wrong thing.** Part of the
 174-to-1 figure is this rule working normally, not disagreement.
+
+He restated the rule on 2026-08-02 with the same example: the longer form was available, but a
+preceding letter T made the short form read better and simpler, so he used the short form.
+
+**Where the rule is and is not load-bearing.** It varies the *form* of a term the translator has
+already chosen, so it belongs among the 77 rows scored similar, and cannot explain the 93 scored
+substantially different — those are two translators choosing different terms outright. This is an
+inference from what the rule does, not a re-scored measurement. It is worth keeping straight, because
+the tempting reading is that collocation explains the whole 174-to-1 result. It does not. It explains
+why agreement was 1 rather than something like 70.
+
+**Asked whether this is a Tibetan translation convention or his own habit, he said: both, and he is
+not sure.** His words: it is how he himself thinks about it, but the 初中藏文课本 he was taught from
+sets out translation standards that require choosing words by collocation; whether contemporary
+translation practice still requires it, he does not know.
+
+That answer is more useful than a confident one either way. A taught standard he can name is
+checkable. It also means we cannot yet decide the question the answer was meant to settle: if the
+convention is general, two translators diverging on these rows is normal and returning them would be
+wrong; if it is personal, we have to pick one and impose it.
 
 ## What this says about our design
 
@@ -106,5 +138,10 @@ winner.
   contradict each other on this, and it is checkable: one cites a Tibetan medical dictionary and
   hospital reports, the other says lab reports are all in Chinese so no fixed usage exists. The
   source has been requested.
+- Whether the collocation rule is a general convention or a personal one. Reviewer 1 has named a
+  source (translation standards in the 初中藏文课本) but flags that he does not know its current
+  status. Both reviewers have now pointed at a checkable document; neither document has been read.
+  Until one is, treat every collocation-driven difference as unresolved rather than as conflict —
+  returning it would be asking a translator to break a rule he was taught.
 - All 174 definitions currently have one opinion. They cannot be published under the two-person
   rule until a second reviewer translates them independently.
