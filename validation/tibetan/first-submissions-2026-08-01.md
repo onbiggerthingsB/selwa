@@ -146,11 +146,31 @@ Both can hold if 规范 (consistent usage) and 书面语 (formal register) are s
 are. But the two reviewers are arguing in overlapping vocabulary, and neither has been asked which
 axis they mean. Some of the four policy questions may be dissolving rather than being decided.
 
-**Where reviewer 2 is plainly right, and where our product blunts it.** The concern about divergence
-between hospitals and doctors is real for Tibetan medical documents generally. It is weaker here
-specifically: our screen never replaces the Chinese, it annotates it, so a clinician shown the phone
-reads the printed Chinese name. The cross-institution risk is carried by the Chinese, which is not
-ours to vary.
+**Where reviewer 2 is plainly right, and where our product only partly blunts it.** The concern about
+divergence between hospitals and doctors is real for Tibetan medical documents generally. An earlier
+version of this paragraph claimed our screen never replaces the Chinese, only annotates it, so a
+clinician shown the phone always reads the printed Chinese name. **That is not what the code does,
+and the part of it that is true today stops being true the moment this work succeeds.**
+
+The two row paths differ, and only one of them keeps the Chinese:
+
+- An **unrecognised** row renders the verbatim printed name in every language mode
+  (`lib/summary.ts` fills `en`/`zh`/`bo` alike from `unverified(row.extracted.name)`). For these the
+  original claim holds unconditionally — we never had a translation to substitute.
+- A **recognised** row renders the curated `entry.name`, and the pair shown is primary + secondary
+  from `LANGUAGE_CONFIG`. For `bo` that is `{ fallback: 'zh', secondary: 'en' }` — Tibetan over
+  **English**. No Chinese appears on that row at all.
+
+The reason the screen looks Chinese-annotating today is that `nameBo` is curated on **0 of 175**
+entries, so every `bo` string falls back to `zh` and the primary happens to be Chinese. Importing the
+reviewed Tibetan this document is validating is exactly what removes that. Once a name has Tibetan, a
+Tibetan-mode reader sees Tibetan + English on the summary screen, and the printed Chinese is on the
+manifest and confirm screens, which are dismissed before the summary — the screen that persists.
+
+So reviewer 2's cross-institution concern is **not** defused by the product for recognised rows. It
+is deferred by the fact that no Tibetan ships yet. Whether the `bo` secondary should be `zh` rather
+than `en` is a real product question this document is not the place to settle, but it has to be
+settled before the first Tibetan name publishes. Recorded in Open below.
 
 **What it does change is internal, and it is not currently enforced.** Whatever vocabulary wins, one
 concept must render identically everywhere in the app — that is a product invariant, not a
@@ -193,3 +213,19 @@ winner.
   returning it would be asking a translator to break a rule they were taught.
 - All 174 definitions currently have one opinion. They cannot be published under the two-person
   rule until a second reviewer translates them independently.
+- **Whether `bo`'s secondary language should be `zh` rather than `en`.** `LANGUAGE_CONFIG.bo` is
+  `{ fallback: 'zh', secondary: 'en' }`, so a recognised row in Tibetan mode will show Tibetan +
+  English and no Chinese once `nameBo` exists. Reviewer 2's cross-institution argument is a reason to
+  prefer Chinese as the secondary; nobody has decided. Must be settled before the first Tibetan name
+  publishes, because that is the moment the current behaviour changes.
+- **Within-corpus term consistency is unchecked, and nothing tracks it but the paragraph above.**
+  `planDualAgreement` compares reviewer A's row to reviewer B's row; no code compares a reviewer's
+  row to their own other rows. Under the collocation rule that variation is *expected*, so this is
+  the one check the vocabulary argument identifies regardless of who wins. Not live today — no
+  Tibetan ships — but live on the first import.
+- **基础代谢率 has no Tibetan from either reviewer, and is in neither reviewer's packet.** It was
+  curated on 2026-08-01 (`6f4a7f6`), after both submissions were produced; the importer now expects
+  350 glossary rows (175 × 2) while the submissions in hand carry 174 names each. The importer fails
+  safe — missing-from-both is reported and a blank never publishes — so this is a tracking gap, not a
+  hazard. It needs a re-export before that row can ever publish. The "174" counts throughout this
+  document are correct for the packets that were sent; the table is now 175.
