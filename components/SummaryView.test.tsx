@@ -65,7 +65,7 @@ describe('SummaryView', () => {
     expect(screen.getByText('Fasting plasma glucose')).toBeInTheDocument(); // EN still present
   });
 
-  it('shows explicit Chinese fallback as the bo primary and English as secondary', () => {
+  it('shows Chinese once in bo mode and no English at all, until Tibetan is imported', () => {
     const { container } = render(<SummaryView report={report} lang="bo" />);
 
     const firstRow = container.querySelector('.rows > .row');
@@ -74,13 +74,19 @@ describe('SummaryView', () => {
     const primary = firstRow!.querySelector('.name-primary');
     const secondary = firstRow!.querySelector('.name-secondary');
     expect(primary).toHaveTextContent(/^空腹血糖$/);
-    expect(secondary).toHaveTextContent(/^Fasting plasma glucose$/);
     expect(
       primary!.querySelector('[data-requested-lang="bo"][data-resolved-lang="zh"]'),
     ).not.toBeNull();
-    expect(
-      secondary!.querySelector('[data-requested-lang="en"][data-resolved-lang="en"]'),
-    ).not.toBeNull();
+
+    // No secondary row at all: LANGUAGE_CONFIG.bo.secondary is 'zh' and the bo primary still falls
+    // back to Chinese (nameBo is curated on 0 of 175 entries), so SummaryView's
+    // `secondary.text !== primary.text` guard suppresses the duplicate. After the reviewed Tibetan
+    // import the primary becomes Tibetan and this row reappears carrying the Chinese.
+    expect(secondary).toBeNull();
+
+    // The summary is the screen that PERSISTS — the manifest and confirm screens are dismissed
+    // before it. So this is the assertion that actually enforces "the app carries no English".
+    expect(container.textContent).not.toContain('Fasting plasma glucose');
 
     const fallbacks = container.querySelectorAll(
       '[data-requested-lang="bo"][data-resolved-lang="zh"]',

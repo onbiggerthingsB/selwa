@@ -3,16 +3,19 @@ import { defineText, fallback, reviewed } from '@/lib/i18n';
 export const CONSENT_COPY = {
   dialogLabel: defineText({
     en: reviewed('Before we read your report'),
-    // The existing dialog has no separate Chinese accessible name. Preserve
-    // that exact disclosure surface until reviewed copy is supplied.
-    // NOTE (surfaced 2026-07-21): this registers English text as reviewed Chinese,
-    // so a bo user's dialog aria-label reports data-resolved-lang="zh" over English.
-    // The truthful encoding (zh: fallback('en')) was rejected because it makes the
-    // string resolve bo→zh→en, breaking the product-wide "every bo string falls back
-    // to Chinese" invariant enforced by lib/directBoAudit.test.ts's auditBoFallback.
-    // Resolve by supplying reviewed Chinese here (see heading's 在读取您的化验单之前),
-    // which is an owner decision about the dialog's accessible name.
-    zh: reviewed('Before we read your report'),
+    // RESOLVED 2026-08-29 (open since 2026-07-21). This slot used to hold the ENGLISH string
+    // registered as reviewed Chinese, so a zh or bo user's screen reader announced the dialog in
+    // English. The truthful encoding (zh: fallback('en')) was rejected then because it resolves
+    // bo→zh→en and breaks the product-wide "every bo string falls back to Chinese" invariant in
+    // lib/directBoAudit.test.ts. The actual fix was always to supply reviewed Chinese, which the
+    // old comment named: the heading's own 在读取您的化验单之前. Matching the visible heading is
+    // correct for an accessible name, not a compromise.
+    //
+    // It stopped being cosmetic when the Tibetan packet shipped: A6 (target must contain Tibetan
+    // script) and B4 (Latin token multisets) now BOTH refuse this row, so the only cell the
+    // importer accepted was the English typed straight back — English in, English out, into the
+    // bo slot. See lib/tibetanWellFormedness.ts A6.
+    zh: reviewed('在读取您的化验单之前'),
     bo: fallback('zh'),
   }),
   heading: defineText({

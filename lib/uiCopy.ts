@@ -113,11 +113,6 @@ export const UI_COPY = {
     zh: reviewed('已保存的报告'),
     bo: fallback('zh'),
   }),
-  valuesOnDevice: defineText({
-    en: reviewed('values · on this device'),
-    zh: reviewed('项 · 保存在本机'),
-    bo: fallback('zh'),
-  }),
   delete: defineText({
     en: reviewed('Delete'),
     zh: reviewed('删除'),
@@ -161,3 +156,32 @@ export const UI_COPY = {
     bo: fallback('zh'),
   }),
 } as const satisfies Record<string, LocalizedText>;
+
+/**
+ * The saved-report count, as a TEMPLATE rather than a suffix label.
+ *
+ * It used to be the bare string 'values · on this device' with the number concatenated in front
+ * by the caller (`{rows.length}{' '}<LocalizedText …/>`). That silently assumed every language
+ * puts the numeral FIRST. It does not: the Tibetan reviewer placed the number INSIDE the noun
+ * phrase, so concatenation would have printed the count twice — once from the caller and once
+ * from within the translation. (Their string is deliberately not quoted here: reviewer drafts
+ * are unreconciled work product, and a fragment in the tree can anchor the second reviewer's
+ * vocabulary. Same rule as validation/tibetan/first-submissions-2026-08-01.md.)
+ *
+ * A placeholder is strictly more flexible than concatenation: a language that leads with the
+ * numeral just writes it first. EN and ZH render byte-identically to before — verified by
+ * lib/localizationBaseline.test.ts — so this costs the shipped copy nothing.
+ *
+ * Kept as a property named `valuesOnDevice` on purpose: the review-packet id is derived from the
+ * property name (lib/localizedTextCorpus.ts:649), so reshaping this without the property would
+ * renumber the row and orphan the translation already out with the reviewers.
+ */
+export function savedVisitsCopy(count: number) {
+  return {
+    valuesOnDevice: defineText({
+      en: reviewed(`${count} values · on this device`),
+      zh: reviewed(`${count} 项 · 保存在本机`),
+      bo: fallback('zh'),
+    }),
+  };
+}

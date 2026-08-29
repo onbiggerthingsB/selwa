@@ -121,8 +121,10 @@ describe('shared language preference', () => {
     );
     await user.click(screen.getByRole('button', { name: /Use this photo/i }));
 
+    // Tibetan mode falls back to Chinese, so the dialog's accessible name is the Chinese one
+    // (lib/consentCopy.ts dialogLabel, resolved 2026-08-29 — it used to announce English).
     const dialog = await screen.findByRole('dialog', {
-      name: 'Before we read your report',
+      name: '在读取您的化验单之前',
     });
     const consentNodes = [
       dialog,

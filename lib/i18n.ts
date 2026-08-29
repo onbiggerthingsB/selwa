@@ -41,7 +41,15 @@ export const LANGUAGE_CONFIG = {
   zh: { fallback: 'zh', secondary: 'en' },
   // Tibetan copy is not available yet. Every bo entry must explicitly use this
   // Chinese fallback until reviewed Tibetan content is supplied for that string.
-  bo: { fallback: 'zh', secondary: 'en' },
+  //
+  // SECONDARY IS zh, NOT en. This only became load-bearing now: with nameBo curated on 0 of 175
+  // entries, every bo string fell back to Chinese and the pair rendered zh+en, so the screen
+  // merely LOOKED Chinese-annotating. The first reviewed Tibetan import ends that — a recognised
+  // row would have shown Tibetan over ENGLISH, with the printed Chinese name gone from the one
+  // screen that persists. Two independent reasons it must be Chinese: the product is stated to
+  // carry no English at all, and reviewer 2's cross-institution argument (a Tibetan reader
+  // showing the phone to a clinician needs the Chinese term the report actually prints).
+  bo: { fallback: 'zh', secondary: 'zh' },
 } as const satisfies Record<Lang, Readonly<{ fallback: Lang; secondary: Lang }>>;
 
 /** Identity helper that makes missing language entries a compile-time error. */

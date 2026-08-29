@@ -160,15 +160,66 @@ export function unitInvariantFindings(
     : mismatch('B5', 'Unit token multisets differ.', source, target);
 }
 
+/**
+ * B7 is ONE-SIDED (target >= source), not equality. It catches a DROPPED clause; a surplus
+ * shad is not a defect.
+ *
+ * Equality was wrong in both directions, and it refused 15 of the first 19 rows a real Tibetan
+ * translator returned. A shad is not a translation of a Chinese period — it is where Tibetan
+ * grammar closes a clause, and the two do not correspond:
+ *   • 44 of the 109 UI strings are labels/headings whose Chinese carries no 。；：at all
+ *     (重试, 返回, 结果, 单位). Equality demanded ZERO shad — i.e. unpunctuated Tibetan. The
+ *     reviewer translating them stated the rule unprompted and without being asked about
+ *     register: the shad is required on buttons and prose alike, by Tibetan grammar.
+ *   • Chinese ，、（）—— also close clauses that Tibetan ends with a shad, and this predicate
+ *     does not count them, so a faithful translation systematically overshoots.
+ *
+ * Equality also produced a live FALSE ACCEPT, which one-sidedness removes: for a source with one
+ * 。whose faithful Tibetan takes two shad, the correct string was refused (2 !== 1) while the
+ * string with a clause DELETED was accepted (1 === 1). The gate was inverted on that row.
+ *
+ * Measured on the 19 reviewed rows: equality refuses 15, one-sided refuses 0, and shad count is
+ * >= separator count in 19 of 19 — no faithful translation ever under-produced a shad.
+ *
+ * KNOWN LIMIT, deliberately not papered over. Restricting to the deficit direction narrows what
+ * this catches: of 11 clause-deletion mutants built from those rows, one-sided catches 4. Equality
+ * "caught" 10, but 6 of those were rows where it also refused the correct text — a rule that
+ * refuses everything detects nothing. Measured only on rows whose faithful text PASSES, equality
+ * scored 4 of 4 and one-sided scores 4 of 11, over 19 importable rows instead of 4. The residual
+ * gap is covered by planDualAgreement: two reviewers must produce byte-identical strings
+ * independently, which is a far stronger omission detector than counting punctuation.
+ */
 export function clauseInvariantFindings(
   sourceText: string,
   targetText: string,
 ): readonly TibetanInvariantFinding[] {
-  const source = sourceText.match(/[。；：;:]/gu) ?? [];
-  const target = targetText.match(/[\u0F0D\u0F0E]/gu) ?? [];
-  return source.length === target.length
+  // Terminators only. A colon INTRODUCES a clause, it does not close one, so counting it
+  // demanded a shad Tibetan has no reason to write. Five of the 109 UI strings carry the
+  // parenthetical （原文：{original}）, where the colon labels a quoted value mid-sentence;
+  // counting it refused rows 58 and 61 of a reviewed packet outright. Verified against the
+  // full 108-row reviewed corpus: dropping the colon fixes exactly those rows and refuses
+  // nothing new.
+  const source = sourceText.match(/[。；;]/gu) ?? [];
+  // Tibetan boundaries are not only shad. Syllables inside a phrase are joined by a TSHEG, so a
+  // SPACE between two Tibetan runs is itself a phrase boundary — and the reviewer uses exactly
+  // that where orthography drops the shad ("有一些藏文字…后面不用 །，因为它本来就是很长的竖":
+  // some letters already end in a long vertical stroke that serves as the shad). Counting the
+  // shad alone therefore under-reports real boundaries and refuses correct Tibetan.
+  //
+  // DELIBERATELY NOT a letter allow-list. The reviewer named ག as an EXAMPLE, not an enumeration,
+  // and encoding a guessed set is how this check went wrong three times already: it kept inferring
+  // Tibetan structure from Chinese punctuation. Space-as-boundary needs no such guess. The
+  // residual gap — an omitted shad with no space either, e.g. a clause running straight into a
+  // parenthetical — is left REFUSING on purpose, so a human looks rather than the code guessing.
+  const target = targetText.match(/[\u0F0D\u0F0E]|(?<![\u0F0D\u0F0E])\s+(?=[\u0F40-\u0FBC])/gu) ?? [];
+  return target.length >= source.length
     ? []
-    : mismatch('B7', 'Chinese clause separators and Tibetan shad counts differ.', source, target);
+    : mismatch(
+        'B7',
+        'Tibetan shad count is below the Chinese clause-separator count, so a clause looks dropped.',
+        source,
+        target,
+      );
 }
 
 export function placeholderInvariantFindings(

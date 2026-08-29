@@ -93,6 +93,9 @@ describe('static localized-text corpus', () => {
       'lib/notesGuard.ts:838': [['raw']],
       'lib/notesGuard.ts:850': [['raw']],
       'lib/notesGuard.ts:888': [['n']],
+      // The saved-visit count. Was concatenated by the caller until the Tibetan reviewer's
+      // rendering showed the numeral sits mid-phrase, which would have printed it twice.
+      'lib/uiCopy.ts:181': [['count']],
     });
   });
 

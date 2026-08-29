@@ -143,6 +143,7 @@ const PLACEHOLDER_NAME_BY_EXPRESSION = {
   'ratio.toFixed(1)': 'ratio',
   'srcFreq.toUpperCase()': 'frequency',
   n: 'number',
+  count: 'count',
 } as const satisfies Readonly<Record<string, string>>;
 
 const DISCLAIMER_KEYS = [

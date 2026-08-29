@@ -9,7 +9,7 @@ import {
   LOCALIZED_TEXT_SOURCE_DIRS,
 } from '@/lib/localizedTextCorpus';
 import { buildSummary } from '@/lib/summary';
-import { UI_COPY } from '@/lib/uiCopy';
+import { UI_COPY, savedVisitsCopy } from '@/lib/uiCopy';
 
 const SUMMARY_DIRECT_BO_CONTEXT = 'SUMMARY.abstained-row.name';
 const VERBATIM_OCR_TEST_NAME = 'VERBATIM-OCR-TEST-NAME';
@@ -98,6 +98,13 @@ function auditedCopies(): AuditedCopy[] {
       context: `UI_COPY.${key}`,
       copy,
     })),
+    // Parameterised copy is NOT in UI_COPY, so it must be listed explicitly or it silently
+    // escapes this audit — which is exactly what happened when the saved-visit count became a
+    // template. Any future count/date/name-parameterised string belongs here too.
+    ...Object.entries(savedVisitsCopy(1)).map(([key, copy]) => ({
+      context: `savedVisitsCopy().${key}`,
+      copy,
+    })),
     ...Object.entries(CONSENT_COPY).map(([key, copy]) => ({
       context: `CONSENT_COPY.${key}`,
       copy,
@@ -117,7 +124,10 @@ function auditedCopies(): AuditedCopy[] {
 describe('direct Tibetan localization audit', () => {
   it('requires every direct bo variant to be a named opt-in', () => {
     expect(DISCLAIMER_TEXTS).toHaveLength(5);
-    expect(Object.keys(UI_COPY)).toHaveLength(30);
+    // 29, not 30: valuesOnDevice moved to savedVisitsCopy() to take the count as a template
+    // arg. It is still audited — see auditedCopies() — just not via UI_COPY.
+    expect(Object.keys(UI_COPY)).toHaveLength(29);
+    expect(Object.keys(savedVisitsCopy(1))).toHaveLength(1);
     expect(Object.keys(CONSENT_COPY)).toHaveLength(6);
     // Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only, bandless,
     // 'measurement' frame) plus two OCR-spelling aliases: entries add 16 table rows and three
@@ -125,7 +135,7 @@ describe('direct Tibetan localization audit', () => {
     expect(REFERENCE_LABS).toHaveLength(175);
 
     const copies = auditedCopies();
-    expect(copies).toHaveLength(5 + 30 + 6 + (175 * 3) + 1);
+    expect(copies).toHaveLength(5 + 29 + 1 + 6 + (175 * 3) + 1);
     expect(
       copies.find(({ context }) => context === SUMMARY_DIRECT_BO_CONTEXT)?.copy,
       'the sole direct-bo exception must stay a verbatim unverified OCR token',

@@ -120,7 +120,7 @@ describe('ConfirmValues result-shape input', () => {
     expect(container.querySelector('.confirm-matched')).toHaveTextContent('Fasting plasma glucose');
   });
 
-  it('uses explicit Chinese fallback as the bo primary and keeps English secondary', () => {
+  it('shows Chinese once in bo mode: the secondary is zh, so it dedupes until Tibetan exists', () => {
     const { container } = render(
       <ConfirmValues
         report={report}
@@ -140,13 +140,19 @@ describe('ConfirmValues result-shape input', () => {
     expect(firstName).not.toBeNull();
     const localizedNames = firstName!.querySelectorAll('[data-requested-lang]');
 
-    expect(localizedNames).toHaveLength(2);
+    // ONE, not two. LANGUAGE_CONFIG.bo.secondary is now 'zh', and with nameBo curated on 0 of 175
+    // entries the bo primary also falls back to Chinese — so primary and secondary resolve to the
+    // same string and ConfirmValues suppresses the duplicate. English no longer appears anywhere
+    // in bo mode, which is the stated product requirement.
+    //
+    // Once reviewed Tibetan is imported this becomes TWO again: Tibetan over Chinese. That is the
+    // point of the change — a Tibetan reader who shows the phone to a clinician needs the Chinese
+    // term their report actually prints, not an English one nobody in the room reads.
+    expect(localizedNames).toHaveLength(1);
     expect(localizedNames[0]).toHaveAttribute('data-requested-lang', 'bo');
     expect(localizedNames[0]).toHaveAttribute('data-resolved-lang', 'zh');
     expect(localizedNames[0]).toHaveTextContent(/^空腹血糖$/);
-    expect(localizedNames[1]).toHaveAttribute('data-requested-lang', 'en');
-    expect(localizedNames[1]).toHaveAttribute('data-resolved-lang', 'en');
-    expect(localizedNames[1]).toHaveTextContent(/^Fasting plasma glucose$/);
+    expect(container.textContent).not.toContain('Fasting plasma glucose');
 
     expect(screen.getByText('请核对这些结果')).toBeInTheDocument();
     expect(screen.getByLabelText('结果 0')).toBeInTheDocument();

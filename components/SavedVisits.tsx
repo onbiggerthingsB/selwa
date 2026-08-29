@@ -5,7 +5,7 @@ import { SummaryView } from '@/components/SummaryView';
 import { NotesSection } from '@/components/NotesSection';
 import { LocalizedText } from '@/components/LocalizedText';
 import type { Lang } from '@/lib/i18n';
-import { UI_COPY } from '@/lib/uiCopy';
+import { UI_COPY, savedVisitsCopy } from '@/lib/uiCopy';
 
 export function SavedVisits({ lang }: { lang: Lang }) {
   const [visits, setVisits] = useState<VisitRecord[]>([]);
@@ -29,8 +29,12 @@ export function SavedVisits({ lang }: { lang: Lang }) {
               <button className="saved-open" onClick={() => setOpenId(openId === v.id ? null : v.id)}>
                 {new Date(v.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                 <span className="saved-meta">
-                  {v.report.rows.length}{' '}
-                  <LocalizedText value={UI_COPY.valuesOnDevice} lang={lang} />
+                  {/* The count lives INSIDE the string: Tibetan places the numeral mid-phrase,
+                      so prefixing it here would print it twice. See savedVisitsCopy. */}
+                  <LocalizedText
+                    value={savedVisitsCopy(v.report.rows.length).valuesOnDevice}
+                    lang={lang}
+                  />
                 </span>
               </button>
               <button

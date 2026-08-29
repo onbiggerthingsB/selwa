@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { REFERENCE_LABS } from '@/data/reference-labs';
 import { disclaimers } from '@/lib/disclaimers';
 import { resolveText, type Lang } from '@/lib/i18n';
-import { UI_COPY } from '@/lib/uiCopy';
+import { UI_COPY, savedVisitsCopy } from '@/lib/uiCopy';
 
 // Captured from clean pre-refactor HEAD 9c5100a85565bba784bac2ff488bd28a6e2720bb.
 // Hash input is JSON.stringify's UTF-8 bytes with the property order below and no trailing LF.
@@ -67,7 +67,8 @@ const LEGACY_UI_COPY = {
   saved: { en: 'Saved', zh: '已保存' },
   saveOnDevice: { en: 'Keep this report on my device', zh: '保存到本机' },
   savedReports: { en: 'Saved reports', zh: '已保存的报告' },
-  valuesOnDevice: { en: 'values · on this device', zh: '项 · 保存在本机' },
+  // Count is a template arg now, not a caller-side prefix; rendered output is unchanged.
+  valuesOnDevice: { en: '{count} values · on this device', zh: '{count} 项 · 保存在本机' },
   delete: { en: 'Delete', zh: '删除' },
   reportRange: { en: 'Your report’s range ', zh: '报告所列范围 ' },
   typicalRange: {
@@ -128,11 +129,15 @@ describe('pre-Tibetan EN/ZH localization baseline', () => {
   it.each(['en', 'zh', 'bo'] as const)(
     'keeps every migrated %s UI string byte-identical by semantic key',
     (lang) => {
+      // valuesOnDevice moved out of UI_COPY into a count-parameterised template. Resolve it
+      // with the literal '{count}' so this baseline still compares the SHIPPED string: the
+      // rendered output is unchanged, only the count's position moved inside it.
+      const resolveByKey = (key: string) =>
+        key === 'valuesOnDevice'
+          ? resolveText(savedVisitsCopy('{count}' as unknown as number).valuesOnDevice, lang).text
+          : resolveText(UI_COPY[key as keyof typeof UI_COPY], lang).text;
       const actual = Object.fromEntries(
-        Object.keys(LEGACY_UI_COPY).map((key) => [
-          key,
-          resolveText(UI_COPY[key as keyof typeof LEGACY_UI_COPY], lang).text,
-        ]),
+        Object.keys(LEGACY_UI_COPY).map((key) => [key, resolveByKey(key)]),
       );
       const sourceLang = lang === 'bo' ? 'zh' : lang;
       const expected = Object.fromEntries(

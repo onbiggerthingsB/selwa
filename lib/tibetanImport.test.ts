@@ -366,7 +366,8 @@ describe('Tibetan reviewer packet export', () => {
       .toHaveLength(6);
     const interpolated = packet.floor.filter(({ placeholders }) =>
       (JSON.parse(placeholders) as string[][]).some((values) => values.length > 0));
-    expect(interpolated).toHaveLength(8);
+    // 9 since the saved-visit count became a {count} template rather than a caller-side prefix.
+    expect(interpolated).toHaveLength(9);
     expect(interpolated.find(({ id }) => id === 'lib/grounding.ts:message:0')?.zh)
       .toContain('{fromUnit}');
     expect(interpolated.find(({ id }) => id === 'lib/guard.ts:function:evaluateRow:4')?.zh)

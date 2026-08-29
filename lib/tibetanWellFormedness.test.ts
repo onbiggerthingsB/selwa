@@ -17,6 +17,35 @@ function hasFinding(text: string, check: TibetanWellFormednessCheck): boolean {
 }
 
 describe('Tibetan Class A well-formedness', () => {
+  it('A6 refuses a target with no Tibetan script, and A1 alone owns the empty cell', () => {
+    // The English-in/English-out hole: lib/consentCopy.ts registers English as reviewed Chinese,
+    // and before A6 the only cell the pipeline accepted for that row was the English typed back,
+    // which it then wrote into the bo slot. No other check looked at the target's script.
+    const findings = auditTibetanWellFormedness('Before we read your report');
+    expect(findings.map(({ check }) => check)).toContain('A6');
+
+    // A blank cell reports A1 and NOT A6 — one defect, one diagnostic.
+    const empty = auditTibetanWellFormedness('   ').map(({ check }) => check);
+    expect(empty).toContain('A1');
+    expect(empty).not.toContain('A6');
+
+    expect(auditTibetanWellFormedness('བཀྲ་ཤིས།')).toEqual([]);
+  });
+
+  it('A3 admits the em dash the sources use, and still rejects curly quotes', () => {
+    // 7 of the 109 UI strings carry ——. The reviewer meant to reproduce it and padded with
+    // SPACES instead, which is worse: canonicalBo compares inner whitespace byte-for-byte, so
+    // two reviewers padding differently disagree on a row they translated identically.
+    expect(auditTibetanWellFormedness('བཀྲ་ཤིས།——དགེ་ལེགས།')).toEqual([]);
+
+    // Curly quotes stay banned: they are the signature of an autocorrecting editor, and the
+    // reviewer confirmed the Tibetan gug rtags is the mark they would use anyway.
+    expect(
+      auditTibetanWellFormedness('བཀྲ་ཤིས། \u201Cདགེ་ལེགས།\u201D').map(({ check }) => check),
+    ).toEqual(['A3', 'A3']);
+    expect(auditTibetanWellFormedness('བཀྲ་ཤིས། ༼དགེ་ལེགས།༽')).toEqual([]);
+  });
+
   it('reports a visible empty curated corpus and the separately excluded OCR echo', () => {
     const corpus = extractLocalizedTextCorpus();
     const findings = corpus.curatedBo.flatMap((entry) => {

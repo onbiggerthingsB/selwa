@@ -273,6 +273,60 @@ describe('Tibetan Class B source-output invariants', () => {
     ).toBe(true);
   });
 
+  // B7 is one-sided ON PURPOSE. These three lock the direction, because the obvious "tidy-up"
+  // is to restore equality, and equality refused 15 of the first 19 rows a Tibetan reviewer
+  // returned. See the rationale on clauseInvariantFindings.
+  it('B7 accepts a shad on a label whose Chinese has no clause separator', () => {
+    // 44 of the 109 UI strings look like this. The reviewer's stated rule is that Tibetan
+    // grammar requires the shad on a button label exactly as on prose; equality demanded none.
+    expect(clauseInvariantFindings('重试', 'དང་པོ།')).toEqual([]);
+  });
+
+  it('B7 accepts surplus shad where Chinese uses a comma Tibetan closes with a shad', () => {
+    expect(
+      clauseInvariantFindings(
+        // one 。 in the source, TWO shad in a faithful rendering — the Chinese comma is a
+        // clause boundary Tibetan closes with a shad, and equality refused exactly this.
+        '发送照片进行读取前，请再次确认您的同意。',
+        'དང་པོ། གཉིས་པ།',
+      ),
+    ).toEqual([]);
+  });
+
+  it('B7 does not count a colon that only labels a parenthetical value', () => {
+    // （原文：{original}） appears on five UI strings. The colon introduces a quoted value
+    // mid-sentence; Tibetan writes no shad there, and counting it refused reviewed rows.
+    expect(
+      clauseInvariantFindings(
+        '剂量与原文不一致（原文：{original}）。请与您的医生确认。',
+        'དང་པོ། ({original}) གཉིས་པ།',
+      ),
+    ).toEqual([]);
+  });
+
+  it('B7 counts a space between Tibetan runs as a boundary, not only a shad', () => {
+    // Orthography drops the shad after certain letters, and the reviewer writes the boundary as a
+    // bare space there. Shad-only counting refused this correct row.
+    expect(
+      clauseInvariantFindings(
+        // First clause ends in ག with NO shad — orthography drops it there — and the boundary
+        // is carried by the space alone. Shad-only counting refused this correct shape.
+        '译文中遗漏了原文药名中的信息。请与您的医生确认。',
+        'དང་པོ་འདུག གཉིས་པ།',
+      ),
+    ).toEqual([]);
+    // A shad already followed by a space is ONE boundary, not two.
+    expect(clauseInvariantFindings('甲。乙。丙。', 'ཀ། ཁ།')).toHaveLength(1);
+  });
+
+  it('B7 no longer accepts a deletion it once preferred over the faithful string', () => {
+    // The inversion equality produced on that same row: correct text refused (2 !== 1),
+    // clause-deleted text accepted (1 === 1). Both directions must now come out right.
+    const source = '发送照片进行读取前，请再次确认您的同意。';
+    expect(clauseInvariantFindings(source, 'དང་པོ།')).toEqual([]);
+    expect(clauseInvariantFindings('甲。乙。', 'གཅིག')).toHaveLength(1);
+  });
+
   it('B10 positive control rejects reordered placeholders', () => {
     expect(
       placeholderInvariantFindings(

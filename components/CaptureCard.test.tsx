@@ -145,12 +145,16 @@ describe('CaptureCard extraction failures', () => {
       mocks.hasConsent.mockReturnValue(false);
 
       await uploadAndSubmit(lang);
-      const dialog = await screen.findByRole('dialog', {
-        name: 'Before we read your report',
-      });
+      // The dialog's accessible NAME is now real Chinese in zh (and bo). It used to be the English
+      // string registered as reviewed Chinese, so a Chinese screen-reader user heard English —
+      // resolved 2026-08-29 in lib/consentCopy.ts. The heading below still shows en + zh together;
+      // only the accessible name is language-resolved.
+      const dialogLabel = lang === 'en' ? 'Before we read your report' : '在读取您的化验单之前';
+
+      const dialog = await screen.findByRole('dialog', { name: dialogLabel });
 
       expect(consentRenderContract(dialog)).toEqual({
-        ariaLabel: 'Before we read your report',
+        ariaLabel: dialogLabel,
         heading: {
           childNodes: 2,
           en: 'Before we read your report',
@@ -197,8 +201,9 @@ describe('CaptureCard extraction failures', () => {
     mocks.hasConsent.mockReturnValue(false);
 
     await uploadAndSubmit('bo');
+    // bo falls back to zh, so the accessible name is the Chinese one.
     const dialog = await screen.findByRole('dialog', {
-      name: 'Before we read your report',
+      name: '在读取您的化验单之前',
     });
 
     expect(

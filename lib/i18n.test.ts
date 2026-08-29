@@ -19,7 +19,7 @@ const COPY = defineText({
 describe('localized text', () => {
   it('defines all three supported languages and the explicit Chinese fallback for bo', () => {
     expect(LANGS).toEqual(['en', 'zh', 'bo']);
-    expect(LANGUAGE_CONFIG.bo).toEqual({ fallback: 'zh', secondary: 'en' });
+    expect(LANGUAGE_CONFIG.bo).toEqual({ fallback: 'zh', secondary: 'zh' });
   });
 
   it('returns English and Chinese text byte-for-byte', () => {
@@ -79,7 +79,9 @@ describe('localized text', () => {
     const bo = resolvePrimarySecondary(COPY, 'bo');
     expect(bo.primary.resolvedLang).toBe('zh');
     expect(bo.primary.usedFallback).toBe(true);
-    expect(bo.secondary.resolvedLang).toBe('en');
+    // Chinese, not English: a Tibetan reader shows the phone to a clinician who reads the
+    // Chinese the report prints. See LANGUAGE_CONFIG.bo.
+    expect(bo.secondary.resolvedLang).toBe('zh');
   });
 
   it('requires every supported language at compile time', () => {
