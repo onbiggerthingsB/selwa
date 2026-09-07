@@ -8,10 +8,9 @@ import { CONSENT_HEADER } from '@/lib/consentGate';
 import { applyRedactions, rectFromDrag, isMeaningful, type Rect } from '@/lib/redact';
 import { groundExtraction } from '@/lib/grounding';
 import { LabExtractionSchema } from '@/lib/extractionSchema';
-import { NotesTranslationSchema } from '@/lib/notesSchema';
-import { groundNotes } from '@/lib/notesGrounding';
 import { setPendingReport } from '@/lib/session';
-import type { GroundedNotes, Sex } from '@/lib/types';
+import type { ReportWithOriginalNotes } from '@/lib/reportStorage';
+import type { Sex } from '@/lib/types';
 import { CONSENT_COPY } from '@/lib/consentCopy';
 import { LocalizedText as LocalizedTextView } from '@/components/LocalizedText';
 import {
@@ -31,6 +30,7 @@ type FailureCause =
   | 'not-permitted'
   | 'image-rejected'
   | 'network'
+  | 'storage-unavailable'
   | 'unreadable';
 
 type CaptureFailure = {
@@ -43,10 +43,23 @@ const FAILURE_PRESENTATION: Record<
   FailureCause,
   {
     message: LocalizedText;
-    action: 'retry' | 'retake' | 'consent';
+    action: 'retry' | 'retake' | 'consent' | 'store';
     actionLabel: LocalizedText;
   }
 > = {
+  'storage-unavailable': {
+    message: defineText({
+      en: reviewed('This device could not keep the report and original notes for the next screen. They are still in this open page. Retry on-device storage without sending the photo again.'),
+      zh: reviewed('本设备无法暂存报告和原始说明以供下一页使用。它们仍保留在当前页面中。请重试本机存储，照片不会再次发送。'),
+      bo: fallback('zh'),
+    }),
+    action: 'store',
+    actionLabel: defineText({
+      en: reviewed('Retry on-device storage'),
+      zh: reviewed('重试本机存储'),
+      bo: fallback('zh'),
+    }),
+  },
   'server-unavailable': {
     message: defineText({
       en: reviewed('The report-reading service is temporarily unavailable. Please try again in a moment.'),
@@ -195,6 +208,7 @@ export function CaptureCard({ lang }: { lang: Lang }) {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [notesText, setNotesText] = useState('');
+  const pendingToStore = useRef<ReportWithOriginalNotes | null>(null);
   const [quality, setQuality] = useState<QualityVerdict | null>(null);
   const [failure, setFailure] = useState<CaptureFailure | null>(null);
   // On-device redaction: the user covers their own identifiers before the transfer.
@@ -204,13 +218,15 @@ export function CaptureCard({ lang }: { lang: Lang }) {
   // rendering — a pointer sequence can fire faster than React re-renders, and reading `drag`
   // from a stale closure would silently drop the box.
   const dragRef = useRef<{ ax: number; ay: number; bx: number; by: number } | null>(null);
-  const [drag, setDrag] = useState<{ ax: number; ay: number; bx: number; by: number } | null>(null);
+  const [drag, setDrag] = useState<Rect | null>(null);
   const [redactError, setRedactError] = useState<string | null>(null);
   const consentDialogLabel = resolveText(CONSENT_COPY.dialogLabel, lang);
 
   function dragPoint(e: React.PointerEvent) {
     const box = redactBoxRef.current?.getBoundingClientRect();
-    return box ? { x: e.clientX - box.left, y: e.clientY - box.top } : { x: 0, y: 0 };
+    return box
+      ? { x: e.clientX - box.left, y: e.clientY - box.top, width: box.width, height: box.height }
+      : { x: 0, y: 0, width: 0, height: 0 };
   }
   function onRedactDown(e: React.PointerEvent) {
     const p = dragPoint(e);
@@ -220,13 +236,14 @@ export function CaptureCard({ lang }: { lang: Lang }) {
       /* capture is a nicety — the drag still works without it */
     }
     dragRef.current = { ax: p.x, ay: p.y, bx: p.x, by: p.y };
-    setDrag(dragRef.current);
+    setDrag(rectFromDrag(p.x, p.y, p.x, p.y, p.width, p.height));
   }
   function onRedactMove(e: React.PointerEvent) {
     if (!dragRef.current) return;
     const p = dragPoint(e);
     dragRef.current = { ...dragRef.current, bx: p.x, by: p.y };
-    setDrag({ ...dragRef.current });
+    const d = dragRef.current;
+    setDrag(rectFromDrag(d.ax, d.ay, d.bx, d.by, p.width, p.height));
   }
   function onRedactUp() {
     const d = dragRef.current;
@@ -264,6 +281,10 @@ export function CaptureCard({ lang }: { lang: Lang }) {
   function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
+    pendingToStore.current = null;
+    setRects([]);
+    dragRef.current = null;
+    setDrag(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFailure(null);
     setFile(f);
@@ -277,6 +298,18 @@ export function CaptureCard({ lang }: { lang: Lang }) {
     console.error('capture submission failed', { status, cause });
     setFailure({ cause, status, retryWithQualityOverride });
     setPhase(cause === 'not-permitted' ? 'consent' : 'error');
+  }
+
+  function storePending(pending: ReportWithOriginalNotes) {
+    pendingToStore.current = pending;
+    try {
+      setPendingReport(pending);
+    } catch {
+      failSubmission('storage-unavailable', null, false);
+      return;
+    }
+    pendingToStore.current = null;
+    router.push('/result');
   }
 
   async function submit(overrideQuality = false) {
@@ -367,28 +400,9 @@ export function CaptureCard({ lang }: { lang: Lang }) {
       const base = { ...groundExtraction(extraction, sex, age), generatedAt: Date.now() };
       const report = overrideQuality ? escalateConfirm(base) : base;
 
-      // Doctor notes are optional and best-effort: a translation failure must never
-      // block the lab report. The notes text transits the server transiently only.
-      let notes: GroundedNotes | undefined;
-      const trimmed = notesText.trim();
-      if (trimmed) {
-        try {
-          const nres = await fetch('/api/translate-notes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', [CONSENT_HEADER]: String(CONSENT_VERSION) },
-            body: JSON.stringify({ text: trimmed }),
-          });
-          if (nres.ok) {
-            const { data: ndata } = await nres.json();
-            notes = groundNotes(NotesTranslationSchema.parse(ndata), trimmed);
-          }
-        } catch {
-          notes = undefined; // swallow: keep the report flow intact
-        }
-      }
-
-      setPendingReport({ report, ...(notes ? { notes } : {}) });
-      router.push('/result');
+      // Preserve exactly what the user submitted. Never trim, split or replace it
+      // with model-derived source segments, and never send this field to the server.
+      storePending({ report, originalNotes: notesText });
     } catch {
       // A valid extraction that fails during local post-processing is still not
       // evidence of a bad photo. Keep the selected image available for a retry.
@@ -397,6 +411,7 @@ export function CaptureCard({ lang }: { lang: Lang }) {
   }
 
   function retake() {
+    pendingToStore.current = null;
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFailure(null);
     setFile(null);
@@ -409,7 +424,9 @@ export function CaptureCard({ lang }: { lang: Lang }) {
   function handleFailureAction() {
     if (!failure) return;
     const presentation = FAILURE_PRESENTATION[failure.cause];
-    if (presentation.action === 'retry') {
+    if (presentation.action === 'store') {
+      if (pendingToStore.current) storePending(pendingToStore.current);
+    } else if (presentation.action === 'retry') {
       submit(failure.retryWithQualityOverride);
     } else if (presentation.action === 'consent') {
       setPhase('consent');
@@ -470,6 +487,10 @@ export function CaptureCard({ lang }: { lang: Lang }) {
               value={notesText}
               onChange={(e) => setNotesText(e.target.value)}
             />
+            <span className="field-label">
+              Kept as entered on this device; not translated.
+              <span className="zh" lang="zh">按输入原文保留在本机，不进行翻译。</span>
+            </span>
           </label>
 
           <button type="button" className="capture-card" onClick={openPicker}>
@@ -528,15 +549,12 @@ export function CaptureCard({ lang }: { lang: Lang }) {
                 style={{ position: 'absolute', background: '#000', left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.w * 100}%`, height: `${r.h * 100}%` }}
               />
             ))}
-            {drag && redactBoxRef.current && (() => {
-              const b = redactBoxRef.current.getBoundingClientRect();
-              const r = rectFromDrag(drag.ax, drag.ay, drag.bx, drag.by, b.width, b.height);
-              return (
-                <div
-                  style={{ position: 'absolute', background: 'rgba(0,0,0,0.6)', outline: '2px solid #fff', left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.w * 100}%`, height: `${r.h * 100}%` }}
-                />
-              );
-            })()}
+            {drag && (
+              <div
+                data-testid="redaction-drag-preview"
+                style={{ position: 'absolute', background: 'rgba(0,0,0,0.6)', outline: '2px solid #fff', left: `${drag.x * 100}%`, top: `${drag.y * 100}%`, width: `${drag.w * 100}%`, height: `${drag.h * 100}%` }}
+              />
+            )}
           </div>
           {redactError && (
             <p className="extracting-note" role="alert" style={{ color: 'var(--sev-critical)' }}>

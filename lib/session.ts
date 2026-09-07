@@ -1,26 +1,20 @@
 'use client';
-import type { GroundedReport, GroundedNotes } from '@/lib/types';
+import { createStoredReport, normalizeStoredReport, type ReportWithOriginalNotes, type StoredReport } from '@/lib/reportStorage';
 
 const KEY = 'ht:pending-report';
 
-export interface PendingReport {
-  report: GroundedReport;
-  notes?: GroundedNotes; // optional doctor-notes translation, grounded against the guard
-}
+export type PendingReport = StoredReport;
 
-export function setPendingReport(pending: PendingReport): void {
-  sessionStorage.setItem(KEY, JSON.stringify(pending));
+export function setPendingReport(pending: ReportWithOriginalNotes): void {
+  sessionStorage.setItem(KEY, JSON.stringify(createStoredReport(pending)));
 }
 
 export function getPendingReport(): PendingReport | null {
   const raw = sessionStorage.getItem(KEY);
   if (!raw) return null;
-  const parsed = JSON.parse(raw) as PendingReport | GroundedReport;
-  // Back-compat: an earlier build stored a bare GroundedReport. Wrap it.
-  if (parsed && typeof parsed === 'object' && 'report' in parsed) {
-    return parsed as PendingReport;
-  }
-  return { report: parsed as GroundedReport };
+  // Errors remain distinguishable from absence; callers can offer local recovery.
+  // No read writes a migration or clears a malformed/future-version record.
+  return normalizeStoredReport(JSON.parse(raw));
 }
 
 export function clearPendingReport(): void {

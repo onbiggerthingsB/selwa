@@ -24,13 +24,13 @@ export const CONSENT_COPY = {
     bo: fallback('zh'),
   }),
   transferDisclosure: defineText({
-    en: reviewed('Two things are sent to Anthropic (a US company): your photo — including any name, values, or hospital shown on it — so its text can be read; and anything you typed under “What the doctor told you”, so it can be translated.'),
-    zh: reviewed('有两项内容会发送给美国公司 Anthropic：您的照片（包括其中的姓名、数值或医院信息），用于识别其中的文字；以及您在“医生说了什么”中输入的内容，用于翻译。'),
+    en: reviewed('Your photo — including any names, values, hospital details or notes shown on it — is sent to Anthropic (a US company) so its text can be read. Text you enter under “What the doctor told you” stays on this device and is not translated.'),
+    zh: reviewed('您的照片（包括其中的姓名、数值、医院信息或说明）会发送给美国公司 Anthropic，用于识别文字。您在“医生说了什么”中输入的文字仅保留在本设备上，不会被翻译。'),
     bo: fallback('zh'),
   }),
   onDeviceDisclosure: defineText({
-    en: reviewed('The meaning of your results is worked out on this device. We don’t save either on our servers, and neither is ever used for advertising. Anthropic does not use them to train its models, though it may hold them briefly (up to 30 days) for safety checks.'),
-    zh: reviewed('结果的含义在本设备上计算。两者都不会保存在我们的服务器上，也绝不用于广告。Anthropic 不会用它们训练模型，但可能为安全检查短暂保留（最多 30 天）。'),
+    en: reviewed('The meaning of your results is worked out on this device. We don’t save your photo or typed notes on our servers, and neither is used for advertising. Anthropic does not use the photo to train its models, though it may hold it briefly (up to 30 days) for safety checks.'),
+    zh: reviewed('结果的含义在本设备上计算。照片和输入的说明都不会保存在我们的服务器上，也不会用于广告。Anthropic 不会用照片训练模型，但可能为安全检查短暂保留（最多 30 天）。'),
     bo: fallback('zh'),
   }),
   agree: defineText({

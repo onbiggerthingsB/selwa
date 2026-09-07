@@ -12,6 +12,9 @@ const KEY = 'ht:transfer-consent';
 // v2: the v1 disclosure covered only the IMAGE. Typed doctor's notes are also sent to Anthropic
 // (for translation, not just OCR) — an undisclosed transfer is an FTC §5 deception risk, so the
 // version bump deliberately invalidates every v1 opt-in and re-asks.
+// 2026-09-04: typed-note generation is disabled and the disclosure now says those notes
+// stay local. Existing v2 consent remains sufficient for the narrower, image-only
+// transfer; no additional data or purpose is authorized by this compatibility choice.
 export const CONSENT_VERSION = 2;
 
 export interface ConsentRecord {

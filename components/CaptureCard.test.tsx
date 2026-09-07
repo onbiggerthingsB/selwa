@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Lang } from '@/lib/i18n';
 
@@ -26,6 +26,7 @@ vi.mock('@/lib/consent', () => ({
 }));
 
 import { CaptureCard } from './CaptureCard';
+import { getPendingReport } from '@/lib/session';
 
 const NativeURL = globalThis.URL;
 let consoleError: ReturnType<typeof vi.spyOn>;
@@ -46,9 +47,10 @@ function successfulResponse(payload: unknown) {
   };
 }
 
-async function uploadAndSubmit(lang: Lang = 'en') {
+async function uploadAndSubmit(lang: Lang = 'en', originalNotes?: string) {
   const user = userEvent.setup();
   const { container } = render(<CaptureCard lang={lang} />);
+  if (originalNotes !== undefined) fireEvent.change(screen.getByRole('textbox'), { target: { value: originalNotes } });
   const input = container.querySelector('input[type="file"]');
   if (!(input instanceof HTMLInputElement)) throw new Error('Capture file input not found');
 
@@ -109,6 +111,7 @@ function consentRenderContract(dialog: HTMLElement) {
 
 describe('CaptureCard extraction failures', () => {
   beforeEach(() => {
+    sessionStorage.clear();
     mocks.push.mockReset();
     mocks.downscaleToJpeg.mockReset();
     mocks.hasConsent.mockReset();
@@ -140,7 +143,7 @@ describe('CaptureCard extraction failures', () => {
   });
 
   it.each(['en', 'zh'] as const)(
-    'keeps the pre-localization consent bytes and wrapper structure in %s',
+    'renders the image-only transfer disclosure with bilingual wrapper structure in %s',
     async (lang) => {
       mocks.hasConsent.mockReturnValue(false);
 
@@ -167,22 +170,22 @@ describe('CaptureCard extraction failures', () => {
         },
         transfer: {
           childNodes: 2,
-          en: 'Two things are sent to Anthropic (a US company): your photo — including any name, values, or hospital shown on it — so its text can be read; and anything you typed under “What the doctor told you”, so it can be translated.',
+          en: 'Your photo — including any names, values, hospital details or notes shown on it — is sent to Anthropic (a US company) so its text can be read. Text you enter under “What the doctor told you” stays on this device and is not translated.',
           zh: {
             tag: 'span',
             className: 'zh',
             lang: 'zh',
-            text: '有两项内容会发送给美国公司 Anthropic：您的照片（包括其中的姓名、数值或医院信息），用于识别其中的文字；以及您在“医生说了什么”中输入的内容，用于翻译。',
+            text: '您的照片（包括其中的姓名、数值、医院信息或说明）会发送给美国公司 Anthropic，用于识别文字。您在“医生说了什么”中输入的文字仅保留在本设备上，不会被翻译。',
           },
         },
         onDevice: {
           childNodes: 2,
-          en: 'The meaning of your results is worked out on this device. We don’t save either on our servers, and neither is ever used for advertising. Anthropic does not use them to train its models, though it may hold them briefly (up to 30 days) for safety checks.',
+          en: 'The meaning of your results is worked out on this device. We don’t save your photo or typed notes on our servers, and neither is used for advertising. Anthropic does not use the photo to train its models, though it may hold it briefly (up to 30 days) for safety checks.',
           zh: {
             tag: 'span',
             className: 'zh',
             lang: 'zh',
-            text: '结果的含义在本设备上计算。两者都不会保存在我们的服务器上，也绝不用于广告。Anthropic 不会用它们训练模型，但可能为安全检查短暂保留（最多 30 天）。',
+            text: '结果的含义在本设备上计算。照片和输入的说明都不会保存在我们的服务器上，也不会用于广告。Anthropic 不会用照片训练模型，但可能为安全检查短暂保留（最多 30 天）。',
           },
         },
         agree: {
@@ -454,4 +457,56 @@ describe('CaptureCard extraction failures', () => {
     await waitFor(() => expect(mocks.fetch).toHaveBeenCalledTimes(2));
     expect(screen.queryByText('This photo may be hard to read clearly.')).not.toBeInTheDocument();
   });
+
+  it.each(['  原文\nབོད་\ne\u0301\t ', '', ' \n\t '])('keeps exact original notes locally and makes only the OCR request (%j)', async (originalNotes) => {
+    mocks.fetch.mockResolvedValue(successfulResponse({ data: { rows: [{ name: 'GLU', value: '5.5', unit: 'mmol/L', printedRange: null, confidence: 'high' }] } }).response);
+    await uploadAndSubmit('en', originalNotes);
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/result'));
+    const pending = getPendingReport();
+    expect(pending?.schemaVersion).toBe(2);
+    expect(pending?.originalNotes).toBe(originalNotes);
+    expect(pending?.notes).toBeUndefined();
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+    expect(mocks.fetch.mock.calls[0]?.[0]).toBe('/api/extract');
+    const request = mocks.fetch.mock.calls[0]?.[1];
+    expect([...(request?.body as FormData).keys()]).toEqual(['image']);
+  });
+
+  it('retries only the local pending write after storage failure, retaining original and lab without resending', async () => {
+    mocks.fetch.mockResolvedValue(successfulResponse({ data: { rows: [{ name: 'GLU', value: '5.5', unit: 'mmol/L', printedRange: null, confidence: 'high' }] } }).response);
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('quota'); });
+    const originalNotes = '  原文\nsecond line\t ';
+    const { user } = await uploadAndSubmit('en', originalNotes);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Retry on-device storage without sending the photo again.');
+    expect(mocks.push).not.toHaveBeenCalled();
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+    write.mockRestore();
+    await user.click(screen.getByRole('button', { name: /Retry on-device storage/ }));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/result'));
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+    expect(mocks.downscaleToJpeg).toHaveBeenCalledTimes(1);
+    expect(getPendingReport()?.originalNotes).toBe(originalNotes);
+    expect(getPendingReport()?.report.rows[0].extracted.value).toBe('5.5');
+  });
+
+  it('renders normalized redaction geometry captured by pointer events, without reading layout during render', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<CaptureCard lang="en" />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(input, new File(['image'], 'lab.jpg', { type: 'image/jpeg' }));
+    await user.click(screen.getByRole('button', { name: /Cover personal details/ }));
+    const box = container.querySelector('[style*="touch-action"]') as HTMLElement;
+    expect(box).not.toBeNull();
+    const bounds = vi.spyOn(box, 'getBoundingClientRect').mockReturnValue({ x: 10, y: 20, left: 10, top: 20, right: 210, bottom: 120, width: 200, height: 100, toJSON: () => ({}) });
+    vi.stubGlobal('PointerEvent', MouseEvent);
+    fireEvent.pointerDown(box, { clientX: 30, clientY: 30 });
+    fireEvent.pointerMove(box, { clientX: 130, clientY: 80 });
+    expect(screen.getByTestId('redaction-drag-preview')).toHaveStyle({ left: '10%', top: '10%', width: '50%', height: '50%' });
+    expect(bounds).toHaveBeenCalledTimes(2);
+    fireEvent.pointerUp(box);
+    expect(screen.queryByTestId('redaction-drag-preview')).toBeNull();
+    expect(screen.getByRole('button', { name: /Cover 1 area/ })).toBeInTheDocument();
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
 });

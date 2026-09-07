@@ -25,9 +25,12 @@ describe('static localized-text corpus', () => {
     // Rebaseline deliberately when a feature adds strings — and
     // confirm, as the two assertions below do, that the growth is all fallback and none of it is
     // direct (unreviewed) Tibetan.
-    expect(corpus.sourceFiles).toHaveLength(15);
-    expect(corpus.calls).toHaveLength(619);
-    expect(fallbackBo).toHaveLength(618);
+    // 2026-09-04: original-note containment adds eight storage/recovery strings in
+    // reportStorageCopy and two CaptureCard local-storage failure strings. All
+    // ten retain Chinese fallback; no generated Tibetan is added to production.
+    expect(corpus.sourceFiles).toHaveLength(16);
+    expect(corpus.calls).toHaveLength(629);
+    expect(fallbackBo).toHaveLength(628);
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(corpus.excludedDirectBo[0].reason).toBe('verbatim-ocr-echo');

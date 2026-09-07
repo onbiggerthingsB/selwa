@@ -319,7 +319,9 @@ describe('Tibetan reviewer packet export', () => {
       comparator: 6,
       polarity: 12,
     });
-    expect(packet.floor).toHaveLength(162); // 139 + 5 T2/T3 + 12 T4 + 5 completeness-gate + 1 measurement unit-contradiction flag
+    // 2026-09-04: eight original-note storage/recovery strings and two capture
+    // storage-failure strings add ten Chinese-fallback rows; no Tibetan is authored.
+    expect(packet.floor).toHaveLength(172);
     expect(packet.terms.find(({ term }) => term === '阴性')?.categories.split(' | ').sort())
       .toEqual(['core-negator', 'polarity']);
   });
@@ -441,13 +443,14 @@ describe('Tibetan reviewer packet export', () => {
     // OCR-spelling aliases add 16 name rows and no floor rows.
     expect(parsed.names.rows).toHaveLength(350);
     expect(parsed.terms.rows).toHaveLength(34);
-    expect(parsed.floor.rows).toHaveLength(162);
+    // 2026-09-04: the ten notes-containment Chinese-fallback strings are exportable.
+    expect(parsed.floor.rows).toHaveLength(172);
     expect(parsed.decisions.rows).toHaveLength(5);
     for (const sheet of [parsed.names, parsed.terms, parsed.floor]) {
       expect(sheet.rows.every((row) => row.bo === '')).toBe(true);
     }
     const rows = readReviewedPacket(output);
-    expect(rows).toHaveLength(350 + 162);
+    expect(rows).toHaveLength(350 + 172);
     expect(rows.every(({ bo }) => bo === '')).toBe(true);
   });
 

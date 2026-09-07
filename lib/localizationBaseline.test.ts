@@ -79,8 +79,9 @@ const LEGACY_UI_COPY = {
   aboutSummary: { en: 'About this summary', zh: '关于本摘要' },
   doctorNotes: { en: 'What the doctor told you', zh: '医生说了什么' },
   doctorNotesSummary: {
-    en: 'In plain words. Numbers, doses, and key terms are kept exactly as written.',
-    zh: '用大白话解释。数字、剂量和关键术语均保持原文不变。',
+    // Approved notes containment, 2026-09-04: actual entered text replaces generated prose.
+    en: 'Shown exactly as you entered it. Generated notes translations are disabled.',
+    zh: '按您输入的原文显示。医生说明自动翻译已停用。',
   },
   keptExactly: { en: 'Kept exactly as written', zh: '保持原文不变' },
 } as const;

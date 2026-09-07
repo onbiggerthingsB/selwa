@@ -144,7 +144,9 @@ describe('Tibetan Class B source-output invariants', () => {
     const corpus = extractLocalizedTextCorpus();
     // Rebaselined 2026-07-28 for 16 bone densitometry entries (report-only, bandless,
     // 'measurement' frame) plus two OCR-spelling aliases: entries add 32 calls; aliases add none.
-    expect(corpus.calls).toHaveLength(619); // curatedBo===0 below remains the safety check
+    // 2026-09-04: eight notes storage/recovery strings plus two capture storage
+    // strings add ten Chinese fallbacks. The curatedBo===0 safety check is unchanged.
+    expect(corpus.calls).toHaveLength(629);
     expect(corpus.curatedBo).toHaveLength(0);
     expect(corpus.excludedDirectBo).toHaveLength(1);
     expect(pairs).toHaveLength(0);

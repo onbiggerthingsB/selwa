@@ -146,8 +146,8 @@ export const UI_COPY = {
     bo: fallback('zh'),
   }),
   doctorNotesSummary: defineText({
-    en: reviewed('In plain words. Numbers, doses, and key terms are kept exactly as written.'),
-    zh: reviewed('用大白话解释。数字、剂量和关键术语均保持原文不变。'),
+    en: reviewed('Shown exactly as you entered it. Generated notes translations are disabled.'),
+    zh: reviewed('按您输入的原文显示。医生说明自动翻译已停用。'),
     bo: fallback('zh'),
   }),
   keptExactly: defineText({

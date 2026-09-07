@@ -13,11 +13,15 @@ import { TibetanText, TIBETAN_TYPOGRAPHY_SAMPLE } from '@/components/TibetanText
 import { resolveText } from '@/lib/i18n';
 import { useLangPreference } from '@/lib/langPreference';
 import { UI_COPY } from '@/lib/uiCopy';
+import { REPORT_STORAGE_COPY } from '@/lib/reportStorageCopy';
 
 export default function ResultPage() {
   const router = useRouter();
   const [report, setReport] = useState<GroundedReport | null>(null);
   const [notes, setNotes] = useState<GroundedNotes | undefined>(undefined);
+  const [originalNotes, setOriginalNotes] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [acknowledged, setAcknowledged] = useState(false);
   const [confirmed, setConfirmed] = useState<GroundedReport | null>(null);
   const [lang, setLang] = useLangPreference();
@@ -26,14 +30,32 @@ export default function ResultPage() {
     // Mount-time load of the in-progress report from sessionStorage (browser-only).
     // The default null render is what the server produced, so we update after mount
     // to stay hydration-safe; this is the intended use of an effect, not a render cascade.
-    const pending = getPendingReport();
-    if (!pending) router.replace('/');
-    else {
+    try {
+      const pending = getPendingReport();
+      if (!pending) {
+        router.replace('/');
+        return;
+      }
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setReport(pending.report);
       setNotes(pending.notes);
+      setOriginalNotes(pending.originalNotes ?? null);
+      setLoadFailed(false);
+    } catch {
+      setLoadFailed(true);
     }
-  }, [router]);
+  }, [router, loadAttempt]);
+
+  if (loadFailed) return (
+    <main className="result">
+      <div className="callout-error" role="alert">
+        <p><LocalizedText value={REPORT_STORAGE_COPY.loadFailed} lang={lang} /></p>
+        <button className="btn btn-ghost" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>
+          <LocalizedText value={REPORT_STORAGE_COPY.retry} lang={lang} />
+        </button>
+      </div>
+    </main>
+  );
 
   if (!report) return null;
 
@@ -104,8 +126,8 @@ export default function ResultPage() {
       ) : (
         <>
           <SummaryView report={confirmed} lang={lang} />
-          {notes && notes.segments.length > 0 && <NotesSection notes={notes} lang={lang} />}
-          <SaveVisitButton report={confirmed} notes={notes} lang={lang} />
+          <NotesSection originalNotes={originalNotes} lang={lang} />
+          <SaveVisitButton report={confirmed} originalNotes={originalNotes} notes={notes} lang={lang} />
         </>
       )}
     </main>
