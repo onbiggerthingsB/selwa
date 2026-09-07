@@ -1,0 +1,452 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://health-translator.local/research/contracts/parallel-material.schema.json",
+  "$defs": {
+    "member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "source_version",
+        "source_sha256",
+        "example_id",
+        "example_version",
+        "example_sha256"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "source_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "example_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "example_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "example_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pair_id",
+        "version",
+        "scenario_group",
+        "paraphrase_group",
+        "translation_contributor_ids",
+        "members",
+        "permission_record_ids"
+      ],
+      "properties": {
+        "pair_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "scenario_group": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "paraphrase_group": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "translation_contributor_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "members": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "bo",
+            "zh"
+          ],
+          "properties": {
+            "bo": {
+              "$ref": "#/$defs/member"
+            },
+            "zh": {
+              "$ref": "#/$defs/member"
+            }
+          }
+        },
+        "permission_record_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+          },
+          "minItems": 2,
+          "uniqueItems": true
+        }
+      }
+    },
+    "permission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "permission_id",
+        "source_id",
+        "source_version",
+        "source_sha256",
+        "status",
+        "permitted_derivatives",
+        "granted_by",
+        "permission_evidence",
+        "evidence_kind"
+      ],
+      "properties": {
+        "permission_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "source_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "source_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "granted",
+            "denied"
+          ]
+        },
+        "permitted_derivatives": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "translation",
+              "parallel_evaluation"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "granted_by": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "permission_evidence": {
+          "type": "string"
+        },
+        "evidence_kind": {
+          "enum": [
+            "human_review",
+            "synthetic_test"
+          ]
+        }
+      }
+    },
+    "equivalence_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_id",
+        "pair_id",
+        "pair_version",
+        "parallel_pair_sha256",
+        "reviewer_id",
+        "reviewer_languages",
+        "independent_judgment",
+        "evidence_kind",
+        "checks",
+        "status",
+        "recommendation",
+        "issues",
+        "minutes_spent"
+      ],
+      "properties": {
+        "review_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "pair_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "pair_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "parallel_pair_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "reviewer_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "reviewer_languages": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "bo",
+              "zh"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "independent_judgment": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "evidence_kind": {
+          "enum": [
+            "human_review",
+            "synthetic_test"
+          ]
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "facts",
+            "numbers",
+            "negation",
+            "question_intent",
+            "answerability",
+            "allowed_claims",
+            "reference_answer_meaning"
+          ],
+          "properties": {
+            "facts": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "numbers": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "negation": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "question_intent": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "answerability": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "allowed_claims": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "reference_answer_meaning": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          }
+        },
+        "status": {
+          "enum": [
+            "incomplete",
+            "complete"
+          ]
+        },
+        "recommendation": {
+          "enum": [
+            "pending",
+            "approve",
+            "revise",
+            "reject"
+          ]
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "minutes_spent": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "equivalence_adjudication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adjudication_id",
+        "pair_id",
+        "pair_version",
+        "parallel_pair_sha256",
+        "adjudicator_id",
+        "evidence_kind",
+        "review_bindings",
+        "decision",
+        "rationale",
+        "minutes_spent"
+      ],
+      "properties": {
+        "adjudication_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "pair_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "pair_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "parallel_pair_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "adjudicator_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "evidence_kind": {
+          "enum": [
+            "human_review",
+            "synthetic_test"
+          ]
+        },
+        "review_bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "review_id",
+              "review_sha256"
+            ],
+            "properties": {
+              "review_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+              },
+              "review_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          },
+          "uniqueItems": true
+        },
+        "decision": {
+          "enum": [
+            "pending",
+            "approve",
+            "revise",
+            "reject"
+          ]
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "minutes_spent": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_kind",
+    "pairs",
+    "permissions",
+    "equivalence_reviews",
+    "equivalence_adjudications"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "evidence_kind": {
+      "enum": [
+        "human_review",
+        "synthetic_test"
+      ]
+    },
+    "pairs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pair"
+      }
+    },
+    "permissions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/permission"
+      }
+    },
+    "equivalence_reviews": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/equivalence_review"
+      }
+    },
+    "equivalence_adjudications": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/equivalence_adjudication"
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "valid": [
+    "synthetic-dataset.json"
+  ],
+  "invalid": [
+    {
+      "file": "invalid-source-hash.json",
+      "expected_error_code": "source_hash"
+    },
+    {
+      "file": "invalid-implicit-approval.json",
+      "expected_error_code": "missing_adjudication"
+    },
+    {
+      "file": "invalid-training-permission.json",
+      "expected_error_code": "permission"
+    },
+    {
+      "file": "invalid-extra-field.json",
+      "expected_error_code": "schema"
+    }
+  ]
+}

@@ -1,0 +1,708 @@
+{
+  "schema_version": "1.0",
+  "kind": "sanitized_release_training_evaluation_evidence",
+  "local_report_date": "2026-09-05",
+  "local_timezone": "America/New_York",
+  "artifact_timestamp_timezone": "UTC",
+  "generated_at_utc": "2026-09-06T01:10:22.944258+00:00",
+  "evidence_scope": "Read-only inspection and SHA-256 verification of existing native-run artifacts; no model import, GPU execution or experiment rerun for this report.",
+  "engineering_only": true,
+  "data_evidence_kind": "synthetic_test",
+  "native_model_execution": true,
+  "privacy": {
+    "included": "Local artifact relative paths, hashes, numeric measurements and engineering identities.",
+    "excluded": [
+      "source passages",
+      "questions",
+      "reference answers",
+      "model reply text",
+      "prompt token IDs",
+      "private absolute paths",
+      "personal identity or consent evidence"
+    ]
+  },
+  "release": {
+    "release_id": "engineering-release-20260905-v1",
+    "release_sha256": "26c244ba812043e386df3b7d24c626416b0005ac608820855f548663c8132765",
+    "created_at_utc": "2026-09-06T00:55:57.774276+00:00",
+    "split_counts": {
+      "train": 2,
+      "validation": 1,
+      "final_test": 1
+    },
+    "input_hashes": {
+      "dataset_file_sha256": "c03bc666d5b73cdf0a3fd31b1c76bb95d4fa5156eb43b789535a53b21099004d",
+      "dataset_canonical_sha256": "0458e881196ec5e6693764fc1bdf7c4bbef64861f8b3a080177efd0c59512e57",
+      "reconciled_dataset_canonical_sha256": "0458e881196ec5e6693764fc1bdf7c4bbef64861f8b3a080177efd0c59512e57",
+      "permissions_file_sha256": "784e97e891cce9c8eda958e6ab5e868073331ffc11821895487479bbd35b7c70",
+      "permissions_canonical_sha256": "68db93deb0c0c7b8d87d1170dad8aea2e1d25285641a42ed7ba053f73783213b"
+    },
+    "contributor_policy": "report"
+  },
+  "runtime": {
+    "python": "3.12.13",
+    "architecture": "arm64",
+    "platform": "macOS-26.3.1-arm64-arm-64bit",
+    "packages": {
+      "jsonschema": "4.26.0",
+      "mlx": "0.32.2",
+      "mlx-lm": "0.31.3",
+      "transformers": "5.16.1",
+      "tokenizers": "0.23.2"
+    }
+  },
+  "hardware": {
+    "chip": "Apple M4 Pro",
+    "memory_bytes": 25769803776,
+    "os": "26.3.1"
+  },
+  "training_configuration": {
+    "steps": 20,
+    "max_seq_length": 256,
+    "num_layers": 2,
+    "rank": 4,
+    "scale": 8.0,
+    "learning_rate": 0.0001,
+    "seed": 0,
+    "max_mlx_bytes": 12884901888
+  },
+  "condition_identity": {
+    "condition_id": "english-extraction-engineering-v1",
+    "instruction_language": "en",
+    "output_language": "en",
+    "instruction_sha256": "cbc696fd569c508b4700a98f486a7a00b67a2cb9381c7ccb6af28f72a4684210",
+    "condition_sha256": "b3aa7f06ddce7a2b91df84c50221d2851126f4d2748982583b7d23964b00a24a",
+    "rendering_policy": "instruction-passage-question-blank-lines-v1"
+  },
+  "model_identity": "mlx-community/Qwen3-4B-4bit@4dcb3d101c2a062e5c1d4bb173588c54ea6c4d25",
+  "conversion_provenance": {
+    "status": "publisher_declared_not_reproduced",
+    "upstream_source_revision": null,
+    "recipe_available": false
+  },
+  "failed_attempt": {
+    "run_id": "release-training-qwen-20260905",
+    "created_at_utc": "2026-09-06T00:56:02.332955+00:00",
+    "finished_at_utc": "2026-09-06T00:56:05.585587+00:00",
+    "completed_steps": 0,
+    "last_recorded_stage": "hash_frozen_base_before",
+    "checkpoint_created": false,
+    "training": {
+      "supervisor_outcome": "failed",
+      "stop_reason": "swap_growth",
+      "worker_returncode": -15,
+      "wall_seconds": 3.210246125003323,
+      "limits": {
+        "deadline_seconds": 300,
+        "max_worker_rss_bytes": 15032385536,
+        "max_swap_growth_bytes": 1073741824,
+        "minimum_disk_bytes": 16106127360,
+        "monitoring": "Sampled approximately once per second; limits terminate the worker after detection."
+      },
+      "sample_count": 5,
+      "minimum_sampled_free_disk_bytes": 21009285120,
+      "initial_sampled_swap_bytes": 7677149184,
+      "maximum_sampled_swap_bytes": 9579528192,
+      "sampled_swap_growth_bytes": 1902379008,
+      "pressure_levels": [
+        2
+      ]
+    }
+  },
+  "successful_training": {
+    "run_id": "release-training-qwen-20260905-r2",
+    "created_at_utc": "2026-09-06T00:59:54.469536+00:00",
+    "finished_at_utc": "2026-09-06T01:00:06.512151+00:00",
+    "outcome": "completed",
+    "completed_steps": 20,
+    "unique_training_examples": 2,
+    "complete_tokens": 1570,
+    "supervised_tokens": 120,
+    "token_weighted_training_loss": 1.8730037113496414,
+    "gradient_seconds": 3.1586074153892696,
+    "update_seconds": 0.07539312448352575,
+    "train_load_seconds": 0.8856188340578228,
+    "reload_load_seconds": 0.9826090419664979,
+    "train_memory": {
+      "mlx_active_bytes": 2265775136,
+      "mlx_peak_bytes": 2527206244,
+      "mlx_cache_bytes": 33128800,
+      "process_peak_rss_bytes": 2562015232
+    },
+    "reload_memory": {
+      "mlx_active_bytes": 2303114260,
+      "mlx_peak_bytes": 2522943496,
+      "mlx_cache_bytes": 133927142,
+      "process_peak_rss_bytes": 2534080512
+    },
+    "training_resources": {
+      "supervisor_outcome": "completed",
+      "stop_reason": null,
+      "worker_returncode": 0,
+      "wall_seconds": 7.647468291921541,
+      "limits": {
+        "deadline_seconds": 300,
+        "max_worker_rss_bytes": 15032385536,
+        "max_swap_growth_bytes": 1073741824,
+        "minimum_disk_bytes": 16106127360,
+        "monitoring": "Sampled approximately once per second; limits terminate the worker after detection."
+      },
+      "sample_count": 9,
+      "minimum_sampled_free_disk_bytes": 21011890176,
+      "initial_sampled_swap_bytes": 9445247549,
+      "maximum_sampled_swap_bytes": 9652865597,
+      "sampled_swap_growth_bytes": 207618048,
+      "pressure_levels": [
+        1,
+        2
+      ]
+    },
+    "reload_resources": {
+      "supervisor_outcome": "completed",
+      "stop_reason": null,
+      "worker_returncode": 0,
+      "wall_seconds": 4.325480959145352,
+      "limits": {
+        "deadline_seconds": 180,
+        "max_worker_rss_bytes": 15032385536,
+        "max_swap_growth_bytes": 1073741824,
+        "minimum_disk_bytes": 16106127360,
+        "monitoring": "Sampled approximately once per second; limits terminate the worker after detection."
+      },
+      "sample_count": 6,
+      "minimum_sampled_free_disk_bytes": 21009162240,
+      "initial_sampled_swap_bytes": 9652865597,
+      "maximum_sampled_swap_bytes": 9795597762,
+      "sampled_swap_growth_bytes": 142732165,
+      "pressure_levels": [
+        2
+      ]
+    }
+  },
+  "checkpoint": {
+    "adapter_identity": "sha256:01c41f908da21ab0669a8169de7dc9511e696f4fffb429c5d9efaa0e6da82101",
+    "adapter_bytes": 328546,
+    "adapter_parameters": 81920,
+    "adapter_tensor_count": 8,
+    "changed_adapter_tensor_count": 8,
+    "frozen_tensor_count": 904,
+    "recorded_frozen_inventories_identical": true,
+    "saved_adapter_payload_hashes_independently_verified": true,
+    "full_base_payloads_rehashed_for_this_report": false,
+    "fresh_process_reload_verified": true,
+    "validation_reload_verified": true,
+    "file_hashes": {
+      "adapter_config.json": "5d90ee8812e699aff7e4d0cc492759704d2b60f9a221bbc435fe12316e864994",
+      "adapters.safetensors": "01c41f908da21ab0669a8169de7dc9511e696f4fffb429c5d9efaa0e6da82101",
+      "checkpoint-evidence.json": "7e356f3b4ff11a0bec3566b0794d538a2449799bbb3a68a7b4b4febe5c7b082a"
+    }
+  },
+  "validation": {
+    "before": {
+      "token_weighted_loss": 4.289064407348633,
+      "supervised_tokens": 4,
+      "complete_tokens": 73,
+      "objective": "final_assistant_and_template_suffix_only",
+      "seconds": 0.3213007082231343
+    },
+    "after": {
+      "token_weighted_loss": 1.5711755752563477,
+      "supervised_tokens": 4,
+      "complete_tokens": 73,
+      "objective": "final_assistant_and_template_suffix_only",
+      "seconds": 0.1251858330797404
+    },
+    "reloaded": {
+      "token_weighted_loss": 1.5711755752563477,
+      "supervised_tokens": 4,
+      "complete_tokens": 73,
+      "objective": "final_assistant_and_template_suffix_only",
+      "seconds": 0.17344649997539818
+    },
+    "unique_example_count": 1,
+    "quality_claim": false
+  },
+  "evaluation": {
+    "run_id": "release-evaluation-qwen-20260905",
+    "created_at_utc": "2026-09-06T01:00:06.657579+00:00",
+    "finished_at_utc": "2026-09-06T01:00:14.199862+00:00",
+    "manifest_outcome": "failed",
+    "manifest_error": null,
+    "scoring_valid": true,
+    "scoring_complete": true,
+    "unique_final_questions": 1,
+    "paired_case_count": 2,
+    "connected_cluster_count": 1,
+    "max_output_tokens": 32,
+    "context_limit_tokens": 2048,
+    "seed": 0,
+    "temperature": 0.0,
+    "matched_transport": "bounded-greedy-v1",
+    "cases": [
+      {
+        "arm_id": "base",
+        "model_identity": "mlx-community/Qwen3-4B-4bit@4dcb3d101c2a062e5c1d4bb173588c54ea6c4d25",
+        "adapter_identity": null,
+        "condition_id": "english-extraction-engineering-v1",
+        "instruction_language": "en",
+        "output_language": "en",
+        "prompt_ids_sha256": "a0633a9dddd7f3ff824e63e587b946926d4f8526afdd1f29dc21d1472091721d",
+        "outcome": "success",
+        "termination_reason": "stop",
+        "answer_present": true,
+        "input_tokens": 72,
+        "output_token_steps_including_stop": 25,
+        "planned_cases": 1,
+        "strict_reference_matches": 0,
+        "normalized_reference_matches": 0,
+        "automatic_task_rule_passes": 0,
+        "adapter_verified": false,
+        "generation_seconds": 0.6373827089555562,
+        "model_load_seconds": 0.959786375053227,
+        "worker_seconds": 2.538761582924053,
+        "supervised_worker_wall_seconds": 2.7925586660858244,
+        "mlx_peak_bytes": 2531556914,
+        "process_peak_rss_bytes": 1491763200,
+        "raw_result_synthetic_flag": false
+      },
+      {
+        "arm_id": "adapter",
+        "model_identity": "mlx-community/Qwen3-4B-4bit@4dcb3d101c2a062e5c1d4bb173588c54ea6c4d25",
+        "adapter_identity": "sha256:01c41f908da21ab0669a8169de7dc9511e696f4fffb429c5d9efaa0e6da82101",
+        "condition_id": "english-extraction-engineering-v1",
+        "instruction_language": "en",
+        "output_language": "en",
+        "prompt_ids_sha256": "a0633a9dddd7f3ff824e63e587b946926d4f8526afdd1f29dc21d1472091721d",
+        "outcome": "runtime_failure",
+        "termination_reason": "output_limit",
+        "answer_present": false,
+        "input_tokens": 72,
+        "output_token_steps_including_stop": 32,
+        "planned_cases": 1,
+        "strict_reference_matches": 0,
+        "normalized_reference_matches": 0,
+        "automatic_task_rule_passes": 0,
+        "adapter_verified": true,
+        "generation_seconds": 0.573516207979992,
+        "model_load_seconds": 0.47515779198147357,
+        "worker_seconds": 2.8072742079384625,
+        "supervised_worker_wall_seconds": 2.9975620419718325,
+        "mlx_peak_bytes": 2520371246,
+        "process_peak_rss_bytes": 2629222400,
+        "raw_result_synthetic_flag": false
+      }
+    ],
+    "native_review_status": "pending",
+    "clinical_approval": false,
+    "production_promotion": false,
+    "interpretation": {
+      "base": "Correct requested fact appears in an explanatory reply, but the declared exact-answer format fails.",
+      "adapter": "Generation reaches the 32-token cap without a stop; partial text is retained privately and no successful answer is returned.",
+      "quality_improvement_established": false,
+      "result_synthetic_flag_meaning": "False identifies real model inference, not real human-authored data; the release and run remain engineering_only."
+    }
+  },
+  "acceptance_summary": {
+    "T1": "Portable identity guards plus this native pinned snapshot/checkpoint binding; conversion recipe not independently reproduced.",
+    "T2": "Portable renderer/offset guards plus native runtime input-ID verification; no representative Tibetan input.",
+    "T3": "Portable mixed-length/padding mask tests; native batch-one assistant/template-suffix loss only.",
+    "T4": "Portable overlong/empty target rejection; native short examples have no truncation.",
+    "T5": "Portable nonfinite rejection; twenty native steps finite; no injected native NaN trial.",
+    "T6": "Twenty optimizer updates; eight adapter tensors changed; 904 frozen inventory entries identical.",
+    "T7": "Native train/reload/eval measurements and one real swap-growth stop; representative Tibetan capacity unknown.",
+    "T8": "Private checkpoint saved and inventory/file/adapter payload hashes verified.",
+    "T9": "Fresh-process exact reload and matching validation loss; portable malformed-checkpoint rejection.",
+    "T10": "Native paired base/adapter evaluation with same prompt IDs and transport; zero exact matches in both arms.",
+    "T11": "Native resource stop before first update plus portable interruption cases; no claim of resuming an interrupted update.",
+    "T12": "No resume path; each run starts a fresh optimizer; exact continuation remains unimplemented."
+  },
+  "verification": {
+    "artifact_inventory_counts": {
+      "releases/engineering-release-20260905-v1": 9,
+      "runs/release-training-qwen-20260905": 15,
+      "runs/release-training-qwen-20260905-r2": 24,
+      "runs/release-evaluation-qwen-20260905": 7
+    },
+    "all_inventoried_artifact_hashes_and_sizes_match": true,
+    "source_artifacts": [
+      {
+        "path": "releases/engineering-release-20260905-v1/audits/final_test.json",
+        "sha256": "18adc8dd3530876aa4097e9ce5f19bad4e30be6b5a06b346ca78ba9467da6aec",
+        "bytes": 46461
+      },
+      {
+        "path": "releases/engineering-release-20260905-v1/audits/train.json",
+        "sha256": "8e1168516a9f98789fe1134252489403d7b8c59fd8b1fd0409bb28dfda08f328",
+        "bytes": 46493
+      },
+      {
+        "path": "releases/engineering-release-20260905-v1/audits/validation.json",
+        "sha256": "d331c04f75d2ee0ff20e3364b307d969ca69ba95b3a5deff1e27924e78b8c090",
+        "bytes": 46461
+      },
+      {
+        "path": "releases/engineering-release-20260905-v1/datasets/train.json",
+        "sha256": "a878374bee99e8154c0c96c581c6a87cb8fb40b91af5b6c1cd3d3fb0ad3571ab",
+        "bytes": 7823
+      },
+      {
+        "path": "releases/engineering-release-20260905-v1/datasets/validation.json",
+        "sha256": "66f6ba82197fc2da8c2e498525ba058a4ea16a7fc7433607128353791d692124",
+        "bytes": 3949
+      },
+      {
+        "path": "releases/engineering-release-20260905-v1/history.json",
+        "sha256": "4835e58e9bb358bbf3ca735c0e43dfeeed0e39f5eb2d28d1164fba015e7015a9",
+        "bytes": 41416
+      },
+      {
+        "path": "releases/engineering-release-20260905-v1/locked/final_test.dataset.json",
+        "sha256": "1c6c5c651a10ee1a1f9b7fc09a83b5b2e772d0e35900175e22d04bb65a270162",
+        "bytes": 3921
+      },
+      {
+        "path": "releases/engineering-release-20260905-v1/locked/final_test.references.json",
+        "sha256": "d397227682bbd7a2b4d9026f35c7cc0219885cd6c24df2ada31fb599a54afbb1",
+        "bytes": 375
+      },
+      {
+        "path": "releases/engineering-release-20260905-v1/permissions.json",
+        "sha256": "784e97e891cce9c8eda958e6ab5e868073331ffc11821895487479bbd35b7c70",
+        "bytes": 3400
+      },
+      {
+        "path": "releases/engineering-release-20260905-v1/manifest.json",
+        "sha256": "0b21560ee834723c403a0e0208b52b8e50bb5ba376be84c2ba2505932bac5ece",
+        "bytes": 4167
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/current-release-verification.json",
+        "sha256": "f12424edd8deeb34b64c77ee883945e5e247bfd0a30589288e703fe7942e3976",
+        "bytes": 131716
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/exposure.001.json",
+        "sha256": "cef16ca3835788585542722fe276142859cc4a9ec4d07354f69a8132d2561c90",
+        "bytes": 2878
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/exposure.002.json",
+        "sha256": "ea1eeacbb3c7e183bb4f844757b9157eff858e433c6755fd3774449be9caa398",
+        "bytes": 1636
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/model-verification.json",
+        "sha256": "b898392a30ea8421847d0bead08341f2fb62bc8ccea281d1f188d134386ff87c",
+        "bytes": 3068
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/preflight.json",
+        "sha256": "1e1cb79b63652e57c0debaf0da07a4be4cf19c7f9a569505317746008c9184ac",
+        "bytes": 1167
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/release-verification.json",
+        "sha256": "f12424edd8deeb34b64c77ee883945e5e247bfd0a30589288e703fe7942e3976",
+        "bytes": 131716
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/started.json",
+        "sha256": "f533865f37f4e1adb5416cab2804aabab3588707f47440d5c401ea8f37be9244",
+        "bytes": 13564
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/train-dataset.json",
+        "sha256": "a878374bee99e8154c0c96c581c6a87cb8fb40b91af5b6c1cd3d3fb0ad3571ab",
+        "bytes": 7823
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/train-inputs.json",
+        "sha256": "dec91934b680d8a13c5af0f7b035ce7de6ffb7d6fe353b64db7817f2e00f71a1",
+        "bytes": 11831
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/train-worker/progress.json",
+        "sha256": "3fbbb001275868ca1af5e702eda07b65e791ac20889ae36a13902ee79972e85e",
+        "bytes": 96
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/train-worker/request.json",
+        "sha256": "4d2705d9c3ab916a32f71eb13168dbfb0afb95f2533e00d20f24a051b879fff7",
+        "bytes": 17153
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/train-worker/supervisor.json",
+        "sha256": "55c3f8da861dfc4e6c7ebcef89c2f244328dd44fb8176448ab89553590d16aed",
+        "bytes": 1432
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/train-worker/worker.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/validation-dataset.json",
+        "sha256": "66f6ba82197fc2da8c2e498525ba058a4ea16a7fc7433607128353791d692124",
+        "bytes": 3949
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/validation-inputs.json",
+        "sha256": "c3abd73cb01bff9fe99213ecaaa83c50888093699fabb084666053dc3b8d27ab",
+        "bytes": 6107
+      },
+      {
+        "path": "runs/release-training-qwen-20260905/manifest.json",
+        "sha256": "d985ae025236491c43f1a8c29b88eb316ee6f3a8fc958b08d3e57714b2fc4972",
+        "bytes": 18072
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/checkpoint/adapter_config.json",
+        "sha256": "5d90ee8812e699aff7e4d0cc492759704d2b60f9a221bbc435fe12316e864994",
+        "bytes": 895
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/checkpoint/adapters.safetensors",
+        "sha256": "01c41f908da21ab0669a8169de7dc9511e696f4fffb429c5d9efaa0e6da82101",
+        "bytes": 328546
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/checkpoint/checkpoint-evidence.json",
+        "sha256": "7e356f3b4ff11a0bec3566b0794d538a2449799bbb3a68a7b4b4febe5c7b082a",
+        "bytes": 426896
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/current-release-verification.json",
+        "sha256": "406a45a5bb8bc18d5f1d3d6fb965572e46db83422ff08a74266680203f7f168f",
+        "bytes": 166194
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/exposure.001.json",
+        "sha256": "cef16ca3835788585542722fe276142859cc4a9ec4d07354f69a8132d2561c90",
+        "bytes": 2878
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/exposure.002.json",
+        "sha256": "ea1eeacbb3c7e183bb4f844757b9157eff858e433c6755fd3774449be9caa398",
+        "bytes": 1636
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/model-verification.json",
+        "sha256": "b898392a30ea8421847d0bead08341f2fb62bc8ccea281d1f188d134386ff87c",
+        "bytes": 3068
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/preflight.json",
+        "sha256": "8de801855cbcefcbaf600f20dc35c6ea217afb097f799db525fa272fd74a177c",
+        "bytes": 1167
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/release-verification.json",
+        "sha256": "406a45a5bb8bc18d5f1d3d6fb965572e46db83422ff08a74266680203f7f168f",
+        "bytes": 166194
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/reload-worker/progress.json",
+        "sha256": "a11df9d1d1399cabd6b8433734ada5d1dee5f60f2fadca9488efa50998975168",
+        "bytes": 82
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/reload-worker/request.json",
+        "sha256": "74c51142f5b8ee2c537072deb5959b91d8f3356378639f1f6c2f84255173e646",
+        "bytes": 17485
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/reload-worker/response.json",
+        "sha256": "a06e6babb5de6b341d6e0249855811909d7c00d97ded0b02d41c7f04e01abeab",
+        "bytes": 4147
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/reload-worker/supervisor.json",
+        "sha256": "9fcd305bf8459b65cdd0e694502aa2ef8573bbce98de5b79bde89659ba44ba9f",
+        "bytes": 6094
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/reload-worker/worker.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/started.json",
+        "sha256": "9310f9886e6c5a28f36da30bcaf6534c67967a30a7ef19bec1799a4e0d200713",
+        "bytes": 13570
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/train-dataset.json",
+        "sha256": "a878374bee99e8154c0c96c581c6a87cb8fb40b91af5b6c1cd3d3fb0ad3571ab",
+        "bytes": 7823
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/train-inputs.json",
+        "sha256": "dec91934b680d8a13c5af0f7b035ce7de6ffb7d6fe353b64db7817f2e00f71a1",
+        "bytes": 11831
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/train-worker/progress.json",
+        "sha256": "01bca55a14cbd9e19c8098b976f31a8eabd7562033f269fc36e40785b9dadd0c",
+        "bytes": 83
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/train-worker/request.json",
+        "sha256": "cb3dcc2f71fd6ccf8ff340bdefe69da6b4b94c997fcbb0445c396d9c5e67de41",
+        "bytes": 17156
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/train-worker/response.json",
+        "sha256": "44d118c95d1b435a4bdaea62bad378a6e9daa074f8f094209434182ace1a9b4c",
+        "bytes": 23725
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/train-worker/supervisor.json",
+        "sha256": "bc77afe1c45d4212f1d24f8aad375bd4cc9a56f1e49c314f4b43dd0cd0b907f6",
+        "bytes": 27167
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/train-worker/worker.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/validation-dataset.json",
+        "sha256": "66f6ba82197fc2da8c2e498525ba058a4ea16a7fc7433607128353791d692124",
+        "bytes": 3949
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/validation-inputs.json",
+        "sha256": "c3abd73cb01bff9fe99213ecaaa83c50888093699fabb084666053dc3b8d27ab",
+        "bytes": 6107
+      },
+      {
+        "path": "runs/release-training-qwen-20260905-r2/manifest.json",
+        "sha256": "858ae6b373c4081e07703f1852130c4613a851280869a1154bb5f4cae2dd39c7",
+        "bytes": 53092
+      },
+      {
+        "path": "runs/release-evaluation-qwen-20260905/case.0001.attempt.json",
+        "sha256": "070f1e31160542397cddc02cc44893ff4ab65bed2c0be1edb57b07701d3d080d",
+        "bytes": 4235
+      },
+      {
+        "path": "runs/release-evaluation-qwen-20260905/case.0001.result.json",
+        "sha256": "1240561545e824bceb1adc06372aa5191abc3487ac53cd582219a833dc3ec8ad",
+        "bytes": 7592
+      },
+      {
+        "path": "runs/release-evaluation-qwen-20260905/case.0002.attempt.json",
+        "sha256": "5e0dff1119dbc70b98a394641419b62664bcca9ae1060e9e4a8d57559c3f5163",
+        "bytes": 4307
+      },
+      {
+        "path": "runs/release-evaluation-qwen-20260905/case.0002.result.json",
+        "sha256": "b1f81cbcfcf7b0413a46e4173f40756a032195c583d8c46470beef92afda2a18",
+        "bytes": 8151
+      },
+      {
+        "path": "runs/release-evaluation-qwen-20260905/exposure.001.json",
+        "sha256": "f8835bc4f39f903e176778276b3ac87d855e7c6f623aea93bfcf8d05fe716833",
+        "bytes": 1636
+      },
+      {
+        "path": "runs/release-evaluation-qwen-20260905/report.json",
+        "sha256": "a274c612c7efc3ed4a0f2a6f9fcd84427aa32a188b189c5cbf6b38e03a11ac44",
+        "bytes": 30595
+      },
+      {
+        "path": "runs/release-evaluation-qwen-20260905/started.json",
+        "sha256": "b063927185074448a8ea20174153fa62093e0a9c6bc87ab04457f184d50a9538",
+        "bytes": 11805
+      },
+      {
+        "path": "runs/release-evaluation-qwen-20260905/manifest.json",
+        "sha256": "130f67515740654e99fab9ee1037be545701899bacd412466c31456739e1e8f9",
+        "bytes": 17052
+      },
+      {
+        "path": "releases/engineering-release-20260905-v1/release.sha256.json",
+        "sha256": "e7e67bbe1d106019e1045684495fb547ac7fad1068090be8235352eb15dc2d91",
+        "bytes": 161
+      }
+    ],
+    "final_suite_counts": {
+      "source": "Root implementation run; package/inventory logs also read directly for this report.",
+      "python_core_unittest_passed": 580,
+      "offline_reviewer_dom_passed": 58,
+      "production_tests_passed": 1252,
+      "production_existing_skips": 41,
+      "research_web_tests_passed": 243,
+      "research_web_lint": "passed",
+      "research_web_typecheck": "passed",
+      "research_web_build": "passed",
+      "root_typescript_check": "passed",
+      "production_build": "passed",
+      "production_build_exit_code": 0,
+      "production_static_pages": 8
+    },
+    "isolated_package": {
+      "valid": true,
+      "imported_from_installed_wheel": true,
+      "wheel_sha256": "7934d70b07cb88ae381114cfea3502fe91f3f19e84d92a94e36dc92d527406cb",
+      "compared_source_schema_fixture_asset_files": 68,
+      "packaged_study_validation": true,
+      "packaged_offline_form_render_bytes": 20492
+    },
+    "current_exposure_inventory": {
+      "valid": true,
+      "error_count": 0,
+      "finalized_manifest_count": 12,
+      "scanned_files": 156,
+      "hashed_files": 133,
+      "merged_exposure_entries": 12,
+      "verified_bytes_read": 2966686
+    },
+    "verification_log_identities": [
+      {
+        "name": "ht-final-package-verification.json",
+        "sha256": "6bfdc00eee3dd10549babdf538ee7697fc41b5cc6d6080e4fc266ac324b6c731",
+        "bytes": 283
+      },
+      {
+        "name": "ht-final-exposure-inventory.json",
+        "sha256": "9d0814099d0b9f38e74ed9c398b74018240eb7de1712203edb88c5b889d622e2",
+        "bytes": 60611
+      }
+    ],
+    "offline_evaluation_form": {
+      "html": {
+        "path": "reviews/engineering-release-reviewer-a.html",
+        "bytes": 20492,
+        "sha256": "96dd1bcbe5139abf3de51098d90d690d760bf81cef8726e04abeda212ec24f1d"
+      },
+      "packet": {
+        "path": "reviews/engineering-release-reviewer-a.json",
+        "bytes": 2272,
+        "sha256": "040bb1109f5b019467af92a45d566599b5a69f9e9930783b32248003164c309a"
+      },
+      "ten_item_synthetic_script_download_roundtrip": "Root/form-agent verified through DOM execution and Blob download.",
+      "actual_reviewer_judgments_collected": false,
+      "visual_browser_check": "Blocked by CUA local-file URL policy; no workaround attempted."
+    },
+    "source_inventory": {
+      "source": "Root final source-inventory check.",
+      "untracked_research_documentation_files": 188,
+      "approximate_total_megabytes": 2.1,
+      "model_environment_cache_reviewkey_run_artifacts_included": false,
+      "whitespace_diff_check": "passed",
+      "commit_performed": false,
+      "push_performed": false,
+      "deployment_performed": false
+    }
+  },
+  "remaining_unmeasured": [
+    "Tibetan training or comprehension",
+    "Native reviewer agreement",
+    "Representative long-sequence throughput and memory",
+    "Clinically reviewed health guidance",
+    "Held-out quality improvement",
+    "Exact optimizer/RNG/sampler resume"
+  ],
+  "updated_at_utc": "2026-09-06T01:14:58.321576+00:00"
+}

@@ -1,0 +1,11 @@
+sample_slot,example_id,example_version,task_type,representative_reason,authoring_person_minutes,translation_person_minutes,reviewer_1_person_minutes,reviewer_2_person_minutes,coordination_person_minutes,adjudication_person_minutes,rework_person_minutes,total_person_minutes,start_date_time,end_date_time,elapsed_hours,completion_status,language_review_status,medical_review_status,unresolved_issues,evaluation_capacity_reserved,notes
+1,,,,,,,,,,,,,,,,,,,,,
+2,,,,,,,,,,,,,,,,,,,,,
+3,,,,,,,,,,,,,,,,,,,,,
+4,,,,,,,,,,,,,,,,,,,,,
+5,,,,,,,,,,,,,,,,,,,,,
+6,,,,,,,,,,,,,,,,,,,,,
+7,,,,,,,,,,,,,,,,,,,,,
+8,,,,,,,,,,,,,,,,,,,,,
+9,,,,,,,,,,,,,,,,,,,,,
+10,,,,,,,,,,,,,,,,,,,,,

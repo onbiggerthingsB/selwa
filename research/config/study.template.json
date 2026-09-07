@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "kind": "tibetan_comprehension_study",
+  "study_id": "tibetan-passage-comprehension-v1",
+  "status": "draft",
+  "evidence_kind": "human_review",
+  "population": "Adults in Tibet",
+  "writing_style": "Clear everyday written Tibetan; exact local variety to be agreed with the first reviewers.",
+  "community": null,
+  "first_task": {
+    "task_id": "nonclinical-passage-extraction-v1",
+    "description": "Read a short nonclinical everyday passage and return the exact requested source span, or the declared no-answer label when the passage does not supply the answer.",
+    "answer_kind": "extraction",
+    "labels": [],
+    "no_answer_label": "UNKNOWN",
+    "review_criteria": "Independent native reviewers check whether the answer addresses the question, is supported by the passage, preserves numbers and negation, and correctly declines absent information. Confirm the no-answer label and local writing variety before preregistration."
+  },
+  "condition": null,
+  "critical_failure_categories": [
+    {"category_id": "number_changed", "definition": "A number, time, date, quantity or unit differs from the passage."},
+    {"category_id": "negation_reversed", "definition": "The answer reverses or drops a negation that changes the passage meaning."},
+    {"category_id": "unsupported_answer", "definition": "The answer supplies information not supported by the passage."},
+    {"category_id": "missed_no_answer", "definition": "The answer invents a response when the requested information is absent."}
+  ],
+  "pilot": {"planned_item_count": 10, "item_unit": "model_output_case", "minimum_reviewers": 2, "expected_item_ids": []},
+  "candidate_ids": ["qwen3-4b-mlx-4bit", "gemma3-4b-it-mlx-4bit"],
+  "clinical_review_available": false,
+  "registered_by": null,
+  "registered_at": null
+}

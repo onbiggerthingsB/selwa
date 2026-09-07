@@ -51,3 +51,34 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local language-model research: source and safe fixtures remain tracked
+/research/**/__pycache__/
+/research/**/*.py[cod]
+/research/**/.venv/
+/research/**/*.egg-info/
+/research/*.egg-info/
+/research/build/
+/research/dist/
+/research/**/build/
+/research/**/dist/
+/research/**/node_modules/
+/research/**/.next/
+/research/**/coverage/
+/research/**/.ruff_cache/
+/research/**/.pytest_cache/
+/research/data/
+/research/raw/
+/research/models/
+/research/cache/
+/research/runs/
+/research/adapters/
+/research/transcripts/
+/research/review/submissions/
+/research/**/*.safetensors
+/research/**/*.gguf
+
+# Local review logs and generated research report artifacts
+/output/codebase-review-2026-09-04/
+/output/pdf/
+/output/tibetan-llm-research-2026-09-04/

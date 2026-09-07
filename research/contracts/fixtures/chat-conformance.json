@@ -1,0 +1,2268 @@
+{
+  "schema_version": "1.0",
+  "cases": [
+    {
+      "name": "request valid integral JSON number version",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-integral-version",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1.0,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [{"role": "user", "content": "How many wooden spoons are in the blue box?"}]
+      },
+      "valid": true
+    },
+    {
+      "name": "request valid selected source",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": true,
+      "catalog": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      }
+    },
+    {
+      "name": "request valid exact multilingual Unicode",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": " བོད་ཡིག་ 中文 é 😀\n"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "request valid three alternating messages",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          },
+          {
+            "role": "assistant",
+            "content": "Synthetic response."
+          },
+          {
+            "role": "user",
+            "content": "What about the red box?"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "request valid nine alternating messages",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Turn 1"
+          },
+          {
+            "role": "assistant",
+            "content": "Turn 2"
+          },
+          {
+            "role": "user",
+            "content": "Turn 3"
+          },
+          {
+            "role": "assistant",
+            "content": "Turn 4"
+          },
+          {
+            "role": "user",
+            "content": "Turn 5"
+          },
+          {
+            "role": "assistant",
+            "content": "Turn 6"
+          },
+          {
+            "role": "user",
+            "content": "Turn 7"
+          },
+          {
+            "role": "assistant",
+            "content": "Turn 8"
+          },
+          {
+            "role": "user",
+            "content": "Turn 9"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "request valid code point limit includes astral characters",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "request valid 8000 total code points",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "role": "assistant",
+            "content": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "role": "user",
+            "content": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "role": "assistant",
+            "content": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "role": "user",
+            "content": "a"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "request valid safe integer maximum",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 9007199254740991,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "request invalid empty history",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": []
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid too many messages",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "Turn"
+          },
+          {
+            "role": "assistant",
+            "content": "Turn"
+          },
+          {
+            "role": "user",
+            "content": "Turn"
+          },
+          {
+            "role": "assistant",
+            "content": "Turn"
+          },
+          {
+            "role": "user",
+            "content": "Turn"
+          },
+          {
+            "role": "assistant",
+            "content": "Turn"
+          },
+          {
+            "role": "user",
+            "content": "Turn"
+          },
+          {
+            "role": "assistant",
+            "content": "Turn"
+          },
+          {
+            "role": "user",
+            "content": "Turn"
+          },
+          {
+            "role": "assistant",
+            "content": "Turn"
+          },
+          {
+            "role": "user",
+            "content": "Turn"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid starts assistant",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "assistant",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid ends assistant",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          },
+          {
+            "role": "assistant",
+            "content": "Synthetic response."
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid adjacent user messages",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          },
+          {
+            "role": "user",
+            "content": "Second"
+          },
+          {
+            "role": "user",
+            "content": "Third"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid system role",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "system",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid whitespace only",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": " \t\n  ﻿"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid empty content",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": ""
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid content above code point limit",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid 8001 total code points",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "role": "assistant",
+            "content": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "role": "user",
+            "content": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "role": "assistant",
+            "content": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          {
+            "role": "user",
+            "content": "a"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid extra top field",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ],
+        "model": "external-provider"
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid extra message field",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?",
+            "source_id": "unknown"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid extra citation field",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+          "title": "Untrusted title"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid id final newline",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "request\n",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid id slash",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "../request",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid id too long",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid source id blank",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "﻿",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid source version boolean",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": true,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid source version zero",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 0,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid source version fractional",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1.5,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid source version unsafe integer",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 9007199254740992,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid hash uppercase",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1BDA59B8EE35B45E5AB327F7A4038B8035105016DD6C37B03DA0648786BA0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid hash length",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "request invalid unknown catalog source",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "unknown-source",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false,
+      "catalog": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      }
+    },
+    {
+      "name": "request invalid stale catalog source version",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 2,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false,
+      "catalog": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      }
+    },
+    {
+      "name": "request invalid stale catalog source hash",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      },
+      "valid": false,
+      "catalog": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      }
+    },
+    {
+      "name": "request invalid isolated surrogate",
+      "kind": "request",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "\ud800"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "response valid success",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": true,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response valid 4000 astral code points",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": true,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response valid timeout",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "timeout",
+        "answer": null,
+        "citations": [],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": true,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response valid cancelled",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "cancelled",
+        "answer": null,
+        "citations": [],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": true,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response valid context_overflow",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "context_overflow",
+        "answer": null,
+        "citations": [],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": true,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response valid runtime_failure",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "runtime_failure",
+        "answer": null,
+        "citations": [],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": true,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid different request id",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "other-request",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid request id final newline",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1\n",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid wrong selected citation",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "other-source",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid stale citation version",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 2,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid wrong citation hash",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid success without citation",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid duplicate citations",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          },
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid success null answer",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": null,
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid blank answer",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "　﻿",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid oversized answer",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid failure contains answer",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "timeout",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid failure contains citation",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "runtime_failure",
+        "answer": null,
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid real model identity",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "mlx://qwen3",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid synthetic false",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": false,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid token count invented",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": 10
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid unrecognised outcome",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "refusal",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid extra top field",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "Synthetic demonstration: the supplied passage says three wooden spoons.",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reviewed": true
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "response invalid isolated surrogate answer",
+      "kind": "response",
+      "value": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "outcome": "success",
+        "answer": "bad\udfff",
+        "citations": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+          }
+        ],
+        "model_identity": "fake://research-chat-v1",
+        "synthetic": true,
+        "input_tokens": null,
+        "output_tokens": null
+      },
+      "valid": false,
+      "request": {
+        "schema_version": "1.0",
+        "request_id": "conformance-1",
+        "source": {
+          "source_id": "synthetic-boxes-en",
+          "version": 1,
+          "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898"
+        },
+        "messages": [
+          {
+            "role": "user",
+            "content": "How many wooden spoons are in the blue box?"
+          }
+        ]
+      }
+    },
+    {
+      "name": "catalog valid two synthetic sources",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "catalog valid one synthetic source",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": true
+    },
+    {
+      "name": "catalog invalid empty",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": []
+      },
+      "valid": false
+    },
+    {
+      "name": "catalog invalid more than two sources",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "third-source",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "catalog invalid duplicate source id",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "catalog invalid exact source text hash",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty. ",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "catalog invalid claimed language approval",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "approved",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "catalog invalid clinical scope",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "health",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "catalog invalid claimed medical approval",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "approved"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "catalog invalid real source kind",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "permissioned_text",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "catalog invalid extra source field",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable",
+            "permitted_uses": [
+              "train"
+            ]
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "catalog invalid unknown language",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "fr",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "catalog invalid blank source title",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "synthetic_demo",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "\t　",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": false
+    },
+    {
+      "name": "catalog invalid mode",
+      "kind": "catalog",
+      "value": {
+        "schema_version": "1.0",
+        "mode": "live",
+        "sources": [
+          {
+            "source_id": "synthetic-boxes-en",
+            "version": 1,
+            "content_sha256": "1bda59b8ee35b45e5ab327f7a4038b8035105016dd6c37b03da0648786ba0898",
+            "title": "Synthetic boxes fixture",
+            "original_text": "The blue box contains three wooden spoons.\nThe red box is empty.",
+            "language": "en",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          },
+          {
+            "source_id": "synthetic-boxes-bo",
+            "version": 1,
+            "content_sha256": "a06dd63a2d356dacf51571641a11c4af9525cee3cdf27aaeaa504a1a276aa59c",
+            "title": "Synthetic Tibetan script fixture",
+            "original_text": "སྒམ་སྔོན་པོའི་ནང་དུ་ཐུར་མ་གསུམ་ཡོད།",
+            "language": "bo",
+            "source_kind": "synthetic_fixture",
+            "scope": "nonclinical",
+            "language_review": "pending",
+            "medical_review": "not_applicable"
+          }
+        ]
+      },
+      "valid": false
+    }
+  ]
+}

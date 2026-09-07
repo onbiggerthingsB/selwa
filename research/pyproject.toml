@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools==84.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ht-tibetan-research"
+version = "0.1.0"
+description = "Local Tibetan model experiments and review tooling"
+requires-python = ">=3.12,<3.13"
+dependencies = ["jsonschema==4.26.0"]
+
+[project.optional-dependencies]
+mlx = ["mlx-lm[train]==0.31.3"]
+
+[project.scripts]
+ht-tibetan = "ht_tibetan.cli:main"
+
+[tool.setuptools]
+packages = ["ht_tibetan", "ht_tibetan_contracts"]
+
+[tool.setuptools.package-dir]
+ht_tibetan = "ml/src/ht_tibetan"
+ht_tibetan_contracts = "contracts"
+
+[tool.setuptools.package-data]
+ht_tibetan_contracts = ["*.json", "fixtures/*.json"]
+ht_tibetan = ["reviewer_assets/*.html", "reviewer_assets/*.css", "reviewer_assets/*.js"]

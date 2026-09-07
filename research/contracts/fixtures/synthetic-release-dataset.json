@@ -1,0 +1,415 @@
+{
+  "schema_version": "1.0",
+  "sources": [
+    {
+      "source_id": "release-engineering-source-1",
+      "version": 1,
+      "title": "ENGINEERING FIXTURE: authored synthetic English; no human review or clinical evidence",
+      "source_url": null,
+      "source_date": null,
+      "original_text": "The repair shop keeps spare keys in a yellow cabinet. The cabinet stands beside the west window.",
+      "content_sha256": "3ad2bc644dea76a490008018e9a4634b22ba92b098857224d617ecbca62a2171",
+      "language": "en",
+      "source_kind": "synthetic_fixture",
+      "scope": "nonclinical",
+      "permitted_uses": [
+        "private_research",
+        "review",
+        "train"
+      ],
+      "language_review": "approved",
+      "medical_review": "not_applicable",
+      "unresolved_issues": []
+    },
+    {
+      "source_id": "release-engineering-source-2",
+      "version": 1,
+      "title": "ENGINEERING FIXTURE: authored synthetic English; no human review or clinical evidence",
+      "source_url": null,
+      "source_date": null,
+      "original_text": "On Friday, the village bus leaves the square at eight. On Saturday, it leaves at ten.",
+      "content_sha256": "5c2a0850b79ff4f695ceed5e69aecf0899ccf662341aa60a235f96d8b8cfa193",
+      "language": "en",
+      "source_kind": "synthetic_fixture",
+      "scope": "nonclinical",
+      "permitted_uses": [
+        "private_research",
+        "review",
+        "train"
+      ],
+      "language_review": "approved",
+      "medical_review": "not_applicable",
+      "unresolved_issues": []
+    },
+    {
+      "source_id": "release-engineering-source-3",
+      "version": 1,
+      "title": "ENGINEERING FIXTURE: authored synthetic English; no human review or clinical evidence",
+      "source_url": null,
+      "source_date": null,
+      "original_text": "Mira labels the cloth basket with the number seven. The metal basket is labeled four.",
+      "content_sha256": "a25c6d04a746ec4c96f9acb03f207590f13a3bbfcf9c651c2135ac6aaff1d57e",
+      "language": "en",
+      "source_kind": "synthetic_fixture",
+      "scope": "nonclinical",
+      "permitted_uses": [
+        "private_research",
+        "review",
+        "validation"
+      ],
+      "language_review": "approved",
+      "medical_review": "not_applicable",
+      "unresolved_issues": []
+    },
+    {
+      "source_id": "release-engineering-source-4",
+      "version": 1,
+      "title": "ENGINEERING FIXTURE: authored synthetic English; no human review or clinical evidence",
+      "source_url": null,
+      "source_date": null,
+      "original_text": "The reading room lends maps for three days. Atlases may be borrowed for six days.",
+      "content_sha256": "d4a903e056877ae2131780d18903bb197515c075f3b13ae0f66a46a54a4bda67",
+      "language": "en",
+      "source_kind": "synthetic_fixture",
+      "scope": "nonclinical",
+      "permitted_uses": [
+        "private_research",
+        "review",
+        "final_test"
+      ],
+      "language_review": "approved",
+      "medical_review": "not_applicable",
+      "unresolved_issues": []
+    }
+  ],
+  "examples": [
+    {
+      "example_id": "release-engineering-example-1",
+      "version": 1,
+      "source_id": "release-engineering-source-1",
+      "source_version": 1,
+      "source_sha256": "3ad2bc644dea76a490008018e9a4634b22ba92b098857224d617ecbca62a2171",
+      "scenario_group": "release-engineering-scenario-1",
+      "paraphrase_group": "release-engineering-paraphrase-1",
+      "contributor_id": "synthetic-engineering-author-1",
+      "register": "Synthetic English engineering fixture only; no completed human review",
+      "question": "Where does the repair shop keep spare keys?",
+      "allowed_claims": [
+        "In a yellow cabinet."
+      ],
+      "approved_answer": "In a yellow cabinet.",
+      "review_state": "approved",
+      "split": "train",
+      "exposures": []
+    },
+    {
+      "example_id": "release-engineering-example-2",
+      "version": 1,
+      "source_id": "release-engineering-source-2",
+      "source_version": 1,
+      "source_sha256": "5c2a0850b79ff4f695ceed5e69aecf0899ccf662341aa60a235f96d8b8cfa193",
+      "scenario_group": "release-engineering-scenario-2",
+      "paraphrase_group": "release-engineering-paraphrase-2",
+      "contributor_id": "synthetic-engineering-author-2",
+      "register": "Synthetic English engineering fixture only; no completed human review",
+      "question": "When does the village bus leave on Friday?",
+      "allowed_claims": [
+        "At eight."
+      ],
+      "approved_answer": "At eight.",
+      "review_state": "approved",
+      "split": "train",
+      "exposures": []
+    },
+    {
+      "example_id": "release-engineering-example-3",
+      "version": 1,
+      "source_id": "release-engineering-source-3",
+      "source_version": 1,
+      "source_sha256": "a25c6d04a746ec4c96f9acb03f207590f13a3bbfcf9c651c2135ac6aaff1d57e",
+      "scenario_group": "release-engineering-scenario-3",
+      "paraphrase_group": "release-engineering-paraphrase-3",
+      "contributor_id": "synthetic-engineering-author-3",
+      "register": "Synthetic English engineering fixture only; no completed human review",
+      "question": "What number labels the cloth basket?",
+      "allowed_claims": [
+        "Seven."
+      ],
+      "approved_answer": "Seven.",
+      "review_state": "approved",
+      "split": "validation",
+      "exposures": []
+    },
+    {
+      "example_id": "release-engineering-example-4",
+      "version": 1,
+      "source_id": "release-engineering-source-4",
+      "source_version": 1,
+      "source_sha256": "d4a903e056877ae2131780d18903bb197515c075f3b13ae0f66a46a54a4bda67",
+      "scenario_group": "release-engineering-scenario-4",
+      "paraphrase_group": "release-engineering-paraphrase-4",
+      "contributor_id": "synthetic-engineering-author-4",
+      "register": "Synthetic English engineering fixture only; no completed human review",
+      "question": "For how many days may a map be borrowed?",
+      "allowed_claims": [
+        "Three days."
+      ],
+      "approved_answer": "Three days.",
+      "review_state": "approved",
+      "split": "final_test",
+      "exposures": []
+    }
+  ],
+  "reviews": [
+    {
+      "review_id": "synthetic-release-review-1-1",
+      "example_id": "release-engineering-example-1",
+      "example_version": 1,
+      "example_sha256": "65563a9a7e1bab7432e15a5e53015b7a6c7da3584a9d5c4a07aab1589708657c",
+      "source_sha256": "3ad2bc644dea76a490008018e9a4634b22ba92b098857224d617ecbca62a2171",
+      "reviewer_id": "synthetic-structural-reviewer-1",
+      "reviewer_role": "language_reviewer",
+      "review_type": "language",
+      "ratings": {
+        "naturalness": 4,
+        "fidelity": 4,
+        "comprehension": 4
+      },
+      "issues": [
+        "Synthetic structural test labels only. No person supplied these ratings."
+      ],
+      "minutes_spent": 1,
+      "status": "complete",
+      "recommendation": "approve",
+      "revision": 1,
+      "supersedes_review_id": null
+    },
+    {
+      "review_id": "synthetic-release-review-1-2",
+      "example_id": "release-engineering-example-1",
+      "example_version": 1,
+      "example_sha256": "65563a9a7e1bab7432e15a5e53015b7a6c7da3584a9d5c4a07aab1589708657c",
+      "source_sha256": "3ad2bc644dea76a490008018e9a4634b22ba92b098857224d617ecbca62a2171",
+      "reviewer_id": "synthetic-structural-reviewer-2",
+      "reviewer_role": "language_reviewer",
+      "review_type": "language",
+      "ratings": {
+        "naturalness": 4,
+        "fidelity": 4,
+        "comprehension": 4
+      },
+      "issues": [
+        "Synthetic structural test labels only. No person supplied these ratings."
+      ],
+      "minutes_spent": 1,
+      "status": "complete",
+      "recommendation": "approve",
+      "revision": 1,
+      "supersedes_review_id": null
+    },
+    {
+      "review_id": "synthetic-release-review-2-1",
+      "example_id": "release-engineering-example-2",
+      "example_version": 1,
+      "example_sha256": "0307fa670dde5811e41122e7141c2bb31f186e4395464036882f44355f917273",
+      "source_sha256": "5c2a0850b79ff4f695ceed5e69aecf0899ccf662341aa60a235f96d8b8cfa193",
+      "reviewer_id": "synthetic-structural-reviewer-1",
+      "reviewer_role": "language_reviewer",
+      "review_type": "language",
+      "ratings": {
+        "naturalness": 4,
+        "fidelity": 4,
+        "comprehension": 4
+      },
+      "issues": [
+        "Synthetic structural test labels only. No person supplied these ratings."
+      ],
+      "minutes_spent": 1,
+      "status": "complete",
+      "recommendation": "approve",
+      "revision": 1,
+      "supersedes_review_id": null
+    },
+    {
+      "review_id": "synthetic-release-review-2-2",
+      "example_id": "release-engineering-example-2",
+      "example_version": 1,
+      "example_sha256": "0307fa670dde5811e41122e7141c2bb31f186e4395464036882f44355f917273",
+      "source_sha256": "5c2a0850b79ff4f695ceed5e69aecf0899ccf662341aa60a235f96d8b8cfa193",
+      "reviewer_id": "synthetic-structural-reviewer-2",
+      "reviewer_role": "language_reviewer",
+      "review_type": "language",
+      "ratings": {
+        "naturalness": 4,
+        "fidelity": 4,
+        "comprehension": 4
+      },
+      "issues": [
+        "Synthetic structural test labels only. No person supplied these ratings."
+      ],
+      "minutes_spent": 1,
+      "status": "complete",
+      "recommendation": "approve",
+      "revision": 1,
+      "supersedes_review_id": null
+    },
+    {
+      "review_id": "synthetic-release-review-3-1",
+      "example_id": "release-engineering-example-3",
+      "example_version": 1,
+      "example_sha256": "e59330df85918c84b9e1694a8396795a519b4b1129e9954f75d9e46055370f9f",
+      "source_sha256": "a25c6d04a746ec4c96f9acb03f207590f13a3bbfcf9c651c2135ac6aaff1d57e",
+      "reviewer_id": "synthetic-structural-reviewer-1",
+      "reviewer_role": "language_reviewer",
+      "review_type": "language",
+      "ratings": {
+        "naturalness": 4,
+        "fidelity": 4,
+        "comprehension": 4
+      },
+      "issues": [
+        "Synthetic structural test labels only. No person supplied these ratings."
+      ],
+      "minutes_spent": 1,
+      "status": "complete",
+      "recommendation": "approve",
+      "revision": 1,
+      "supersedes_review_id": null
+    },
+    {
+      "review_id": "synthetic-release-review-3-2",
+      "example_id": "release-engineering-example-3",
+      "example_version": 1,
+      "example_sha256": "e59330df85918c84b9e1694a8396795a519b4b1129e9954f75d9e46055370f9f",
+      "source_sha256": "a25c6d04a746ec4c96f9acb03f207590f13a3bbfcf9c651c2135ac6aaff1d57e",
+      "reviewer_id": "synthetic-structural-reviewer-2",
+      "reviewer_role": "language_reviewer",
+      "review_type": "language",
+      "ratings": {
+        "naturalness": 4,
+        "fidelity": 4,
+        "comprehension": 4
+      },
+      "issues": [
+        "Synthetic structural test labels only. No person supplied these ratings."
+      ],
+      "minutes_spent": 1,
+      "status": "complete",
+      "recommendation": "approve",
+      "revision": 1,
+      "supersedes_review_id": null
+    },
+    {
+      "review_id": "synthetic-release-review-4-1",
+      "example_id": "release-engineering-example-4",
+      "example_version": 1,
+      "example_sha256": "ea9b0b03226dfdf6d64ae83ad5380e8167776d238068c0bdc2cd100174d7308c",
+      "source_sha256": "d4a903e056877ae2131780d18903bb197515c075f3b13ae0f66a46a54a4bda67",
+      "reviewer_id": "synthetic-structural-reviewer-1",
+      "reviewer_role": "language_reviewer",
+      "review_type": "language",
+      "ratings": {
+        "naturalness": 4,
+        "fidelity": 4,
+        "comprehension": 4
+      },
+      "issues": [
+        "Synthetic structural test labels only. No person supplied these ratings."
+      ],
+      "minutes_spent": 1,
+      "status": "complete",
+      "recommendation": "approve",
+      "revision": 1,
+      "supersedes_review_id": null
+    },
+    {
+      "review_id": "synthetic-release-review-4-2",
+      "example_id": "release-engineering-example-4",
+      "example_version": 1,
+      "example_sha256": "ea9b0b03226dfdf6d64ae83ad5380e8167776d238068c0bdc2cd100174d7308c",
+      "source_sha256": "d4a903e056877ae2131780d18903bb197515c075f3b13ae0f66a46a54a4bda67",
+      "reviewer_id": "synthetic-structural-reviewer-2",
+      "reviewer_role": "language_reviewer",
+      "review_type": "language",
+      "ratings": {
+        "naturalness": 4,
+        "fidelity": 4,
+        "comprehension": 4
+      },
+      "issues": [
+        "Synthetic structural test labels only. No person supplied these ratings."
+      ],
+      "minutes_spent": 1,
+      "status": "complete",
+      "recommendation": "approve",
+      "revision": 1,
+      "supersedes_review_id": null
+    }
+  ],
+  "adjudications": [
+    {
+      "adjudication_id": "synthetic-release-adjudication-1",
+      "example_id": "release-engineering-example-1",
+      "example_version": 1,
+      "example_sha256": "65563a9a7e1bab7432e15a5e53015b7a6c7da3584a9d5c4a07aab1589708657c",
+      "review_ids": [
+        "synthetic-release-review-1-1",
+        "synthetic-release-review-1-2"
+      ],
+      "adjudicator_id": "synthetic-structural-adjudicator",
+      "decision": "approve",
+      "language_review": "approved",
+      "medical_review": "not_applicable",
+      "rationale": "Synthetic structural fixture only. No human adjudication occurred; never use as language-quality or consent evidence.",
+      "minutes_spent": 1
+    },
+    {
+      "adjudication_id": "synthetic-release-adjudication-2",
+      "example_id": "release-engineering-example-2",
+      "example_version": 1,
+      "example_sha256": "0307fa670dde5811e41122e7141c2bb31f186e4395464036882f44355f917273",
+      "review_ids": [
+        "synthetic-release-review-2-1",
+        "synthetic-release-review-2-2"
+      ],
+      "adjudicator_id": "synthetic-structural-adjudicator",
+      "decision": "approve",
+      "language_review": "approved",
+      "medical_review": "not_applicable",
+      "rationale": "Synthetic structural fixture only. No human adjudication occurred; never use as language-quality or consent evidence.",
+      "minutes_spent": 1
+    },
+    {
+      "adjudication_id": "synthetic-release-adjudication-3",
+      "example_id": "release-engineering-example-3",
+      "example_version": 1,
+      "example_sha256": "e59330df85918c84b9e1694a8396795a519b4b1129e9954f75d9e46055370f9f",
+      "review_ids": [
+        "synthetic-release-review-3-1",
+        "synthetic-release-review-3-2"
+      ],
+      "adjudicator_id": "synthetic-structural-adjudicator",
+      "decision": "approve",
+      "language_review": "approved",
+      "medical_review": "not_applicable",
+      "rationale": "Synthetic structural fixture only. No human adjudication occurred; never use as language-quality or consent evidence.",
+      "minutes_spent": 1
+    },
+    {
+      "adjudication_id": "synthetic-release-adjudication-4",
+      "example_id": "release-engineering-example-4",
+      "example_version": 1,
+      "example_sha256": "ea9b0b03226dfdf6d64ae83ad5380e8167776d238068c0bdc2cd100174d7308c",
+      "review_ids": [
+        "synthetic-release-review-4-1",
+        "synthetic-release-review-4-2"
+      ],
+      "adjudicator_id": "synthetic-structural-adjudicator",
+      "decision": "approve",
+      "language_review": "approved",
+      "medical_review": "not_applicable",
+      "rationale": "Synthetic structural fixture only. No human adjudication occurred; never use as language-quality or consent evidence.",
+      "minutes_spent": 1
+    }
+  ]
+}

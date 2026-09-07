@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="__EVALUATION_CSP__">
+<title>Independent answer review</title><style>__EVALUATION_CSS__</style></head>
+<body><main><header><h1 id="title">Independent answer review</h1><label for="language">Language / 语言</label>
+<select id="language"><option value="en">English</option><option value="zh">中文</option></select></header>
+<p id="intro"></p><p id="evidence-note" class="notice"></p><p id="reviewer"></p>
+<p id="error" role="alert"></p><p id="progress" role="status"></p>
+<section><h2 id="answer-heading"></h2><label id="item-label" for="item-select"></label><select id="item-select"></select>
+<h3 id="source-label"></h3><div id="source-text" class="exact"></div>
+<h3 id="question-label"></h3><div id="question-text" class="exact"></div>
+<h3 id="answer-label"></h3><div id="answer-text" class="exact"></div>
+<details><summary id="instructions-label"></summary><div id="instruction-text" class="exact"></div></details>
+<p id="scale-note"></p><div id="ratings" class="grid"></div><h3 id="critical-heading"></h3><div id="critical-errors" class="grid"></div>
+<label id="minutes-label" for="minutes-spent"></label><input id="minutes-spent" type="number" min="0" max="1000000" step="any">
+<label id="notes-label" for="notes"></label><textarea id="notes" rows="3"></textarea>
+<label class="check"><input id="blind-compromised" type="checkbox"><span id="blind-label"></span></label>
+<label class="check"><input id="item-complete" type="checkbox"><span id="item-complete-label"></span></label></section>
+<section><h2 id="candidate-heading"></h2><p id="suitability-note"></p>
+<label id="candidate-label" for="candidate-select"></label><select id="candidate-select"></select>
+<label id="recommendation-label" for="recommendation"></label><select id="recommendation"></select>
+<label id="rationale-label" for="rationale"></label><textarea id="rationale" rows="3"></textarea></section>
+<section><label class="check"><input id="independent" type="checkbox"><span id="independent-label"></span></label>
+<label class="check"><input id="review-complete" type="checkbox"><span id="review-complete-label"></span></label>
+<button id="download-review" type="button"></button><p id="save-note"></p></section>
+<details><summary id="limitations-label"></summary><ul id="limitations"></ul></details>
+</main><script id="evaluation-packet" type="application/octet-stream">__EVALUATION_PACKET__</script><script>__EVALUATION_JS__</script></body></html>

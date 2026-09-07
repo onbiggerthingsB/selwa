@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "sources": [
+    {
+      "source_id": "unreviewed-books-bo",
+      "version": 1,
+      "title": "AI-authored unreviewed synthetic script probe; no human language or equivalence approval",
+      "source_url": null,
+      "source_date": null,
+      "original_text": "འདིར་དེབ་གསུམ་ཡོད།",
+      "content_sha256": "359205bc1e44ae2ae3e7399832161a0f16bec275162b76f692abfb796a7f6dff",
+      "language": "bo",
+      "source_kind": "synthetic_fixture",
+      "scope": "nonclinical",
+      "permitted_uses": [
+        "development_screen",
+        "private_research",
+        "review"
+      ],
+      "language_review": "pending",
+      "medical_review": "not_applicable",
+      "unresolved_issues": []
+    },
+    {
+      "source_id": "unreviewed-books-zh",
+      "version": 1,
+      "title": "AI-authored unreviewed synthetic script probe; no human language or equivalence approval",
+      "source_url": null,
+      "source_date": null,
+      "original_text": "这里有三本书。",
+      "content_sha256": "deef19698cf0df5322bd14e3f858f47f7e847c8e98f73efdbe80245ddfd12c93",
+      "language": "zh",
+      "source_kind": "synthetic_fixture",
+      "scope": "nonclinical",
+      "permitted_uses": [
+        "development_screen",
+        "private_research",
+        "review"
+      ],
+      "language_review": "pending",
+      "medical_review": "not_applicable",
+      "unresolved_issues": []
+    }
+  ],
+  "examples": [
+    {
+      "example_id": "unreviewed-books-question-bo",
+      "version": 1,
+      "source_id": "unreviewed-books-bo",
+      "source_version": 1,
+      "source_sha256": "359205bc1e44ae2ae3e7399832161a0f16bec275162b76f692abfb796a7f6dff",
+      "scenario_group": "unreviewed-books-scenario",
+      "paraphrase_group": "unreviewed-books-parallel",
+      "contributor_id": "ai-synthetic-fixture",
+      "register": "Unreviewed synthetic script input; not a native-language benchmark",
+      "question": "འདིར་དེབ་ག་ཚོད་ཡོད།",
+      "allowed_claims": [],
+      "approved_answer": null,
+      "review_state": "pending",
+      "split": "development_screen",
+      "exposures": []
+    },
+    {
+      "example_id": "unreviewed-books-question-zh",
+      "version": 1,
+      "source_id": "unreviewed-books-zh",
+      "source_version": 1,
+      "source_sha256": "deef19698cf0df5322bd14e3f858f47f7e847c8e98f73efdbe80245ddfd12c93",
+      "scenario_group": "unreviewed-books-scenario",
+      "paraphrase_group": "unreviewed-books-parallel",
+      "contributor_id": "ai-synthetic-fixture",
+      "register": "Unreviewed synthetic script input; not a native-language benchmark",
+      "question": "这里有几本书？",
+      "allowed_claims": [],
+      "approved_answer": null,
+      "review_state": "pending",
+      "split": "development_screen",
+      "exposures": []
+    }
+  ],
+  "reviews": [],
+  "adjudications": []
+}

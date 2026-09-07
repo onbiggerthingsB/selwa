@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://health-translator.local/research/contracts/contribution-permissions.schema.json",
+  "title": "Recorded permission for exact contributor material; not source licensing or identity verification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_kind", "schema_version", "evidence_kind", "grants"],
+  "properties": {
+    "schema_kind": {"const": "contribution_permissions"},
+    "schema_version": {"const": "1.0"},
+    "evidence_kind": {"enum": ["operator_recorded", "synthetic_test"]},
+    "grants": {"type": "array", "items": {"$ref": "#/$defs/grant"}},
+    "source_contributors": {
+      "description": "Optional operator-declared authors of source text. This cannot establish exhaustive authorship; absent sources remain explicitly outside contributor coverage.",
+      "type": "array", "items": {"$ref": "#/$defs/source_contributors"}
+    },
+    "example_contributors": {
+      "description": "Declare all known example authors when question, claims or answer have additional contributors. Each listed author needs bundled-content permission, including the example's named primary contributor.",
+      "type": "array", "items": {"$ref": "#/$defs/example_contributors"}
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"},
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "version": {"type": "integer", "minimum": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "uses": {
+      "type": "array", "uniqueItems": true,
+      "items": {"enum": ["development_screen", "smoke_training", "train", "validation", "final_test", "private_research", "review"]}
+    },
+    "source_contributors": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_id", "source_version", "source_sha256", "contributor_ids"],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/id"},
+        "source_version": {"$ref": "#/$defs/version"},
+        "source_sha256": {"$ref": "#/$defs/hash"},
+        "contributor_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "example_contributors": {
+      "type": "object", "additionalProperties": false,
+      "required": ["example_id", "example_version", "example_sha256", "contributor_ids"],
+      "properties": {
+        "example_id": {"$ref": "#/$defs/id"},
+        "example_version": {"$ref": "#/$defs/version"},
+        "example_sha256": {"$ref": "#/$defs/hash"},
+        "contributor_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/id"}}
+      }
+    },
+    "grant": {
+      "type": "object", "additionalProperties": false,
+      "required": ["grant_id", "revision", "supersedes_grant_id", "contributor_id", "contribution_kind", "contribution_fields", "permitted_uses", "status", "evidence_ref", "recorded_at", "granted_at", "expires_at"],
+      "properties": {
+        "grant_id": {"$ref": "#/$defs/id"},
+        "revision": {"$ref": "#/$defs/version"},
+        "supersedes_grant_id": {"anyOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]},
+        "contributor_id": {"$ref": "#/$defs/id"},
+        "contribution_kind": {"enum": ["example_bundle", "source_text"]},
+        "contribution_fields": {"type": "array"},
+        "example_id": {"$ref": "#/$defs/id"},
+        "example_version": {"$ref": "#/$defs/version"},
+        "example_sha256": {"$ref": "#/$defs/hash"},
+        "source_id": {"$ref": "#/$defs/id"},
+        "source_version": {"$ref": "#/$defs/version"},
+        "source_sha256": {"$ref": "#/$defs/hash"},
+        "permitted_uses": {"$ref": "#/$defs/uses"},
+        "status": {"enum": ["active", "revoked", "declined", "pending"]},
+        "evidence_ref": {
+          "description": "Opaque reference to private permission evidence. Do not store names, contact details, consent text, URLs or file paths here.",
+          "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "recorded_at": {"$ref": "#/$defs/timestamp"},
+        "granted_at": {"anyOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+        "expires_at": {"anyOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]}
+      },
+      "oneOf": [
+        {
+          "required": ["example_id", "example_version", "example_sha256"],
+          "properties": {
+            "contribution_kind": {"const": "example_bundle"},
+            "contribution_fields": {"const": ["question", "allowed_claims", "approved_answer"]}
+          },
+          "not": {"anyOf": [{"required": ["source_id"]}, {"required": ["source_version"]}, {"required": ["source_sha256"]}]}
+        },
+        {
+          "required": ["source_id", "source_version", "source_sha256"],
+          "properties": {
+            "contribution_kind": {"const": "source_text"},
+            "contribution_fields": {"const": ["original_text"]}
+          },
+          "not": {"anyOf": [{"required": ["example_id"]}, {"required": ["example_version"]}, {"required": ["example_sha256"]}]}
+        }
+      ]
+    }
+  }
+}

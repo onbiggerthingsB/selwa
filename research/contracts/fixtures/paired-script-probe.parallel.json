@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "evidence_kind": "synthetic_test",
+  "pairs": [
+    {
+      "pair_id": "unreviewed-books-probe",
+      "version": 1,
+      "scenario_group": "unreviewed-books-scenario",
+      "paraphrase_group": "unreviewed-books-parallel",
+      "translation_contributor_ids": [
+        "ai-synthetic-fixture"
+      ],
+      "members": {
+        "bo": {
+          "source_id": "unreviewed-books-bo",
+          "source_version": 1,
+          "source_sha256": "359205bc1e44ae2ae3e7399832161a0f16bec275162b76f692abfb796a7f6dff",
+          "example_id": "unreviewed-books-question-bo",
+          "example_version": 1,
+          "example_sha256": "828b505f7220d30abdeccb4880cf90c1751fe19e9689d90e5f11624723662548"
+        },
+        "zh": {
+          "source_id": "unreviewed-books-zh",
+          "source_version": 1,
+          "source_sha256": "deef19698cf0df5322bd14e3f858f47f7e847c8e98f73efdbe80245ddfd12c93",
+          "example_id": "unreviewed-books-question-zh",
+          "example_version": 1,
+          "example_sha256": "926952a63e8944c7c068cb09cf34bd7890dfca9e94bfebeae12a1ecbc5b8a928"
+        }
+      },
+      "permission_record_ids": [
+        "synthetic-probe-permission-bo",
+        "synthetic-probe-permission-zh"
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "permission_id": "synthetic-probe-permission-bo",
+      "source_id": "unreviewed-books-bo",
+      "source_version": 1,
+      "source_sha256": "359205bc1e44ae2ae3e7399832161a0f16bec275162b76f692abfb796a7f6dff",
+      "status": "granted",
+      "permitted_derivatives": [
+        "translation",
+        "parallel_evaluation"
+      ],
+      "granted_by": "ai-synthetic-fixture",
+      "permission_evidence": "Original AI-authored software fixture for this implementation check. Synthetic declaration only; no human contributor permission or review is asserted.",
+      "evidence_kind": "synthetic_test"
+    },
+    {
+      "permission_id": "synthetic-probe-permission-zh",
+      "source_id": "unreviewed-books-zh",
+      "source_version": 1,
+      "source_sha256": "deef19698cf0df5322bd14e3f858f47f7e847c8e98f73efdbe80245ddfd12c93",
+      "status": "granted",
+      "permitted_derivatives": [
+        "translation",
+        "parallel_evaluation"
+      ],
+      "granted_by": "ai-synthetic-fixture",
+      "permission_evidence": "Original AI-authored software fixture for this implementation check. Synthetic declaration only; no human contributor permission or review is asserted.",
+      "evidence_kind": "synthetic_test"
+    }
+  ],
+  "equivalence_reviews": [],
+  "equivalence_adjudications": []
+}

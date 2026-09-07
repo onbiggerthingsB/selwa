@@ -1,0 +1,73 @@
+:root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #24342e; background: #f5f3ed; font-size: 16px; line-height: 1.55; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, select, input, textarea { font: inherit; }
+button, select, input[type="number"] { min-height: 44px; }
+button { cursor: pointer; border: 1px solid #bec9c1; border-radius: 9px; background: #fffefa; color: #24342e; padding: 10px 17px; font-weight: 600; }
+button:hover:not(:disabled) { background: #eef2eb; border-color: #638575; }
+button:disabled { cursor: default; opacity: .5; }
+button.primary { background: #285943; color: #fff; border-color: #285943; }
+button.primary:hover:not(:disabled) { background: #1c4533; }
+button.quiet { background: transparent; border-color: transparent; }
+button.small { min-height: 40px; padding: 7px 11px; font-size: .875rem; }
+:focus-visible { outline: 3px solid #24765b; outline-offset: 3px; }
+input, select, textarea { background: #fff; color: #24342e; border: 1px solid #a4b3a8; border-radius: 7px; padding: 9px 11px; max-width: 100%; }
+textarea { width: 100%; min-height: 94px; resize: vertical; line-height: 1.65; }
+input[type="checkbox"] { width: 20px; height: 20px; accent-color: #285943; flex-shrink: 0; }
+header, .workspace, .page-footer { max-width: 1180px; margin: 0 auto; padding: 24px 32px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-top: 30px; padding-bottom: 20px; }
+.brand { font-size: .8rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; color: #426251; }
+h1 { margin: 5px 0 2px; font-size: clamp(1.6rem, 4vw, 2.1rem); line-height: 1.25; font-weight: 650; letter-spacing: -.025em; }
+h2 { margin: 0 0 16px; font-size: 1.22rem; font-weight: 650; }
+h3 { margin: 0 0 7px; font-size: .9rem; font-weight: 650; }
+p { margin: 0 0 12px; }
+.muted, .help { color: #58695f; font-size: .88rem; }
+.help { margin-top: 7px; }
+.language { display: grid; gap: 3px; font-size: .78rem; flex-shrink: 0; }
+.language select { min-width: 128px; }
+.workspace { padding-top: 0; }
+.intro { padding: 18px 22px; background: #eaf0e7; border-radius: 12px; margin-bottom: 20px; }
+.intro p:last-child { margin-bottom: 0; }
+.badge { display: inline-block; border-radius: 20px; padding: 3px 10px; background: #e4eade; font-size: .75rem; font-weight: 650; }
+.badge.warning { color: #795414; background: #f9eaca; }
+.progress-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 20px 0 9px; }
+progress { width: 100%; height: 7px; display: block; border: 0; border-radius: 9px; overflow: hidden; background: #dde3d9; accent-color: #557c59; }
+progress::-webkit-progress-bar { background: #dde3d9; }
+progress::-webkit-progress-value { background: #557c59; }
+.review-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 22px; margin-top: 23px; align-items: start; }
+.card { border: 1px solid #d9dfd4; border-radius: 15px; background: #fffefa; padding: 26px; box-shadow: 0 3px 12px #25352705; min-width: 0; }
+.reading-block + .reading-block { border-top: 1px solid #e5e8df; padding-top: 22px; margin-top: 22px; }
+.exact-text { white-space: pre-wrap; overflow-wrap: anywhere; font-family: "Kailasa", "Noto Sans Tibetan", "Microsoft Himalaya", "PingFang SC", -apple-system, sans-serif; font-size: 1.09rem; line-height: 1.95; }
+.reference-note { border-left: 3px solid #c7d9ba; padding-left: 14px; }
+.language-pair { margin-bottom: 18px; font-size: .86rem; background: #eff2ea; border-radius: 7px; padding: 9px 12px; }
+.field { display: grid; gap: 6px; margin-top: 18px; }
+.field > label, .field-label { font-weight: 600; font-size: .9rem; }
+.scale-note { padding: 11px 13px; background: #f1f3ec; border-radius: 8px; font-size: .86rem; }
+.ratings { display: grid; gap: 13px; margin: 20px 0; }
+.rating-row { display: grid; grid-template-columns: 1fr minmax(135px, .85fr); gap: 15px; align-items: center; }
+.rating-row label { font-weight: 600; font-size: .9rem; }
+.rating-row .help { display: block; font-weight: 400; font-size: .78rem; margin-top: 2px; }
+.issues-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; }
+.issues-heading h3 { margin: 0; }
+.issue { margin-top: 10px; }
+.issue-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; font-size: .8rem; }
+.issue textarea { font-family: "Kailasa", "Noto Sans Tibetan", "Microsoft Himalaya", "PingFang SC", -apple-system, sans-serif; }
+.check-field { display: flex; align-items: flex-start; gap: 10px; margin-top: 23px; padding: 13px; background: #eff2ea; border-radius: 8px; }
+.check-field label { font-size: .9rem; }
+.navigation { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 21px 0; }
+.save-area { margin-top: 24px; border-top: 1px solid #d9dfd4; padding-top: 23px; }
+.save-buttons { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.file-label { display: grid; gap: 8px; margin-top: 22px; font-size: .87rem; font-weight: 600; }
+.file-label input { max-width: 100%; font-size: .85rem; }
+.status { margin-top: 14px; min-height: 24px; color: #596a5f; font-size: .88rem; }
+.status.error { color: #a03329; }
+.status.unsaved { color: #835818; }
+.page-footer { color: #58695f; font-size: .78rem; padding-top: 4px; padding-bottom: 35px; }
+details { margin-top: 18px; }
+summary { cursor: pointer; font-weight: 600; font-size: .85rem; }
+.metadata { overflow-wrap: anywhere; font-family: ui-monospace, monospace; font-size: .74rem; margin-top: 10px; }
+.loading, .fatal { max-width: 760px; margin: 60px auto; padding: 25px; }
+.fatal { border: 1px solid #c98078; border-radius: 12px; background: #fff; }
+@media (max-width: 800px) { .review-grid { grid-template-columns: 1fr; } header, .workspace, .page-footer { padding-left: 20px; padding-right: 20px; } .card { padding: 21px; } }
+@media (max-width: 460px) { header { align-items: flex-start; gap: 12px; } .language select { min-width: 94px; width: 94px; } .brand { font-size: .68rem; } .rating-row { grid-template-columns: 1fr; gap: 5px; } .save-buttons button { width: 100%; } .intro { padding: 15px; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }

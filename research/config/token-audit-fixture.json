@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "evidence_type": "synthetic_transport_fixture",
+  "cases": [
+    {
+      "case_id": "synthetic-single-turn",
+      "mode": "generation",
+      "messages": [
+        {"role": "user", "content": "Transport fixture only. Repeat the label BLUE."}
+      ]
+    },
+    {
+      "case_id": "synthetic-system-evidence-history",
+      "mode": "generation",
+      "messages": [
+        {"role": "system", "content": "This is a synthetic software fixture. Use only the supplied passage."},
+        {"role": "user", "content": "Passage: The box is blue. Question: What color is the box?"},
+        {"role": "assistant", "content": "The box is blue."},
+        {"role": "user", "content": "Does the passage say the box is large?"}
+      ]
+    },
+    {
+      "case_id": "synthetic-training-complete-answer",
+      "mode": "training",
+      "messages": [
+        {"role": "user", "content": "Synthetic passage: The label is BLUE. Repeat the label."},
+        {"role": "assistant", "content": "BLUE"}
+      ]
+    },
+    {
+      "case_id": "tibetan-unicode-font-probe-not-native-gold",
+      "mode": "generation",
+      "messages": [
+        {"role": "user", "content": "Unicode font probe only; this is not a native-reviewed language example or comprehension task. Preserve these code points exactly: ཀ་ ཁ།  ཀ༌ཁ་\n"}
+      ]
+    }
+  ]
+}

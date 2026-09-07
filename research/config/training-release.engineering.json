@@ -1,0 +1,23 @@
+{
+  "training": {
+    "steps": 20,
+    "max_seq_length": 256
+  },
+  "condition": {
+    "condition_id": "english-extraction-engineering-v1",
+    "instruction_language": "en",
+    "instruction_text": "Read the passage, then answer the question using only the passage. Return only the requested answer text. If the passage does not provide the answer, return UNKNOWN.",
+    "output_language": "en",
+    "task_answer_kind": "exact_text",
+    "max_output_tokens_by_candidate": {
+      "qwen3-4b-mlx-4bit": 32,
+      "gemma3-4b-it-mlx-4bit": 32
+    },
+    "context_limit_tokens": 2048,
+    "budget_basis": "engineering_limit",
+    "instruction_review": "synthetic"
+  },
+  "study_path": null,
+  "selection_path": null,
+  "evaluation_report_path": null
+}

@@ -1,0 +1,24 @@
+# Candidate metadata lock — metadata collection snapshot
+
+`models.lock.json` records the two planned candidates and their upstream reference snapshots. It contains exact revisions, all 53 repository file sizes, separate Git/LFS identities, and locally computed hashes for 23 small files. Only 1,426,334 bytes of model cards and configuration metadata were read. During that metadata collection step, no model weights were downloaded, loaded, trained or benchmarked. Later local acquisition receipts and run manifests record those separate operations; the catalog keeps its original observation flags.
+
+| Candidate snapshot | Revision | All listed files | Weight files |
+| --- | --- | ---: | ---: |
+| [Qwen3-4B MLX 4-bit](https://huggingface.co/mlx-community/Qwen3-4B-4bit/tree/4dcb3d101c2a062e5c1d4bb173588c54ea6c4d25) | `4dcb3d101c2a062e5c1d4bb173588c54ea6c4d25` | 2,278,972,183 bytes | 2,263,022,529 bytes |
+| [Gemma 3 4B IT MLX 4-bit](https://huggingface.co/mlx-community/gemma-3-4b-it-4bit/tree/93724907d4ed1745d2fe50baadf3b0b01a65abf2) | `93724907d4ed1745d2fe50baadf3b0b01a65abf2` | 3,439,897,526 bytes | 3,400,569,562 bytes |
+
+Both complete snapshots total **5,718,869,709 bytes (about 5.326 GiB)**. This is a payload inventory, not the peak storage estimate. Acquisition preflight must also count environments, temporary downloads, cache copies and checkpoints while preserving the project's 15 GiB headroom target. Both upstream full-precision snapshots are reference metadata; the plan does not require downloading them.
+
+The catalog separates a publisher's expected hash from a locally verified file hash. A Git blob ID for an LFS file identifies its pointer, not the weight bytes. The expected LFS SHA-256 must be checked against acquired content later. Successfully read small files matched both the API's byte size and Git blob identity.
+
+Three issues were identified during metadata collection:
+
+- Qwen's conversion and current upstream have matching `tokenizer.json` LFS metadata, but different tokenizer configurations and embedded chat templates. The runner must use the exact selected template and deliberately record reasoning behavior. Matching vocabulary metadata does not establish equivalent prompt formatting. See the [conversion](https://huggingface.co/mlx-community/Qwen3-4B-4bit/tree/4dcb3d101c2a062e5c1d4bb173588c54ea6c4d25) and [upstream](https://huggingface.co/Qwen/Qwen3-4B/tree/1cfa9a7208912126459214e8b04321603b3df60c) snapshots.
+- Gemma's conversion card names `google/gemma-3-4b-it` in prose and `google/gemma-3-4b-pt` in its quantized-model frontmatter. It declares `mlx-vlm 0.1.18`, with a multimodal configuration. Its weight index references two absent shard names, although one `model.safetensors` exists. This does not prove that MLX-LM loading fails; that behavior remains untested. See the pinned [model card](https://huggingface.co/mlx-community/gemma-3-4b-it-4bit/blob/93724907d4ed1745d2fe50baadf3b0b01a65abf2/README.md), [config](https://huggingface.co/mlx-community/gemma-3-4b-it-4bit/blob/93724907d4ed1745d2fe50baadf3b0b01a65abf2/config.json), and [index](https://huggingface.co/mlx-community/gemma-3-4b-it-4bit/blob/93724907d4ed1745d2fe50baadf3b0b01a65abf2/model.safetensors.index.json).
+- Neither conversion identifies the exact upstream commit or a complete reproducible conversion recipe. The current pinned upstream reference must not be represented as the verified conversion source.
+
+Gemma's upstream metadata and model card were readable, but config/tokenizer file requests returned HTTP 401. No credentials were read and no access acknowledgement was submitted. The public conversion remains subject to the [Gemma terms](https://ai.google.dev/gemma/terms) and [prohibited-use policy](https://ai.google.dev/gemma/prohibited_use_policy), including conditions covering derivatives and hosted distribution. The catalog records these terms and the unresolved access state; it does not certify legal or clinical suitability.
+
+The [subsequent local runner checks](../../docs/experiments/tibetan-llm/2026-09-04-local-runner.md) acquired and verified both selected conversions and successfully loaded their text models. Qwen's selected template was checked with thinking disabled; the installed MLX-LM loader read Gemma's actual weight file and sanitized vision components. This resolves the loader uncertainty for the tested runtime, while the conversion-source provenance remains unresolved.
+
+The catalog is read-only configuration. It is not an acquisition command or a loader readiness assertion. The implemented acquisition/runner commands reject unknown candidates, require an exact revision, verify acquired hashes, and report failures before running an experiment. Refreshing metadata must create an explicit catalog change so past run identities remain recoverable.

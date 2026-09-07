@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "sources": [
+    {
+      "source_id": "fixture-source-1",
+      "version": 1,
+      "title": "Synthetic English plumbing fixture; not Tibetan or clinical evidence",
+      "source_url": null,
+      "source_date": null,
+      "original_text": "The community library opens at nine. It closes on Monday.",
+      "content_sha256": "33e4123f6039073f4024cccf251e9dd22a76f1c47c9eb0eb79acb8c8f74515b7",
+      "language": "en",
+      "source_kind": "synthetic_fixture",
+      "scope": "nonclinical",
+      "permitted_uses": [
+        "development_screen",
+        "validation",
+        "final_test",
+        "private_research"
+      ],
+      "language_review": "pending",
+      "medical_review": "not_applicable",
+      "unresolved_issues": [],
+      "invented": "forbidden"
+    },
+    {
+      "source_id": "fixture-source-2",
+      "version": 1,
+      "title": "Synthetic English plumbing fixture; not Tibetan or clinical evidence",
+      "source_url": null,
+      "source_date": null,
+      "original_text": "A blue notebook is on the table. The red notebook is in the bag.",
+      "content_sha256": "4b3d0a19e04d5209249fc8ff16fe09d448ce8a61ccc183c05e0190027f320416",
+      "language": "en",
+      "source_kind": "synthetic_fixture",
+      "scope": "nonclinical",
+      "permitted_uses": [
+        "development_screen",
+        "validation",
+        "final_test",
+        "private_research"
+      ],
+      "language_review": "pending",
+      "medical_review": "not_applicable",
+      "unresolved_issues": []
+    }
+  ],
+  "examples": [
+    {
+      "example_id": "fixture-example-1",
+      "version": 1,
+      "source_id": "fixture-source-1",
+      "source_version": 1,
+      "source_sha256": "33e4123f6039073f4024cccf251e9dd22a76f1c47c9eb0eb79acb8c8f74515b7",
+      "scenario_group": "fixture-scenario-1",
+      "paraphrase_group": "fixture-paraphrase-1",
+      "contributor_id": "synthetic-contributor-1",
+      "register": "synthetic English test only",
+      "question": "When does the community library open?",
+      "allowed_claims": [
+        "It opens at nine."
+      ],
+      "approved_answer": null,
+      "review_state": "pending",
+      "split": "development_screen",
+      "exposures": []
+    },
+    {
+      "example_id": "fixture-example-2",
+      "version": 1,
+      "source_id": "fixture-source-2",
+      "source_version": 1,
+      "source_sha256": "4b3d0a19e04d5209249fc8ff16fe09d448ce8a61ccc183c05e0190027f320416",
+      "scenario_group": "fixture-scenario-2",
+      "paraphrase_group": "fixture-paraphrase-2",
+      "contributor_id": "synthetic-contributor-2",
+      "register": "synthetic English test only",
+      "question": "Which notebook is on the table?",
+      "allowed_claims": [
+        "The blue notebook is on the table."
+      ],
+      "approved_answer": null,
+      "review_state": "pending",
+      "split": "development_screen",
+      "exposures": []
+    }
+  ],
+  "reviews": [],
+  "adjudications": []
+}

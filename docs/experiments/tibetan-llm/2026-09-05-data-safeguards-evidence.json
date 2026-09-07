@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "kind": "data_safeguards_engineering_evidence",
+  "created_at": "2026-09-06T00:35:45.044119+00:00",
+  "evidence_scope": "Portable regression tests and read-only audit of recorded private runs; no new model execution or human review.",
+  "inventory_sha256": "583bdc86d4c3e43a5d16781b0da0d1d5902bbff6d2b46b1021187fc19ef7adee",
+  "manifest_count": 9,
+  "verified_file_hashes": 84,
+  "content_entries": 8,
+  "verified_bytes_read": 1239320,
+  "classified_runs": [
+    {
+      "manifest_sha256": "178774aecc0e5fd34084445d54279fcb3145108b803d0194bfe125a05d4f392f",
+      "run_id": "foundation-20260904",
+      "kind": "foundation-checks",
+      "outcome": "completed",
+      "classification": "known_non_model_engineering",
+      "external_inputs": "basename-only metadata; not resolved or reverified"
+    },
+    {
+      "manifest_sha256": "42badfcecd8b48f4bfc2b73b5c03f68e1af260d7a5691cf4ddd61a810d7d72f1",
+      "run_id": "mechanics-gemma-20260905",
+      "kind": "synthetic_adapter_mechanics",
+      "outcome": "failed",
+      "classification": "verified_exposure_evidence",
+      "exposure_records": 4
+    },
+    {
+      "manifest_sha256": "e871b32d974da3438ccf736dfc3b7bdb62701dd057c43bed86ee670145bd79d9",
+      "run_id": "mechanics-gemma-20260905-r2",
+      "kind": "synthetic_adapter_mechanics",
+      "outcome": "failed",
+      "classification": "verified_exposure_evidence",
+      "exposure_records": 4
+    },
+    {
+      "manifest_sha256": "fe13f5a74fe93822ef68f7a496555e93127bb5d798c1cb6ea499c1b1d012472f",
+      "run_id": "mechanics-qwen-20260905",
+      "kind": "synthetic_adapter_mechanics",
+      "outcome": "completed",
+      "classification": "verified_exposure_evidence",
+      "exposure_records": 4
+    },
+    {
+      "manifest_sha256": "5d13624af628fef180be920b85c01eafcc5c3d12780cf10866f374b0c1a3c916",
+      "run_id": "paired-engineering-20260904",
+      "kind": "paired-comparison-engineering-checks",
+      "outcome": "completed",
+      "classification": "known_non_model_engineering",
+      "external_inputs": "basename-only metadata; not resolved or reverified"
+    },
+    {
+      "manifest_sha256": "7fa1e3f230d6ae8072741d6385a1d75c6d5db0faf6c4de695746c78a90de2655",
+      "run_id": "paired-script-infrastructure-smoke",
+      "kind": "local_source_question_baseline",
+      "outcome": "failed",
+      "classification": "verified_exposure_evidence",
+      "exposure_records": 16
+    },
+    {
+      "manifest_sha256": "45a186af513303c374e3018b961df50d2cd6417b2e1521965f0960c2ffeef8a1",
+      "run_id": "private-chat-engineering-20260905",
+      "kind": "synthetic_chat_interface_engineering",
+      "outcome": "completed",
+      "classification": "known_non_model_engineering",
+      "external_inputs": "basename-only metadata; not resolved or reverified"
+    },
+    {
+      "manifest_sha256": "1098c6a7c7c4ef28aa81203a5ece33c54501775932e076a608aa8e96a1b8f66e",
+      "run_id": "reviewer-form-engineering-20260905",
+      "kind": "offline_review_form_engineering",
+      "outcome": "completed",
+      "classification": "known_non_model_engineering",
+      "external_inputs": "basename-only metadata; not resolved or reverified"
+    },
+    {
+      "manifest_sha256": "92af69281a3afab6c6a530acead2cf89d9317918e0c4ec82c7d867635ebb10ff",
+      "run_id": "english-infrastructure-smoke",
+      "kind": "local_source_question_baseline",
+      "outcome": "completed",
+      "classification": "verified_exposure_evidence",
+      "exposure_records": 8
+    }
+  ],
+  "tests": {
+    "python_unittest": {
+      "passed": 368,
+      "log_sha256": "a39ea8393954babc877487e78f4d17db6767f9699be4ef69ac1541c5a1d87e9d"
+    },
+    "reviewer_form_node_test": {
+      "passed": 50,
+      "log_sha256": "074989a87403c42ca6d5453dd6410a02cfc42cb61252e11fe8f0cc6469fa2709"
+    }
+  },
+  "not_established": [
+    "authenticated contributor consent",
+    "complete external/deleted run history",
+    "semantic independence",
+    "released dataset",
+    "Tibetan comprehension",
+    "clinical correctness"
+  ]
+}

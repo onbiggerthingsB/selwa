@@ -1,0 +1,550 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://health-translator.local/research/contracts/records.schema.json",
+  "$defs": {
+    "source_card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "version",
+        "title",
+        "source_url",
+        "source_date",
+        "original_text",
+        "content_sha256",
+        "language",
+        "source_kind",
+        "scope",
+        "permitted_uses",
+        "language_review",
+        "medical_review",
+        "unresolved_issues"
+      ],
+      "properties": {
+        "source_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
+        },
+        "source_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "original_text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_kind": {
+          "enum": [
+            "synthetic_fixture",
+            "publication",
+            "community"
+          ]
+        },
+        "scope": {
+          "enum": [
+            "nonclinical",
+            "health"
+          ]
+        },
+        "permitted_uses": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "development_screen",
+              "smoke_training",
+              "train",
+              "validation",
+              "final_test",
+              "private_research",
+              "review"
+            ]
+          }
+        },
+        "language_review": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ]
+        },
+        "medical_review": {
+          "enum": [
+            "not_applicable",
+            "pending",
+            "approved",
+            "rejected"
+          ]
+        },
+        "unresolved_issues": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "example": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "example_id",
+        "version",
+        "source_id",
+        "source_version",
+        "source_sha256",
+        "scenario_group",
+        "paraphrase_group",
+        "contributor_id",
+        "register",
+        "question",
+        "allowed_claims",
+        "approved_answer",
+        "review_state",
+        "split",
+        "exposures"
+      ],
+      "properties": {
+        "example_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "source_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "scenario_group": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "paraphrase_group": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "contributor_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "register": {
+          "type": "string",
+          "minLength": 1
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "allowed_claims": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "approved_answer": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "review_state": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ]
+        },
+        "split": {
+          "enum": [
+            "unassigned",
+            "development_screen",
+            "smoke_training",
+            "train",
+            "validation",
+            "final_test"
+          ]
+        },
+        "exposures": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "development_screen",
+              "smoke_training",
+              "train",
+              "validation",
+              "final_test"
+            ]
+          }
+        }
+      }
+    },
+    "review_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review_id",
+        "example_id",
+        "example_version",
+        "example_sha256",
+        "source_sha256",
+        "reviewer_id",
+        "reviewer_role",
+        "review_type",
+        "ratings",
+        "issues",
+        "minutes_spent",
+        "status",
+        "recommendation",
+        "revision",
+        "supersedes_review_id"
+      ],
+      "properties": {
+        "review_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "example_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "example_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "example_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "source_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "reviewer_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "reviewer_role": {
+          "enum": [
+            "language_reviewer",
+            "clinician",
+            "dietitian"
+          ]
+        },
+        "review_type": {
+          "enum": [
+            "language",
+            "medical"
+          ]
+        },
+        "ratings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "naturalness",
+            "fidelity",
+            "comprehension"
+          ],
+          "properties": {
+            "naturalness": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 5
+            },
+            "fidelity": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 5
+            },
+            "comprehension": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 1,
+              "maximum": 5
+            }
+          }
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "minutes_spent": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "status": {
+          "enum": [
+            "incomplete",
+            "complete"
+          ]
+        },
+        "recommendation": {
+          "enum": [
+            "pending",
+            "approve",
+            "revise",
+            "reject"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "supersedes_review_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        }
+      }
+    },
+    "adjudication": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "adjudication_id",
+        "example_id",
+        "example_version",
+        "example_sha256",
+        "review_ids",
+        "adjudicator_id",
+        "decision",
+        "language_review",
+        "medical_review",
+        "rationale",
+        "minutes_spent"
+      ],
+      "properties": {
+        "adjudication_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "example_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "example_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "example_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "review_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+          }
+        },
+        "adjudicator_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "decision": {
+          "enum": [
+            "pending",
+            "approve",
+            "revise",
+            "reject"
+          ]
+        },
+        "language_review": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ]
+        },
+        "medical_review": {
+          "enum": [
+            "not_applicable",
+            "pending",
+            "approved",
+            "rejected"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minutes_spent": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "sources",
+        "examples",
+        "reviews",
+        "adjudications"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_card"
+          }
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/example"
+          }
+        },
+        "reviews": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/review_record"
+          }
+        },
+        "adjudications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/adjudication"
+          }
+        }
+      }
+    },
+    "review_packet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "packet_id",
+        "dataset_sha256",
+        "reviewer_id",
+        "reviewer_role",
+        "review_type",
+        "items"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "1.0"
+        },
+        "packet_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "dataset_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "reviewer_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,95}$"
+        },
+        "reviewer_role": {
+          "enum": [
+            "language_reviewer",
+            "clinician",
+            "dietitian"
+          ]
+        },
+        "review_type": {
+          "enum": [
+            "language",
+            "medical"
+          ]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "example",
+              "source",
+              "binding_sha256",
+              "review"
+            ],
+            "properties": {
+              "example": {
+                "$ref": "#/$defs/example"
+              },
+              "source": {
+                "$ref": "#/$defs/source_card"
+              },
+              "binding_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "review": {
+                "$ref": "#/$defs/review_record"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/dataset"
+}

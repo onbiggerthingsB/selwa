@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "run_id": "english-infrastructure-smoke",
+  "purpose": "infrastructure_smoke",
+  "candidate_ids": ["qwen3-4b-mlx-4bit", "gemma3-4b-it-mlx-4bit"],
+  "example_ids": ["fixture-example-1", "fixture-example-2"],
+  "max_output_tokens": 128,
+  "context_limit_tokens": 2048,
+  "timeout_seconds": 120,
+  "seed": 0,
+  "temperature": 0.0,
+  "reasoning_mode": "disabled",
+  "contributor_policy": "report",
+  "community_id": null,
+  "task_id": null,
+  "review_criteria": null
+}
